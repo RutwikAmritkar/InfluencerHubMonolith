@@ -3,20 +3,40 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Influencer Hub API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: influencers
+    description: Influencer profiles
+  - name: brands
+    description: Brand profiles
+  - name: campaigns
+    description: Campaign management
+  - name: applications
+    description: Campaign applications
+  - name: messages
+    description: Messaging
+  - name: notifications
+    description: Notifications
+  - name: dashboard
+    description: Dashboard summaries
+  - name: analytics
+    description: Analytics data
+  - name: ai
+    description: AI assistant
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +44,613 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Auth ────────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthenticated
+
+  # ─── Influencers ─────────────────────────────────────────────────────────────
+  /influencers:
+    get:
+      operationId: listInfluencers
+      tags: [influencers]
+      summary: List influencers with optional filters
+      parameters:
+        - name: platform
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: country
+          in: query
+          schema:
+            type: string
+        - name: minFollowers
+          in: query
+          schema:
+            type: number
+        - name: maxFollowers
+          in: query
+          schema:
+            type: number
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of influencers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Influencer"
+
+  /influencers/{id}:
+    get:
+      operationId: getInfluencer
+      tags: [influencers]
+      summary: Get influencer profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Influencer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfluencerDetail"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateInfluencer
+      tags: [influencers]
+      summary: Update influencer profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InfluencerUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Influencer"
+
+  # ─── Brands ──────────────────────────────────────────────────────────────────
+  /brands:
+    get:
+      operationId: listBrands
+      tags: [brands]
+      summary: List brands
+      responses:
+        "200":
+          description: List of brands
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Brand"
+
+  /brands/{id}:
+    get:
+      operationId: getBrand
+      tags: [brands]
+      summary: Get brand profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Brand profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateBrand
+      tags: [brands]
+      summary: Update brand profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+
+  # ─── Campaigns ───────────────────────────────────────────────────────────────
+  /campaigns:
+    get:
+      operationId: listCampaigns
+      tags: [campaigns]
+      summary: List campaigns
+      parameters:
+        - name: platform
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: brandId
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+    post:
+      operationId: createCampaign
+      tags: [campaigns]
+      summary: Create a campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+
+  /campaigns/{id}:
+    get:
+      operationId: getCampaign
+      tags: [campaigns]
+      summary: Get campaign
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateCampaign
+      tags: [campaigns]
+      summary: Update campaign
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+    delete:
+      operationId: deleteCampaign
+      tags: [campaigns]
+      summary: Delete campaign
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Applications ────────────────────────────────────────────────────────────
+  /applications:
+    get:
+      operationId: listApplications
+      tags: [applications]
+      summary: List applications
+      parameters:
+        - name: campaignId
+          in: query
+          schema:
+            type: number
+        - name: influencerId
+          in: query
+          schema:
+            type: number
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+    post:
+      operationId: createApplication
+      tags: [applications]
+      summary: Apply to a campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /applications/{id}:
+    patch:
+      operationId: updateApplication
+      tags: [applications]
+      summary: Update application status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  # ─── Messages ────────────────────────────────────────────────────────────────
+  /conversations:
+    get:
+      operationId: listConversations
+      tags: [messages]
+      summary: List conversations for current user
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+    post:
+      operationId: createConversation
+      tags: [messages]
+      summary: Start a conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+
+  /conversations/{id}/messages:
+    get:
+      operationId: listMessages
+      tags: [messages]
+      summary: Get messages in a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  # ─── Notifications ───────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  # ─── Dashboard ───────────────────────────────────────────────────────────────
+  /dashboard/brand:
+    get:
+      operationId: getBrandDashboard
+      tags: [dashboard]
+      summary: Brand dashboard summary
+      responses:
+        "200":
+          description: Brand dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrandDashboard"
+
+  /dashboard/influencer:
+    get:
+      operationId: getInfluencerDashboard
+      tags: [dashboard]
+      summary: Influencer dashboard summary
+      responses:
+        "200":
+          description: Influencer dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfluencerDashboard"
+
+  # ─── Analytics ───────────────────────────────────────────────────────────────
+  /analytics/influencer/{id}:
+    get:
+      operationId: getInfluencerAnalytics
+      tags: [analytics]
+      summary: Get analytics for an influencer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfluencerAnalytics"
+
+  /analytics/campaign/{id}:
+    get:
+      operationId: getCampaignAnalytics
+      tags: [analytics]
+      summary: Get analytics for a campaign
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignAnalytics"
+
+  # ─── AI ──────────────────────────────────────────────────────────────────────
+  /ai/suggestions:
+    get:
+      operationId: getAiSuggestions
+      tags: [ai]
+      summary: Get AI-powered suggestions
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Suggestions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiSuggestion"
+
+  /ai/match:
+    get:
+      operationId: getInfluencerMatches
+      tags: [ai]
+      summary: Get AI-matched influencers for a campaign
+      parameters:
+        - name: campaignId
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InfluencerMatch"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +658,582 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    # ─── Auth ──────────────────────────────────────────────────────────────────
+    RegisterInput:
+      type: object
+      required: [email, password, role, name]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [brand, influencer]
+        name:
+          type: string
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      required: [id, email, role, name]
+      properties:
+        id:
+          type: number
+        email:
+          type: string
+        role:
+          type: string
+          enum: [brand, influencer]
+        name:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        profileId:
+          type: ["number", "null"]
+
+    # ─── Influencer ────────────────────────────────────────────────────────────
+    Influencer:
+      type: object
+      required: [id, userId, name, category, country, followers, engagementRate, avgViews, collaborationCost, platforms, languages, avatarUrl]
+      properties:
+        id:
+          type: number
+        userId:
+          type: number
+        name:
+          type: string
+        bio:
+          type: ["string", "null"]
+        category:
+          type: string
+        country:
+          type: string
+        followers:
+          type: number
+        engagementRate:
+          type: number
+        avgViews:
+          type: number
+        collaborationCost:
+          type: number
+        platforms:
+          type: array
+          items:
+            type: string
+        languages:
+          type: array
+          items:
+            type: string
+        avatarUrl:
+          type: string
+        coverUrl:
+          type: ["string", "null"]
+        profileCompletion:
+          type: number
+        monthlyEarnings:
+          type: number
+        isVerified:
+          type: boolean
+
+    InfluencerDetail:
+      allOf:
+        - $ref: "#/components/schemas/Influencer"
+        - type: object
+          properties:
+            portfolio:
+              type: array
+              items:
+                type: string
+            previousCollaborations:
+              type: array
+              items:
+                $ref: "#/components/schemas/Collaboration"
+            reviews:
+              type: array
+              items:
+                $ref: "#/components/schemas/Review"
+            availability:
+              type: string
+
+    Collaboration:
+      type: object
+      required: [id, brandName, campaignTitle, year]
+      properties:
+        id:
+          type: number
+        brandName:
+          type: string
+        campaignTitle:
+          type: string
+        year:
+          type: number
+
+    Review:
+      type: object
+      required: [id, brandName, rating, comment, createdAt]
+      properties:
+        id:
+          type: number
+        brandName:
+          type: string
+        rating:
+          type: number
+        comment:
+          type: string
+        createdAt:
+          type: string
+
+    InfluencerUpdate:
+      type: object
+      properties:
+        bio:
+          type: string
+        category:
+          type: string
+        country:
+          type: string
+        collaborationCost:
+          type: number
+        platforms:
+          type: array
+          items:
+            type: string
+        languages:
+          type: array
+          items:
+            type: string
+        avatarUrl:
+          type: string
+        coverUrl:
+          type: string
+        availability:
+          type: string
+
+    # ─── Brand ────────────────────────────────────────────────────────────────
+    Brand:
+      type: object
+      required: [id, userId, name, industry, country, logoUrl]
+      properties:
+        id:
+          type: number
+        userId:
+          type: number
+        name:
+          type: string
+        industry:
+          type: string
+        country:
+          type: string
+        description:
+          type: ["string", "null"]
+        logoUrl:
+          type: string
+        website:
+          type: ["string", "null"]
+        totalCampaigns:
+          type: number
+        activeInfluencers:
+          type: number
+
+    BrandUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        industry:
+          type: string
+        description:
+          type: string
+        logoUrl:
+          type: string
+        website:
+          type: string
+
+    # ─── Campaign ─────────────────────────────────────────────────────────────
+    Campaign:
+      type: object
+      required: [id, brandId, brandName, title, description, budget, platform, status, createdAt, deadline]
+      properties:
+        id:
+          type: number
+        brandId:
+          type: number
+        brandName:
+          type: string
+        brandLogoUrl:
+          type: ["string", "null"]
+        title:
+          type: string
+        description:
+          type: string
+        budget:
+          type: number
+        platform:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, completed, paused]
+        deliverables:
+          type: ["string", "null"]
+        targetAudience:
+          type: ["string", "null"]
+        timeline:
+          type: ["string", "null"]
+        applicationsCount:
+          type: number
+        createdAt:
+          type: string
+        deadline:
+          type: string
+
+    CampaignInput:
+      type: object
+      required: [title, description, budget, platform, deadline]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        budget:
+          type: number
+        platform:
+          type: string
+        deliverables:
+          type: string
+        targetAudience:
+          type: string
+        timeline:
+          type: string
+        deadline:
+          type: string
+
+    CampaignUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        budget:
+          type: number
+        platform:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, completed, paused]
+        deliverables:
+          type: string
+        targetAudience:
+          type: string
+        timeline:
+          type: string
+        deadline:
+          type: string
+
+    # ─── Application ──────────────────────────────────────────────────────────
+    Application:
+      type: object
+      required: [id, campaignId, influencerId, status, createdAt]
+      properties:
+        id:
+          type: number
+        campaignId:
+          type: number
+        campaignTitle:
+          type: ["string", "null"]
+        influencerId:
+          type: number
+        influencerName:
+          type: ["string", "null"]
+        influencerAvatarUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        message:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ApplicationInput:
+      type: object
+      required: [campaignId]
+      properties:
+        campaignId:
+          type: number
+        message:
+          type: string
+
+    ApplicationUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+
+    # ─── Messages ─────────────────────────────────────────────────────────────
+    Conversation:
+      type: object
+      required: [id, participantId, participantName, participantAvatarUrl, lastMessage, lastMessageAt, unreadCount]
+      properties:
+        id:
+          type: number
+        participantId:
+          type: number
+        participantName:
+          type: string
+        participantAvatarUrl:
+          type: ["string", "null"]
+        lastMessage:
+          type: ["string", "null"]
+        lastMessageAt:
+          type: ["string", "null"]
+        unreadCount:
+          type: number
+
+    ConversationInput:
+      type: object
+      required: [participantId]
+      properties:
+        participantId:
+          type: number
+
+    Message:
+      type: object
+      required: [id, conversationId, senderId, content, createdAt]
+      properties:
+        id:
+          type: number
+        conversationId:
+          type: number
+        senderId:
+          type: number
+        senderName:
+          type: ["string", "null"]
+        senderAvatarUrl:
+          type: ["string", "null"]
+        content:
+          type: string
+        createdAt:
+          type: string
+
+    MessageInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    # ─── Notification ─────────────────────────────────────────────────────────
+    Notification:
+      type: object
+      required: [id, userId, type, title, body, isRead, createdAt]
+      properties:
+        id:
+          type: number
+        userId:
+          type: number
+        type:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+
+    # ─── Dashboard ────────────────────────────────────────────────────────────
+    BrandDashboard:
+      type: object
+      required: [totalCampaigns, activeCampaigns, totalApplications, savedInfluencers, recentCampaigns, topInfluencers]
+      properties:
+        totalCampaigns:
+          type: number
+        activeCampaigns:
+          type: number
+        totalApplications:
+          type: number
+        savedInfluencers:
+          type: number
+        recentCampaigns:
+          type: array
+          items:
+            $ref: "#/components/schemas/Campaign"
+        topInfluencers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Influencer"
+
+    InfluencerDashboard:
+      type: object
+      required: [profileCompletion, followers, monthlyEarnings, campaignInvites, recentApplications, profileViews]
+      properties:
+        profileCompletion:
+          type: number
+        followers:
+          type: number
+        monthlyEarnings:
+          type: number
+        campaignInvites:
+          type: number
+        recentApplications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Application"
+        profileViews:
+          type: number
+        viewsThisWeek:
+          type: array
+          items:
+            type: object
+            required: [day, views]
+            properties:
+              day:
+                type: string
+              views:
+                type: number
+
+    # ─── Analytics ────────────────────────────────────────────────────────────
+    InfluencerAnalytics:
+      type: object
+      required: [followerGrowth, engagementByMonth, reachByMonth, audienceGender, ageDistribution, countryDistribution]
+      properties:
+        followerGrowth:
+          type: array
+          items:
+            type: object
+            required: [month, followers]
+            properties:
+              month:
+                type: string
+              followers:
+                type: number
+        engagementByMonth:
+          type: array
+          items:
+            type: object
+            required: [month, rate]
+            properties:
+              month:
+                type: string
+              rate:
+                type: number
+        reachByMonth:
+          type: array
+          items:
+            type: object
+            required: [month, reach]
+            properties:
+              month:
+                type: string
+              reach:
+                type: number
+        audienceGender:
+          type: object
+          required: [male, female, other]
+          properties:
+            male:
+              type: number
+            female:
+              type: number
+            other:
+              type: number
+        ageDistribution:
+          type: array
+          items:
+            type: object
+            required: [range, percentage]
+            properties:
+              range:
+                type: string
+              percentage:
+                type: number
+        countryDistribution:
+          type: array
+          items:
+            type: object
+            required: [country, percentage]
+            properties:
+              country:
+                type: string
+              percentage:
+                type: number
+
+    CampaignAnalytics:
+      type: object
+      required: [totalReach, totalEngagement, estimatedRoi, impressions, clicks]
+      properties:
+        totalReach:
+          type: number
+        totalEngagement:
+          type: number
+        estimatedRoi:
+          type: number
+        impressions:
+          type: number
+        clicks:
+          type: number
+        performanceByDay:
+          type: array
+          items:
+            type: object
+            required: [date, reach, engagement]
+            properties:
+              date:
+                type: string
+              reach:
+                type: number
+              engagement:
+                type: number
+
+    # ─── AI ───────────────────────────────────────────────────────────────────
+    AiSuggestion:
+      type: object
+      required: [id, type, title, body, confidence]
+      properties:
+        id:
+          type: number
+        type:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        confidence:
+          type: number
+        action:
+          type: ["string", "null"]
+
+    InfluencerMatch:
+      type: object
+      required: [influencer, matchScore, matchReasons]
+      properties:
+        influencer:
+          $ref: "#/components/schemas/Influencer"
+        matchScore:
+          type: number
+        matchReasons:
+          type: array
+          items:
+            type: string

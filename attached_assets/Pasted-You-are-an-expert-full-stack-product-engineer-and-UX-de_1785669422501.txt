@@ -1,0 +1,432 @@
+You are an expert full-stack product engineer and UX designer.
+
+Build a modern responsive web application called "Influencer Hub".
+
+The goal is to create an MVP that connects Brands with Influencers. Think of it as a combination of LinkedIn + Upwork + Social Blade specifically for influencer marketing.
+
+The application should look like a real startup product instead of a demo.
+
+--------------------------------------------------
+TECH STACK
+--------------------------------------------------
+
+Frontend:
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui components
+- Framer Motion for animations
+- React Router
+
+Backend:
+- Node.js
+- Express
+
+Database:
+- SQLite (for MVP)
+- Prisma ORM
+
+Authentication:
+- Simple email/password authentication
+- Separate Brand and Influencer roles
+
+--------------------------------------------------
+DESIGN
+--------------------------------------------------
+
+Design should feel premium.
+
+Take inspiration from:
+
+• Linear.app
+• Stripe
+• Notion
+• Vercel
+• LinkedIn
+
+Theme:
+Modern
+Minimal
+Clean
+Professional
+
+Primary Color:
+#6366F1 (Indigo)
+
+Secondary:
+#06B6D4
+
+Accent:
+#14B8A6
+
+Background:
+Very light gray (#F8FAFC)
+
+Cards:
+White
+Rounded corners
+Soft shadows
+
+Buttons:
+Rounded
+Gradient hover effects
+
+Icons:
+Lucide React
+
+Animations:
+Smooth page transitions
+Card hover effects
+Loading skeletons
+
+Everything should be mobile responsive.
+
+Spacing should be generous.
+
+Avoid clutter.
+
+--------------------------------------------------
+LANDING PAGE
+--------------------------------------------------
+
+Hero Section
+
+Large headline
+
+"Find the Right Influencer for Every Campaign."
+
+Subheading
+
+Connect brands with verified creators using AI-powered analytics.
+
+CTA Buttons
+
+Get Started
+
+Browse Influencers
+
+Navigation
+
+Home
+
+Features
+
+Pricing
+
+Dashboard
+
+Login
+
+Footer
+
+--------------------------------------------------
+FEATURES PAGE
+--------------------------------------------------
+
+Show cards explaining:
+
+Verified Profiles
+
+Audience Insights
+
+Campaign Management
+
+Brand Matching
+
+Performance Analytics
+
+Secure Payments
+
+--------------------------------------------------
+LOGIN
+--------------------------------------------------
+
+Simple authentication page
+
+Role selection
+
+Brand
+
+Influencer
+
+--------------------------------------------------
+DASHBOARD
+--------------------------------------------------
+
+After login show dashboard depending on role.
+
+--------------------------------------------------
+BRAND DASHBOARD
+--------------------------------------------------
+
+Statistics cards
+
+Campaigns
+
+Messages
+
+Applications
+
+Saved Influencers
+
+Search bar
+
+Filter influencers by
+
+Platform
+
+Instagram
+
+YouTube
+
+TikTok
+
+Category
+
+Followers
+
+Location
+
+Engagement
+
+Each influencer card should show
+
+Photo
+
+Name
+
+Category
+
+Followers
+
+Engagement Rate
+
+Country
+
+Languages
+
+Average Views
+
+Collaboration Cost
+
+Button
+
+View Profile
+
+--------------------------------------------------
+INFLUENCER DASHBOARD
+--------------------------------------------------
+
+Profile completion %
+
+Followers
+
+Monthly earnings
+
+Campaign invites
+
+Portfolio
+
+Analytics
+
+Brands viewed profile
+
+Recent campaigns
+
+Notifications
+
+--------------------------------------------------
+PROFILE PAGE
+--------------------------------------------------
+
+Professional creator profile.
+
+Cover image
+
+Profile picture
+
+Bio
+
+Social Links
+
+Follower stats
+
+Engagement charts
+
+Audience demographics
+
+Previous collaborations
+
+Content gallery
+
+Reviews
+
+Rate card
+
+Availability
+
+--------------------------------------------------
+CAMPAIGNS
+--------------------------------------------------
+
+Brands can
+
+Create Campaign
+
+Campaign includes
+
+Title
+
+Description
+
+Budget
+
+Deliverables
+
+Target audience
+
+Platform
+
+Timeline
+
+Influencers can apply.
+
+--------------------------------------------------
+MESSAGING
+--------------------------------------------------
+
+Simple chat UI
+
+Inbox
+
+Conversation
+
+Typing indicator
+
+--------------------------------------------------
+ANALYTICS PAGE
+--------------------------------------------------
+
+Use sample data.
+
+Charts for
+
+Follower Growth
+
+Engagement
+
+Reach
+
+Views
+
+Estimated ROI
+
+Audience Gender
+
+Age Distribution
+
+Country Distribution
+
+--------------------------------------------------
+AI SECTION
+--------------------------------------------------
+
+Create an AI Assistant page.
+
+Example suggestions
+
+"Your audience is strongest in India."
+
+"Post between 6PM and 8PM."
+
+"This creator matches 92% with your campaign."
+
+--------------------------------------------------
+MOCK DATA
+--------------------------------------------------
+
+Generate around
+
+20 influencers
+
+10 brands
+
+15 campaigns
+
+Each influencer should have
+
+Name
+
+Photo
+
+Followers
+
+Engagement
+
+Platforms
+
+Languages
+
+Categories
+
+Pricing
+
+Country
+
+--------------------------------------------------
+EXTRAS
+--------------------------------------------------
+
+Dark Mode toggle
+
+Notification dropdown
+
+Search everywhere
+
+Command palette
+
+Settings page
+
+Profile editing
+
+Responsive sidebar
+
+Beautiful empty states
+
+Loading animations
+
+Toast notifications
+
+--------------------------------------------------
+CODE QUALITY
+--------------------------------------------------
+
+Use reusable components.
+
+Separate pages.
+
+Use TypeScript interfaces.
+
+Follow clean architecture.
+
+Use modern React practices.
+
+--------------------------------------------------
+FUTURE READY
+--------------------------------------------------
+
+Design the project so Firebase, Supabase or PostgreSQL can easily replace SQLite later.
+
+Keep the code modular.
+
+--------------------------------------------------
+FINAL GOAL
+--------------------------------------------------
+
+The application should feel like a real SaaS startup MVP suitable for presenting to investors.
+
+Every page should be fully navigable with realistic dummy data.
+
+Prioritize UI/UX quality over backend complexity.
+
+Generate all required code, routing, components, mock data, and styling so the project runs immediately in Replit.

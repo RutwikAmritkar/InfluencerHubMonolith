@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Influencer Hub"
+description = "A B2B SaaS marketplace connecting brands with influencers. Brands discover creators, launch campaigns, and track ROI. Influencers manage their profile, apply to campaigns, and grow their business. Features role-based dashboards, campaign management, messaging, analytics, and an AI assistant."
+version = "1.0.0"
+id = "artifacts/influencer-hub"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22989
+
+[services.development]
+run = "pnpm --filter @workspace/influencer-hub run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/influencer-hub", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/influencer-hub/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22989"
+BASE_PATH = "/"
