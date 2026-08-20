@@ -1,0 +1,453 @@
+export interface HealthStatus {
+  status: string;
+}
+
+export type RegisterInputRole = typeof RegisterInputRole[keyof typeof RegisterInputRole];
+
+export const RegisterInputRole = {
+  brand: 'brand',
+  influencer: 'influencer',
+} as const;
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  role: RegisterInputRole;
+  name: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+
+export const UserRole = {
+  brand: 'brand',
+  influencer: 'influencer',
+} as const;
+
+export interface User {
+  id: number;
+  email: string;
+  role: UserRole;
+  name: string;
+  /** @nullable */
+  avatarUrl?: string | null;
+  /** @nullable */
+  profileId?: number | null;
+}
+
+export interface AuthResponse {
+  user: User;
+}
+
+export type SocialAccountInputType = typeof SocialAccountInputType[keyof typeof SocialAccountInputType];
+
+export const SocialAccountInputType = {
+  username: 'username',
+  url: 'url',
+} as const;
+
+export type SocialAccountStatus = typeof SocialAccountStatus[keyof typeof SocialAccountStatus];
+
+export const SocialAccountStatus = {
+  UNVERIFIED: 'UNVERIFIED',
+  VERIFYING: 'VERIFYING',
+  VERIFIED: 'VERIFIED',
+  FAILED: 'FAILED',
+} as const;
+
+export type SocialAccountVerificationType = typeof SocialAccountVerificationType[keyof typeof SocialAccountVerificationType];
+
+export const SocialAccountVerificationType = {
+  PROFILE_EXISTS: 'PROFILE_EXISTS',
+  OWNER_VERIFIED: 'OWNER_VERIFIED',
+  OAUTH_CONNECTED: 'OAUTH_CONNECTED',
+} as const;
+
+export interface SocialAccount {
+  id: string;
+  creatorId: number;
+  platform: string;
+  username?: string;
+  profileUrl?: string;
+  inputType: SocialAccountInputType;
+  status: SocialAccountStatus;
+  verificationType?: SocialAccountVerificationType;
+  verifiedAt?: string;
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Influencer {
+  id: number;
+  userId: number;
+  name: string;
+  /** @nullable */
+  bio?: string | null;
+  category: string;
+  country: string;
+  followers: number;
+  engagementRate: number;
+  avgViews: number;
+  collaborationCost: number;
+  platforms: string[];
+  languages: string[];
+  avatarUrl: string;
+  /** @nullable */
+  coverUrl?: string | null;
+  profileCompletion?: number;
+  monthlyEarnings?: number;
+  isVerified?: boolean;
+  socialAccounts?: SocialAccount[];
+}
+
+export interface Collaboration {
+  id: number;
+  brandName: string;
+  campaignTitle: string;
+  year: number;
+}
+
+export interface Review {
+  id: number;
+  brandName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export type InfluencerDetail = Influencer & {
+  portfolio?: string[];
+  previousCollaborations?: Collaboration[];
+  reviews?: Review[];
+  availability?: string;
+};
+
+export type SocialAccountInputInputType = typeof SocialAccountInputInputType[keyof typeof SocialAccountInputInputType];
+
+export const SocialAccountInputInputType = {
+  username: 'username',
+  url: 'url',
+} as const;
+
+export interface SocialAccountInput {
+  platform: string;
+  username?: string;
+  profileUrl?: string;
+  inputType: SocialAccountInputInputType;
+}
+
+export interface InfluencerUpdate {
+  bio?: string;
+  category?: string;
+  country?: string;
+  collaborationCost?: number;
+  platforms?: string[];
+  languages?: string[];
+  avatarUrl?: string;
+  coverUrl?: string;
+  availability?: string;
+  socialAccounts?: SocialAccount[];
+}
+
+export interface Brand {
+  id: number;
+  userId: number;
+  name: string;
+  industry: string;
+  country: string;
+  /** @nullable */
+  description?: string | null;
+  logoUrl: string;
+  /** @nullable */
+  website?: string | null;
+  totalCampaigns?: number;
+  activeInfluencers?: number;
+}
+
+export interface BrandUpdate {
+  name?: string;
+  industry?: string;
+  description?: string;
+  logoUrl?: string;
+  website?: string;
+}
+
+export type CampaignStatus = typeof CampaignStatus[keyof typeof CampaignStatus];
+
+export const CampaignStatus = {
+  draft: 'draft',
+  active: 'active',
+  completed: 'completed',
+  paused: 'paused',
+} as const;
+
+export interface Campaign {
+  id: number;
+  brandId: number;
+  brandName: string;
+  /** @nullable */
+  brandLogoUrl?: string | null;
+  title: string;
+  description: string;
+  budget: number;
+  platform: string;
+  status: CampaignStatus;
+  /** @nullable */
+  deliverables?: string | null;
+  /** @nullable */
+  targetAudience?: string | null;
+  /** @nullable */
+  timeline?: string | null;
+  applicationsCount?: number;
+  createdAt: string;
+  deadline: string;
+}
+
+export interface CampaignInput {
+  title: string;
+  description: string;
+  budget: number;
+  platform: string;
+  deliverables?: string;
+  targetAudience?: string;
+  timeline?: string;
+  deadline: string;
+}
+
+export type CampaignUpdateStatus = typeof CampaignUpdateStatus[keyof typeof CampaignUpdateStatus];
+
+export const CampaignUpdateStatus = {
+  draft: 'draft',
+  active: 'active',
+  completed: 'completed',
+  paused: 'paused',
+} as const;
+
+export interface CampaignUpdate {
+  title?: string;
+  description?: string;
+  budget?: number;
+  platform?: string;
+  status?: CampaignUpdateStatus;
+  deliverables?: string;
+  targetAudience?: string;
+  timeline?: string;
+  deadline?: string;
+}
+
+export type ApplicationStatus = typeof ApplicationStatus[keyof typeof ApplicationStatus];
+
+export const ApplicationStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface Application {
+  id: number;
+  campaignId: number;
+  /** @nullable */
+  campaignTitle?: string | null;
+  influencerId: number;
+  /** @nullable */
+  influencerName?: string | null;
+  /** @nullable */
+  influencerAvatarUrl?: string | null;
+  status: ApplicationStatus;
+  /** @nullable */
+  message?: string | null;
+  createdAt: string;
+}
+
+export interface ApplicationInput {
+  campaignId: number;
+  message?: string;
+}
+
+export type ApplicationUpdateStatus = typeof ApplicationUpdateStatus[keyof typeof ApplicationUpdateStatus];
+
+export const ApplicationUpdateStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface ApplicationUpdate {
+  status: ApplicationUpdateStatus;
+}
+
+export interface Conversation {
+  id: number;
+  participantId: number;
+  participantName: string;
+  /** @nullable */
+  participantAvatarUrl: string | null;
+  /** @nullable */
+  lastMessage: string | null;
+  /** @nullable */
+  lastMessageAt: string | null;
+  unreadCount: number;
+}
+
+export interface ConversationInput {
+  participantId: number;
+}
+
+export interface Message {
+  id: number;
+  conversationId: number;
+  senderId: number;
+  /** @nullable */
+  senderName?: string | null;
+  /** @nullable */
+  senderAvatarUrl?: string | null;
+  content: string;
+  createdAt: string;
+}
+
+export interface MessageInput {
+  content: string;
+}
+
+export interface Notification {
+  id: number;
+  userId: number;
+  type: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface BrandDashboard {
+  totalCampaigns: number;
+  activeCampaigns: number;
+  totalApplications: number;
+  savedInfluencers: number;
+  recentCampaigns: Campaign[];
+  topInfluencers: Influencer[];
+}
+
+export type InfluencerDashboardViewsThisWeekItem = {
+  day: string;
+  views: number;
+};
+
+export interface InfluencerDashboard {
+  profileCompletion: number;
+  followers: number;
+  monthlyEarnings: number;
+  campaignInvites: number;
+  recentApplications: Application[];
+  profileViews: number;
+  viewsThisWeek?: InfluencerDashboardViewsThisWeekItem[];
+}
+
+export type InfluencerAnalyticsFollowerGrowthItem = {
+  month: string;
+  followers: number;
+};
+
+export type InfluencerAnalyticsEngagementByMonthItem = {
+  month: string;
+  rate: number;
+};
+
+export type InfluencerAnalyticsReachByMonthItem = {
+  month: string;
+  reach: number;
+};
+
+export type InfluencerAnalyticsAudienceGender = {
+  male: number;
+  female: number;
+  other: number;
+};
+
+export type InfluencerAnalyticsAgeDistributionItem = {
+  range: string;
+  percentage: number;
+};
+
+export type InfluencerAnalyticsCountryDistributionItem = {
+  country: string;
+  percentage: number;
+};
+
+export interface InfluencerAnalytics {
+  followerGrowth: InfluencerAnalyticsFollowerGrowthItem[];
+  engagementByMonth: InfluencerAnalyticsEngagementByMonthItem[];
+  reachByMonth: InfluencerAnalyticsReachByMonthItem[];
+  audienceGender: InfluencerAnalyticsAudienceGender;
+  ageDistribution: InfluencerAnalyticsAgeDistributionItem[];
+  countryDistribution: InfluencerAnalyticsCountryDistributionItem[];
+}
+
+export type CampaignAnalyticsPerformanceByDayItem = {
+  date: string;
+  reach: number;
+  engagement: number;
+};
+
+export interface CampaignAnalytics {
+  totalReach: number;
+  totalEngagement: number;
+  estimatedRoi: number;
+  impressions: number;
+  clicks: number;
+  performanceByDay?: CampaignAnalyticsPerformanceByDayItem[];
+}
+
+export interface AiSuggestion {
+  id: number;
+  type: string;
+  title: string;
+  body: string;
+  confidence: number;
+  /** @nullable */
+  action?: string | null;
+}
+
+export interface InfluencerMatch {
+  influencer: Influencer;
+  matchScore: number;
+  matchReasons: string[];
+}
+
+export type ListInfluencersParams = {
+platform?: string;
+category?: string;
+country?: string;
+minFollowers?: number;
+maxFollowers?: number;
+search?: string;
+};
+
+export type DeleteSocialAccount200 = {
+  success?: boolean;
+};
+
+export type ListCampaignsParams = {
+platform?: string;
+status?: string;
+brandId?: number;
+};
+
+export type ListApplicationsParams = {
+campaignId?: number;
+influencerId?: number;
+status?: string;
+};
+
+export type GetAiSuggestionsParams = {
+type?: string;
+};
+
+export type GetInfluencerMatchesParams = {
+campaignId: number;
+};
