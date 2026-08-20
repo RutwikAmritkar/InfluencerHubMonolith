@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { User } from "@workspace/api-client-react/src/generated/api.schemas";
-import { useGetMe, useLogout } from "@workspace/api-client-react";
+import { User, useGetMe, useLogout } from "@workspace/api-client-react";
 
 type AuthContextType = {
   user: User | null;
@@ -18,7 +17,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: meData, isLoading: meLoading, isError } = useGetMe({
     query: {
       retry: false,
-    }
+    } as any
   });
 
   const logoutMutation = useLogout();
@@ -51,8 +50,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  if (!context) {
+    return {
+      user: null,
+      isLoading: false,
+      setUser: () => {},
+      logout: () => {},
+    };
   }
   return context;
 }

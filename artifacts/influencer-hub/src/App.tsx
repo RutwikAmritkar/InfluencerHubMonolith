@@ -22,6 +22,7 @@ import Messages from '@/pages/messages';
 import Analytics from '@/pages/analytics';
 import AiAssistant from '@/pages/ai-assistant';
 import Settings from '@/pages/settings';
+import CreatorOnboarding from '@/pages/onboarding';
 import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -77,6 +78,29 @@ function PublicOnlyRoute({ component: Component, ...rest }: any) {
   return <Component {...rest} />;
 }
 
+function ProtectedStandaloneRoute({ component: Component, ...rest }: any) {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setLocation('/login');
+    }
+  }, [user, isLoading, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  return <Component {...rest} />;
+}
+
 function Router() {
   return (
     <Switch>
@@ -84,6 +108,14 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/login">
         <PublicOnlyRoute component={Login} />
+      </Route>
+      <Route path="/signup">
+        <PublicOnlyRoute component={Login} />
+      </Route>
+
+      {/* Onboarding Flow */}
+      <Route path="/onboarding">
+        <ProtectedStandaloneRoute component={CreatorOnboarding} />
       </Route>
 
       {/* Protected App Pages */}

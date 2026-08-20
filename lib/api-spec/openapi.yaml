@@ -197,6 +197,129 @@ paths:
               schema:
                 $ref: "#/components/schemas/Influencer"
 
+  /influencers/{id}/social-accounts:
+    get:
+      operationId: listSocialAccounts
+      tags: [influencers]
+      summary: List creator social accounts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of social accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SocialAccount"
+    post:
+      operationId: addSocialAccount
+      tags: [influencers]
+      summary: Add social account for creator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialAccountInput"
+      responses:
+        "201":
+          description: Social account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialAccount"
+
+  /influencers/{id}/social-accounts/{accountId}:
+    put:
+      operationId: updateSocialAccount
+      tags: [influencers]
+      summary: Update social account for creator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialAccountInput"
+      responses:
+        "200":
+          description: Social account updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialAccount"
+    delete:
+      operationId: deleteSocialAccount
+      tags: [influencers]
+      summary: Delete social account for creator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Social account deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /influencers/{id}/social-accounts/{accountId}/verify:
+    post:
+      operationId: verifySocialAccount
+      tags: [influencers]
+      summary: Verify social account profile for creator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Social account verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialAccount"
+
   # ─── Brands ──────────────────────────────────────────────────────────────────
   /brands:
     get:
@@ -752,6 +875,10 @@ components:
           type: number
         isVerified:
           type: boolean
+        socialAccounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/SocialAccount"
 
     InfluencerDetail:
       allOf:
@@ -801,6 +928,52 @@ components:
         createdAt:
           type: string
 
+    SocialAccount:
+      type: object
+      required: [id, creatorId, platform, inputType, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        creatorId:
+          type: number
+        platform:
+          type: string
+        username:
+          type: string
+        profileUrl:
+          type: string
+        inputType:
+          type: string
+          enum: [username, url]
+        status:
+          type: string
+          enum: [UNVERIFIED, VERIFYING, VERIFIED, FAILED]
+        verificationType:
+          type: string
+          enum: [PROFILE_EXISTS, OWNER_VERIFIED, OAUTH_CONNECTED]
+        verifiedAt:
+          type: string
+        errorMessage:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    SocialAccountInput:
+      type: object
+      required: [platform, inputType]
+      properties:
+        platform:
+          type: string
+        username:
+          type: string
+        profileUrl:
+          type: string
+        inputType:
+          type: string
+          enum: [username, url]
+
     InfluencerUpdate:
       type: object
       properties:
@@ -826,6 +999,10 @@ components:
           type: string
         availability:
           type: string
+        socialAccounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/SocialAccount"
 
     # ─── Brand ────────────────────────────────────────────────────────────────
     Brand:

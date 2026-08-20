@@ -16,11 +16,11 @@ export default function Analytics() {
   const isBrand = user?.role === "brand";
   
   const { data: brandData, isLoading: brandLoading } = useGetCampaignAnalytics(id, {
-    query: { enabled: isBrand }
+    query: { enabled: isBrand } as any
   });
 
   const { data: infData, isLoading: infLoading } = useGetInfluencerAnalytics(id, {
-    query: { enabled: !isBrand }
+    query: { enabled: !isBrand } as any
   });
 
   const isLoading = isBrand ? brandLoading : infLoading;

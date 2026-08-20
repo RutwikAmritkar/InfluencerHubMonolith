@@ -34,6 +34,7 @@ import type {
   CampaignUpdate,
   Conversation,
   ConversationInput,
+  DeleteSocialAccount200,
   GetAiSuggestionsParams,
   GetInfluencerMatchesParams,
   HealthStatus,
@@ -50,7 +51,9 @@ import type {
   Message,
   MessageInput,
   Notification,
-  RegisterInput
+  RegisterInput,
+  SocialAccount,
+  SocialAccountInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -678,6 +681,375 @@ export const useUpdateInfluencer = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateInfluencerMutationOptions(options));
+    }
+
+export const getListSocialAccountsUrl = (id: number,) => {
+
+
+
+
+  return `/api/influencers/${id}/social-accounts`
+}
+
+/**
+ * @summary List creator social accounts
+ */
+export const listSocialAccounts = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<SocialAccount[]> => {
+
+  return customFetch<SocialAccount[]>(getListSocialAccountsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSocialAccountsQueryKey = (id: number,) => {
+    return [
+    `/api/influencers/${id}/social-accounts`
+    ] as const;
+    }
+
+
+export const getListSocialAccountsQueryOptions = <TData = Awaited<ReturnType<typeof listSocialAccounts>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSocialAccounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSocialAccountsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSocialAccounts>>> = ({ signal }) => listSocialAccounts(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSocialAccounts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSocialAccountsQueryResult = NonNullable<Awaited<ReturnType<typeof listSocialAccounts>>>
+export type ListSocialAccountsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List creator social accounts
+ */
+
+export function useListSocialAccounts<TData = Awaited<ReturnType<typeof listSocialAccounts>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSocialAccounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSocialAccountsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getAddSocialAccountUrl = (id: number,) => {
+
+
+
+
+  return `/api/influencers/${id}/social-accounts`
+}
+
+/**
+ * @summary Add social account for creator
+ */
+export const addSocialAccount = async (id: number,
+    socialAccountInput: SocialAccountInput, options?: Parameters<typeof customFetch>[1]): Promise<SocialAccount> => {
+
+  return customFetch<SocialAccount>(getAddSocialAccountUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(socialAccountInput)
+  }
+);}
+
+
+
+
+
+export const getAddSocialAccountMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addSocialAccount>>, TError,{id: number;data: BodyType<SocialAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addSocialAccount>>, TError,{id: number;data: BodyType<SocialAccountInput>}, TContext> => {
+
+const mutationKey = ['addSocialAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addSocialAccount>>, {id: number;data: BodyType<SocialAccountInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  addSocialAccount(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddSocialAccountMutationResult = NonNullable<Awaited<ReturnType<typeof addSocialAccount>>>
+    export type AddSocialAccountMutationBody = BodyType<SocialAccountInput>
+    export type AddSocialAccountMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Add social account for creator
+ */
+export const useAddSocialAccount = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addSocialAccount>>, TError,{id: number;data: BodyType<SocialAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addSocialAccount>>,
+        TError,
+        {id: number;data: BodyType<SocialAccountInput>},
+        TContext
+      > => {
+      return useMutation(getAddSocialAccountMutationOptions(options));
+    }
+
+export const getUpdateSocialAccountUrl = (id: number,
+    accountId: string,) => {
+
+
+
+
+  return `/api/influencers/${id}/social-accounts/${accountId}`
+}
+
+/**
+ * @summary Update social account for creator
+ */
+export const updateSocialAccount = async (id: number,
+    accountId: string,
+    socialAccountInput: SocialAccountInput, options?: Parameters<typeof customFetch>[1]): Promise<SocialAccount> => {
+
+  return customFetch<SocialAccount>(getUpdateSocialAccountUrl(id,accountId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(socialAccountInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateSocialAccountMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSocialAccount>>, TError,{id: number;accountId: string;data: BodyType<SocialAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSocialAccount>>, TError,{id: number;accountId: string;data: BodyType<SocialAccountInput>}, TContext> => {
+
+const mutationKey = ['updateSocialAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSocialAccount>>, {id: number;accountId: string;data: BodyType<SocialAccountInput>}> = (props) => {
+          const {id,accountId,data} = props ?? {};
+
+          return  updateSocialAccount(id,accountId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSocialAccountMutationResult = NonNullable<Awaited<ReturnType<typeof updateSocialAccount>>>
+    export type UpdateSocialAccountMutationBody = BodyType<SocialAccountInput>
+    export type UpdateSocialAccountMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update social account for creator
+ */
+export const useUpdateSocialAccount = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSocialAccount>>, TError,{id: number;accountId: string;data: BodyType<SocialAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSocialAccount>>,
+        TError,
+        {id: number;accountId: string;data: BodyType<SocialAccountInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateSocialAccountMutationOptions(options));
+    }
+
+export const getDeleteSocialAccountUrl = (id: number,
+    accountId: string,) => {
+
+
+
+
+  return `/api/influencers/${id}/social-accounts/${accountId}`
+}
+
+/**
+ * @summary Delete social account for creator
+ */
+export const deleteSocialAccount = async (id: number,
+    accountId: string, options?: Parameters<typeof customFetch>[1]): Promise<DeleteSocialAccount200> => {
+
+  return customFetch<DeleteSocialAccount200>(getDeleteSocialAccountUrl(id,accountId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteSocialAccountMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSocialAccount>>, TError,{id: number;accountId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSocialAccount>>, TError,{id: number;accountId: string}, TContext> => {
+
+const mutationKey = ['deleteSocialAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSocialAccount>>, {id: number;accountId: string}> = (props) => {
+          const {id,accountId} = props ?? {};
+
+          return  deleteSocialAccount(id,accountId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSocialAccountMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSocialAccount>>>
+
+    export type DeleteSocialAccountMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete social account for creator
+ */
+export const useDeleteSocialAccount = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSocialAccount>>, TError,{id: number;accountId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSocialAccount>>,
+        TError,
+        {id: number;accountId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteSocialAccountMutationOptions(options));
+    }
+
+export const getVerifySocialAccountUrl = (id: number,
+    accountId: string,) => {
+
+
+
+
+  return `/api/influencers/${id}/social-accounts/${accountId}/verify`
+}
+
+/**
+ * @summary Verify social account profile for creator
+ */
+export const verifySocialAccount = async (id: number,
+    accountId: string, options?: Parameters<typeof customFetch>[1]): Promise<SocialAccount> => {
+
+  return customFetch<SocialAccount>(getVerifySocialAccountUrl(id,accountId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getVerifySocialAccountMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifySocialAccount>>, TError,{id: number;accountId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifySocialAccount>>, TError,{id: number;accountId: string}, TContext> => {
+
+const mutationKey = ['verifySocialAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifySocialAccount>>, {id: number;accountId: string}> = (props) => {
+          const {id,accountId} = props ?? {};
+
+          return  verifySocialAccount(id,accountId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifySocialAccountMutationResult = NonNullable<Awaited<ReturnType<typeof verifySocialAccount>>>
+
+    export type VerifySocialAccountMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Verify social account profile for creator
+ */
+export const useVerifySocialAccount = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifySocialAccount>>, TError,{id: number;accountId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifySocialAccount>>,
+        TError,
+        {id: number;accountId: string},
+        TContext
+      > => {
+      return useMutation(getVerifySocialAccountMutationOptions(options));
     }
 
 export const getListBrandsUrl = () => {

@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/auth-context";
-import { useGetBrand, useUpdateBrand, useGetInfluencer, useUpdateInfluencer } from "@workspace/api-client-react";
+import { useGetBrand, useUpdateBrand, useGetInfluencer, useUpdateInfluencer, SocialAccount } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Switch } from "@/components/ui/switch";
+import { SocialAccountsForm } from "@/components/social-accounts-form";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -44,9 +45,9 @@ export default function Settings() {
       </Card>
 
       {user?.role === "brand" ? (
-        <BrandProfileForm profileId={user.profileId!} />
+        <BrandProfileForm profileId={user.profileId || 1} />
       ) : (
-        <InfluencerProfileForm profileId={user?.profileId!} />
+        <InfluencerProfileForm profileId={user?.profileId || 1} />
       )}
     </div>
   );
@@ -60,7 +61,7 @@ const brandSchema = z.object({
 });
 
 function BrandProfileForm({ profileId }: { profileId: number }) {
-  const { data: brand, isLoading } = useGetBrand(profileId, { query: { enabled: !!profileId } });
+  const { data: brand, isLoading } = useGetBrand(profileId, { query: { enabled: !!profileId } as any });
   const updateBrand = useUpdateBrand();
 
   const form = useForm<z.infer<typeof brandSchema>>({
@@ -156,7 +157,8 @@ const infSchema = z.object({
 });
 
 function InfluencerProfileForm({ profileId }: { profileId: number }) {
-  const { data: inf, isLoading } = useGetInfluencer(profileId, { query: { enabled: !!profileId } });
+  const targetId = profileId || 1;
+  const { data: inf, isLoading } = useGetInfluencer(targetId, { query: { enabled: true } as any });
   const updateInf = useUpdateInfluencer();
 
   const form = useForm<z.infer<typeof infSchema>>({
@@ -171,89 +173,110 @@ function InfluencerProfileForm({ profileId }: { profileId: number }) {
   });
 
   const onSubmit = (values: z.infer<typeof infSchema>) => {
-    updateInf.mutate({ id: profileId, data: values }, {
+    updateInf.mutate({ id: targetId, data: values }, {
       onSuccess: () => toast.success("Profile updated successfully"),
       onError: () => toast.error("Failed to update profile")
     });
   };
 
-  if (isLoading) return <div className="py-12 flex justify-center"><Loader2 className="animate-spin h-6 w-6 text-primary" /></div>;
+  const handleSaveSocialAccounts = (accounts: SocialAccount[]) => {
+    updateInf.mutate({
+      id: targetId,
+      data: {
+        socialAccounts: accounts,
+      } as any,
+    }, {
+      onSuccess: () => toast.success("Social media profiles updated successfully"),
+      onError: () => toast.error("Failed to update social profiles")
+    });
+  };
 
   return (
-    <Card className="shadow-sm border-muted">
-      <CardHeader>
-        <CardTitle>Creator Profile</CardTitle>
-        <CardDescription>Your public presence on InfluencerHub.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-8">
+      <Card className="shadow-sm border-muted">
+        <CardHeader>
+          <CardTitle>Creator Profile</CardTitle>
+          <CardDescription>Your public presence on InfluencerHub.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Primary Category</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="collaborationCost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Starting Rate ($)</FormLabel>
+                      <FormControl><Input type="number" {...field} /></FormControl>
+                      <FormDescription>Your minimum cost for a campaign.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="availability"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Availability</FormLabel>
+                      <FormControl><Input placeholder="e.g. Booking for next month" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
-                name="category"
+                name="bio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Primary Category</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
+                    <FormLabel>Bio</FormLabel>
+                    <FormControl><Textarea className="min-h-[120px]" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="collaborationCost"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Starting Rate ($)</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
-                    <FormDescription>Your minimum cost for a campaign.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="availability"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Availability</FormLabel>
-                    <FormControl><Input placeholder="e.g. Booking for next month" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bio</FormLabel>
-                  <FormControl><Textarea className="min-h-[120px]" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={updateInf.isPending}>
-              {updateInf.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              <Button type="submit" disabled={updateInf.isPending}>
+                {updateInf.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {/* Dedicated Social Media Section */}
+      <SocialAccountsForm
+        creatorId={targetId}
+        initialAccounts={inf?.socialAccounts || []}
+        onSave={handleSaveSocialAccounts}
+        mode="settings"
+        isSaving={updateInf.isPending}
+      />
+    </div>
   );
 }

@@ -52,6 +52,48 @@ export interface AuthResponse {
   user: User;
 }
 
+export type SocialAccountInputType = typeof SocialAccountInputType[keyof typeof SocialAccountInputType];
+
+
+export const SocialAccountInputType = {
+  username: 'username',
+  url: 'url',
+} as const;
+
+export type SocialAccountStatus = typeof SocialAccountStatus[keyof typeof SocialAccountStatus];
+
+
+export const SocialAccountStatus = {
+  UNVERIFIED: 'UNVERIFIED',
+  VERIFYING: 'VERIFYING',
+  VERIFIED: 'VERIFIED',
+  FAILED: 'FAILED',
+} as const;
+
+export type SocialAccountVerificationType = typeof SocialAccountVerificationType[keyof typeof SocialAccountVerificationType];
+
+
+export const SocialAccountVerificationType = {
+  PROFILE_EXISTS: 'PROFILE_EXISTS',
+  OWNER_VERIFIED: 'OWNER_VERIFIED',
+  OAUTH_CONNECTED: 'OAUTH_CONNECTED',
+} as const;
+
+export interface SocialAccount {
+  id: string;
+  creatorId: number;
+  platform: string;
+  username?: string;
+  profileUrl?: string;
+  inputType: SocialAccountInputType;
+  status: SocialAccountStatus;
+  verificationType?: SocialAccountVerificationType;
+  verifiedAt?: string;
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Influencer {
   id: number;
   userId: number;
@@ -72,6 +114,7 @@ export interface Influencer {
   profileCompletion?: number;
   monthlyEarnings?: number;
   isVerified?: boolean;
+  socialAccounts?: SocialAccount[];
 }
 
 export interface Collaboration {
@@ -96,6 +139,21 @@ export type InfluencerDetail = Influencer & {
   availability?: string;
 };
 
+export type SocialAccountInputInputType = typeof SocialAccountInputInputType[keyof typeof SocialAccountInputInputType];
+
+
+export const SocialAccountInputInputType = {
+  username: 'username',
+  url: 'url',
+} as const;
+
+export interface SocialAccountInput {
+  platform: string;
+  username?: string;
+  profileUrl?: string;
+  inputType: SocialAccountInputInputType;
+}
+
 export interface InfluencerUpdate {
   bio?: string;
   category?: string;
@@ -106,6 +164,7 @@ export interface InfluencerUpdate {
   avatarUrl?: string;
   coverUrl?: string;
   availability?: string;
+  socialAccounts?: SocialAccount[];
 }
 
 export interface Brand {
@@ -384,6 +443,10 @@ country?: string;
 minFollowers?: number;
 maxFollowers?: number;
 search?: string;
+};
+
+export type DeleteSocialAccount200 = {
+  success?: boolean;
 };
 
 export type ListCampaignsParams = {

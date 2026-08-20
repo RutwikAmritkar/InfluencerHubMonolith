@@ -5,6 +5,7 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
+import type { SocialAccount } from './socialAccount';
 
 export interface Influencer {
   id: number;
@@ -26,4 +27,5 @@ export interface Influencer {
   profileCompletion?: number;
   monthlyEarnings?: number;
   isVerified?: boolean;
+  socialAccounts?: SocialAccount[];
 }

@@ -1,6 +1,24 @@
-import { pgTable, text, serial, timestamp, integer, real, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, real, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+
+export type SocialAccountStatus = "UNVERIFIED" | "VERIFYING" | "VERIFIED" | "FAILED";
+export type VerificationType = "PROFILE_EXISTS" | "OWNER_VERIFIED" | "OAUTH_CONNECTED";
+
+export interface SocialAccount {
+  id: string;
+  creatorId: number;
+  platform: string;
+  username?: string;
+  profileUrl?: string;
+  inputType: "username" | "url";
+  status: SocialAccountStatus;
+  verificationType?: VerificationType;
+  verifiedAt?: string;
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export const influencersTable = pgTable("influencers", {
   id: serial("id").primaryKey(),
@@ -21,6 +39,7 @@ export const influencersTable = pgTable("influencers", {
   isVerified: boolean("is_verified").notNull().default(false),
   availability: text("availability").default("available"),
   portfolio: text("portfolio").array().notNull().default([]),
+  socialAccounts: jsonb("social_accounts").$type<SocialAccount[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

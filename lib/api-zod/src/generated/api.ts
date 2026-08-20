@@ -108,7 +108,21 @@ export const ListInfluencersResponseItem = zod.object({
   "coverUrl": zod.string().nullish(),
   "profileCompletion": zod.number().optional(),
   "monthlyEarnings": zod.number().optional(),
-  "isVerified": zod.boolean().optional()
+  "isVerified": zod.boolean().optional(),
+  "socialAccounts": zod.array(zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})).optional()
 })
 export const ListInfluencersResponse = zod.array(ListInfluencersResponseItem)
 
@@ -137,7 +151,21 @@ export const GetInfluencerResponse = zod.object({
   "coverUrl": zod.string().nullish(),
   "profileCompletion": zod.number().optional(),
   "monthlyEarnings": zod.number().optional(),
-  "isVerified": zod.boolean().optional()
+  "isVerified": zod.boolean().optional(),
+  "socialAccounts": zod.array(zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})).optional()
 }).and(zod.object({
   "portfolio": zod.array(zod.string()).optional(),
   "previousCollaborations": zod.array(zod.object({
@@ -173,7 +201,21 @@ export const UpdateInfluencerBody = zod.object({
   "languages": zod.array(zod.string()).optional(),
   "avatarUrl": zod.string().optional(),
   "coverUrl": zod.string().optional(),
-  "availability": zod.string().optional()
+  "availability": zod.string().optional(),
+  "socialAccounts": zod.array(zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})).optional()
 })
 
 export const UpdateInfluencerResponse = zod.object({
@@ -193,7 +235,143 @@ export const UpdateInfluencerResponse = zod.object({
   "coverUrl": zod.string().nullish(),
   "profileCompletion": zod.number().optional(),
   "monthlyEarnings": zod.number().optional(),
-  "isVerified": zod.boolean().optional()
+  "isVerified": zod.boolean().optional(),
+  "socialAccounts": zod.array(zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})).optional()
+})
+
+
+/**
+ * @summary List creator social accounts
+ */
+export const ListSocialAccountsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListSocialAccountsResponseItem = zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListSocialAccountsResponse = zod.array(ListSocialAccountsResponseItem)
+
+
+/**
+ * @summary Add social account for creator
+ */
+export const AddSocialAccountParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AddSocialAccountBody = zod.object({
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url'])
+})
+
+export const AddSocialAccountResponse = zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Update social account for creator
+ */
+export const UpdateSocialAccountParams = zod.object({
+  "id": zod.coerce.number(),
+  "accountId": zod.coerce.string()
+})
+
+export const UpdateSocialAccountBody = zod.object({
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url'])
+})
+
+export const UpdateSocialAccountResponse = zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete social account for creator
+ */
+export const DeleteSocialAccountParams = zod.object({
+  "id": zod.coerce.number(),
+  "accountId": zod.coerce.string()
+})
+
+export const DeleteSocialAccountResponse = zod.object({
+  "success": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Verify social account profile for creator
+ */
+export const VerifySocialAccountParams = zod.object({
+  "id": zod.coerce.number(),
+  "accountId": zod.coerce.string()
+})
+
+export const VerifySocialAccountResponse = zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
 })
 
 
@@ -618,7 +796,21 @@ export const GetBrandDashboardResponse = zod.object({
   "coverUrl": zod.string().nullish(),
   "profileCompletion": zod.number().optional(),
   "monthlyEarnings": zod.number().optional(),
-  "isVerified": zod.boolean().optional()
+  "isVerified": zod.boolean().optional(),
+  "socialAccounts": zod.array(zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})).optional()
 }))
 })
 
@@ -750,7 +942,21 @@ export const GetInfluencerMatchesResponseItem = zod.object({
   "coverUrl": zod.string().nullish(),
   "profileCompletion": zod.number().optional(),
   "monthlyEarnings": zod.number().optional(),
-  "isVerified": zod.boolean().optional()
+  "isVerified": zod.boolean().optional(),
+  "socialAccounts": zod.array(zod.object({
+  "id": zod.string(),
+  "creatorId": zod.number(),
+  "platform": zod.string(),
+  "username": zod.string().optional(),
+  "profileUrl": zod.string().optional(),
+  "inputType": zod.enum(['username', 'url']),
+  "status": zod.enum(['UNVERIFIED', 'VERIFYING', 'VERIFIED', 'FAILED']),
+  "verificationType": zod.enum(['PROFILE_EXISTS', 'OWNER_VERIFIED', 'OAUTH_CONNECTED']).optional(),
+  "verifiedAt": zod.string().optional(),
+  "errorMessage": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})).optional()
 }),
   "matchScore": zod.number(),
   "matchReasons": zod.array(zod.string())
