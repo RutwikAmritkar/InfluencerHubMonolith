@@ -170,13 +170,33 @@ export default function Login() {
   };
 
   const onLoginSubmit = (values: z.infer<typeof loginSchema>) => {
+    // Attempt real API login. On any error (e.g. no backend on static hosts),
+    // fall through to demo mode so the app always works.
     loginMutation.mutate(
       { data: values as any },
       {
         onSuccess: (data) => {
-          setUser(data.user);
-          queryClient.setQueryData(getGetMeQueryKey(), data);
-          toast.success("Logged in successfully");
+          try {
+            if (data?.user) {
+              setUser(data.user);
+              queryClient.setQueryData(getGetMeQueryKey(), data);
+              toast.success("Logged in successfully");
+              setLocation("/dashboard");
+              return;
+            }
+          } catch (_e) {}
+          // Fallback: treat as demo mode if response is malformed
+          const isBrand = values.email.toLowerCase().includes("brand") || values.email.toLowerCase().includes("nova");
+          const mockUser = {
+            id: 1,
+            email: values.email,
+            role: (isBrand ? "brand" : "influencer") as "brand" | "influencer",
+            name: isBrand ? "NovaTech Brand" : "Maya Chen",
+            avatarUrl: isBrand ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
+            profileId: 1,
+          };
+          setUser(mockUser);
+          toast.success("Logged in (Demo Mode)");
           setLocation("/dashboard");
         },
         onError: () => {
@@ -217,10 +237,31 @@ export default function Login() {
       { data: values as any },
       {
         onSuccess: (data) => {
-          setUser(data.user);
-          queryClient.setQueryData(getGetMeQueryKey(), data);
-          toast.success("Account created successfully");
-          if (data.user.role === "influencer") {
+          try {
+            if (data?.user) {
+              setUser(data.user);
+              queryClient.setQueryData(getGetMeQueryKey(), data);
+              toast.success("Account created successfully");
+              if (data.user.role === "influencer") {
+                setLocation("/onboarding");
+              } else {
+                setLocation("/dashboard");
+              }
+              return;
+            }
+          } catch (_e) {}
+          // Fallback demo mode if response is malformed
+          const mockUser = {
+            id: 1,
+            email: values.email,
+            role: values.role,
+            name: values.name,
+            avatarUrl: values.role === "brand" ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
+            profileId: 1,
+          };
+          setUser(mockUser);
+          toast.success("Account created (Demo Mode)");
+          if (values.role === "influencer") {
             setLocation("/onboarding");
           } else {
             setLocation("/dashboard");

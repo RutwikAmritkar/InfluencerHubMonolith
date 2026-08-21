@@ -39,6 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: meData, isLoading: meLoading, isError } = useGetMe({
     query: {
       retry: false,
+      // Don't throw on error — fail silently when backend is unavailable
+      throwOnError: false,
     } as any
   });
 
@@ -46,16 +48,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!meLoading) {
-      if (meData?.user) {
-        setUser(meData.user);
-      } else if (isError) {
-        try {
+      try {
+        if (meData?.user) {
+          setUser(meData.user);
+        } else if (isError) {
+          // Backend unreachable — keep localStorage session if it exists
           if (!localStorage.getItem(STORAGE_KEY)) {
             setUserState(null);
           }
-        } catch (_err) {
-          setUserState(null);
         }
+      } catch (_err) {
+        // Fail silently — keep existing user state
       }
       setIsLoading(false);
     }
