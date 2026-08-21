@@ -42,12 +42,7 @@ export default defineConfig({
         'src',
         'api-client-react',
       ),
-      '@assets': path.resolve(
-        import.meta.dirname,
-        '..',
-        '..',
-        'attached_assets',
-      ),
+      '@assets': path.resolve(import.meta.dirname, 'src', 'assets'),
     },
     dedupe: ['react', 'react-dom'],
   },
