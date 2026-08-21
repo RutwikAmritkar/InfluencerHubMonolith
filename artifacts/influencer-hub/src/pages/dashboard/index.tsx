@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import BrandDashboard from "./brand";
+import InfluencerDashboard from "./influencer";
 
 export default function DashboardRouter() {
   const { user } = useAuth();
@@ -9,10 +11,14 @@ export default function DashboardRouter() {
   useEffect(() => {
     if (user?.role === "brand") {
       setLocation("/dashboard/brand");
-    } else if (user?.role === "influencer") {
+    } else {
       setLocation("/dashboard/influencer");
     }
   }, [user, setLocation]);
 
-  return null;
+  if (user?.role === "brand") {
+    return <BrandDashboard />;
+  }
+
+  return <InfluencerDashboard />;
 }

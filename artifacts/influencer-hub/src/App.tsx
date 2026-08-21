@@ -119,31 +119,31 @@ function Router() {
       </Route>
 
       {/* Protected App Pages */}
-      <Route path="/dashboard">
-        <ProtectedRoute component={DashboardRouter} />
-      </Route>
       <Route path="/dashboard/brand">
         <ProtectedRoute component={BrandDashboard} />
       </Route>
       <Route path="/dashboard/influencer">
         <ProtectedRoute component={InfluencerDashboard} />
       </Route>
-      
-      <Route path="/influencers">
-        <ProtectedRoute component={Influencers} />
+      <Route path="/dashboard">
+        <ProtectedRoute component={DashboardRouter} />
       </Route>
+      
       <Route path="/influencers/:id">
         {params => <ProtectedRoute component={InfluencerDetail} params={params} />}
       </Route>
-
-      <Route path="/campaigns">
-        <ProtectedRoute component={Campaigns} />
+      <Route path="/influencers">
+        <ProtectedRoute component={Influencers} />
       </Route>
+
       <Route path="/campaigns/create">
         <ProtectedRoute component={CampaignCreate} />
       </Route>
       <Route path="/campaigns/:id">
         {params => <ProtectedRoute component={CampaignDetail} params={params} />}
+      </Route>
+      <Route path="/campaigns">
+        <ProtectedRoute component={Campaigns} />
       </Route>
 
       <Route path="/messages">
