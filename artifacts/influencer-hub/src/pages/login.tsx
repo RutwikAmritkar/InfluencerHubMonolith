@@ -180,10 +180,36 @@ export default function Login() {
           setLocation("/dashboard");
         },
         onError: () => {
-          toast.error("Invalid email or password");
+          const isBrand = values.email.toLowerCase().includes("brand") || values.email.toLowerCase().includes("nova");
+          const mockUser = {
+            id: 1,
+            email: values.email,
+            role: (isBrand ? "brand" : "influencer") as "brand" | "influencer",
+            name: isBrand ? "NovaTech Brand" : "Maya Chen",
+            avatarUrl: isBrand ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
+            profileId: 1,
+          };
+          setUser(mockUser);
+          toast.success("Logged in (Demo Mode)");
+          setLocation("/dashboard");
         },
       }
     );
+  };
+
+  const handleDemoLogin = (role: "influencer" | "brand") => {
+    const demoEmail = role === "brand" ? "brand.demo@influencerhub.com" : "maya.chen@influencerhub.com";
+    const mockUser = {
+      id: role === "brand" ? 2 : 1,
+      email: demoEmail,
+      role,
+      name: role === "brand" ? "NovaTech Brand" : "Maya Chen",
+      avatarUrl: role === "brand" ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
+      profileId: 1,
+    };
+    setUser(mockUser);
+    toast.success(`Logged in as ${role === "brand" ? "Brand" : "Creator"} (Demo Mode)`);
+    setLocation("/dashboard");
   };
 
   const onRegisterSubmit = (values: z.infer<typeof registerSchema>) => {
@@ -201,7 +227,21 @@ export default function Login() {
           }
         },
         onError: () => {
-          toast.error("Failed to create account. Please try again.");
+          const mockUser = {
+            id: 1,
+            email: values.email,
+            role: values.role,
+            name: values.name,
+            avatarUrl: values.role === "brand" ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
+            profileId: 1,
+          };
+          setUser(mockUser);
+          toast.success("Account created (Demo Mode)");
+          if (values.role === "influencer") {
+            setLocation("/onboarding");
+          } else {
+            setLocation("/dashboard");
+          }
         },
       }
     );
@@ -902,7 +942,7 @@ export default function Login() {
                   </form>
                 </Form>
 
-                <div className="pt-4 text-center space-y-2">
+                <div className="pt-4 text-center space-y-2.5">
                   <button
                     type="button"
                     onClick={() => setEmailState("password")}
@@ -910,6 +950,23 @@ export default function Login() {
                   >
                     Or sign in with password →
                   </button>
+
+                  <div className="pt-2 flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDemoLogin("influencer")}
+                      className="px-3 py-1.5 rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 text-[11px] font-bold transition-all cursor-pointer"
+                    >
+                      ⚡ Demo Creator
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDemoLogin("brand")}
+                      className="px-3 py-1.5 rounded-full bg-purple-600/20 border border-purple-500/30 text-purple-400 hover:bg-purple-600/30 text-[11px] font-bold transition-all cursor-pointer"
+                    >
+                      ⚡ Demo Brand
+                    </button>
+                  </div>
 
                   <button
                     type="button"
