@@ -56,7 +56,7 @@ export default function CampaignCreate() {
     const isoDeadline = new Date(values.deadline).toISOString();
 
     createCampaign.mutate(
-      { data: { ...values, deadline: isoDeadline } },
+      { data: { ...values, deadline: isoDeadline } as any },
       {
         onSuccess: (data) => {
           toast.success("Campaign created successfully!");

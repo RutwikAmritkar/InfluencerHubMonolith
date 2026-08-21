@@ -19,6 +19,7 @@ import InfluencerDetail from '@/pages/influencers/detail';
 import Campaigns from '@/pages/campaigns/index';
 import CampaignCreate from '@/pages/campaigns/create';
 import CampaignDetail from '@/pages/campaigns/detail';
+import Applications from '@/pages/applications';
 import Messages from '@/pages/messages';
 import Analytics from '@/pages/analytics';
 import AiAssistant from '@/pages/ai-assistant';
@@ -215,6 +216,10 @@ function Router() {
       </Route>
       <Route path="/campaigns">
         <ProtectedRoute component={Campaigns} />
+      </Route>
+
+      <Route path="/applications">
+        <ProtectedRoute component={Applications} />
       </Route>
 
       <Route path="/messages">

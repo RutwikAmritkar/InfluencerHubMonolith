@@ -171,7 +171,7 @@ export default function Login() {
 
   const onLoginSubmit = (values: z.infer<typeof loginSchema>) => {
     loginMutation.mutate(
-      { data: values },
+      { data: values as any },
       {
         onSuccess: (data) => {
           setUser(data.user);
@@ -214,7 +214,7 @@ export default function Login() {
 
   const onRegisterSubmit = (values: z.infer<typeof registerSchema>) => {
     registerMutation.mutate(
-      { data: values },
+      { data: values as any },
       {
         onSuccess: (data) => {
           setUser(data.user);
