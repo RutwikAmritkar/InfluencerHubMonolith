@@ -17,6 +17,10 @@ import {
   ChevronDown,
   Compass,
   Search,
+  User,
+  Briefcase,
+  Bookmark,
+  Building2
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useListNotifications } from "@workspace/api-client-react";
@@ -33,115 +37,233 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { Badge } from "./ui/badge";
+import { toast } from "sonner";
 
-// Static Navigation Definitions (Outside Component to prevent re-creation)
-const OVERVIEW_LINKS = [
+// CREATOR NAVIGATION SPECIFICATION
+const CREATOR_OVERVIEW_LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/influencers", label: "Discover", icon: Compass },
-  { href: "/campaigns", label: "Campaigns", icon: Megaphone },
+  { href: "/opportunities", label: "Opportunities", icon: Compass },
+  { href: "/my-campaigns", label: "My Campaigns", icon: Megaphone },
   { href: "/applications", label: "Applications", icon: FileCheck },
   { href: "/messages", label: "Messages", icon: MessageSquare },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-const INTELLIGENCE_LINKS = [
+const CREATOR_INSIGHTS_LINKS = [
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/ai-assistant", label: "AI Assistant", icon: Sparkles },
 ];
 
-const ACCOUNT_LINKS = [
+const CREATOR_PROFILE_LINKS = [
+  { href: "/profile", label: "My Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-const BOTTOM_NAV_LINKS = [
-  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/influencers", label: "Discover", icon: Compass },
-  { href: "/campaigns", label: "Campaigns", icon: Megaphone },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
-  { href: "/settings", label: "Settings", icon: Settings },
+// BRAND ARCHITECTURE NAVIGATION SPECIFICATION
+const BRAND_GROUPS = [
+  {
+    header: "OVERVIEW",
+    links: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }]
+  },
+  {
+    header: "DISCOVER",
+    links: [
+      { href: "/find-creators", label: "Find Creators", icon: Search },
+      { href: "/saved-creators", label: "Shortlists", icon: Bookmark },
+    ]
+  },
+  {
+    header: "CAMPAIGNS",
+    links: [
+      { href: "/campaigns", label: "Campaigns", icon: Megaphone },
+    ]
+  },
+  {
+    header: "COMMUNICATION",
+    links: [
+      { href: "/messages", label: "Messages", icon: MessageSquare },
+    ]
+  },
+  {
+    header: "INSIGHTS",
+    links: [
+      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/ai-assistant", label: "AI Assistant", icon: Sparkles },
+    ]
+  },
+  {
+    header: "BRAND",
+    links: [
+      { href: "/brand-profile", label: "Brand Profile", icon: Building2 },
+      { href: "/settings", label: "Settings", icon: Settings },
+    ]
+  }
 ];
 
-// Memoized Sidebar Content Component
-const SidebarContent = memo(({ location, onItemClick }: { location: string; onItemClick?: () => void }) => (
-  <div className="flex flex-col h-full py-3.5 antialiased font-sans">
-    {/* OVERVIEW GROUP */}
-    <div className="px-4 mb-1.5">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500 font-mono">OVERVIEW</span>
-    </div>
-    <nav className="space-y-0.5 px-3">
-      {OVERVIEW_LINKS.map((link) => {
-        const isActive = location === link.href || (link.href === "/dashboard" && (location === "/dashboard/brand" || location === "/dashboard/influencer"));
-        return (
-          <Link key={link.href} href={link.href}>
-            <div
-              onClick={onItemClick}
-              className={cn(
-                "flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all cursor-pointer",
-                isActive
-                  ? "bg-blue-50/90 dark:bg-blue-950/50 text-[#315BEF] dark:text-blue-400 font-semibold shadow-2xs border-l-3 border-[#315BEF] pl-2.5"
-                  : "text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
-              )}
-            >
-              <link.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-[#315BEF] dark:text-blue-400" : "text-slate-400 dark:text-slate-500")} />
-              <span>{link.label}</span>
-            </div>
-          </Link>
-        );
-      })}
-    </nav>
+// Memoized Role-Aware Sidebar Content Component
+const SidebarContent = memo(({ location, role, onItemClick }: { location: string; role?: string; onItemClick?: () => void }) => {
+  const isCreator = role === "influencer";
 
-    {/* INTELLIGENCE GROUP */}
-    <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 px-4 mb-1.5">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500 font-mono">INTELLIGENCE</span>
-    </div>
-    <nav className="space-y-0.5 px-3">
-      {INTELLIGENCE_LINKS.map((link) => {
-        const isActive = location === link.href;
-        return (
-          <Link key={link.href} href={link.href}>
-            <div
-              onClick={onItemClick}
-              className={cn(
-                "flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all cursor-pointer",
-                isActive
-                  ? "bg-blue-50/90 dark:bg-blue-950/50 text-[#315BEF] dark:text-blue-400 font-semibold shadow-2xs border-l-3 border-[#315BEF] pl-2.5"
-                  : "text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
-              )}
-            >
-              <link.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-[#315BEF] dark:text-blue-400" : "text-slate-400 dark:text-slate-500")} />
-              <span>{link.label}</span>
+  if (!isCreator) {
+    return (
+      <div className="flex flex-col h-full py-3.5 antialiased font-sans space-y-4">
+        {BRAND_GROUPS.map((group) => (
+          <div key={group.header}>
+            <div className="px-4 mb-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500 font-mono">
+                {group.header}
+              </span>
             </div>
-          </Link>
-        );
-      })}
-    </nav>
+            <nav className="space-y-0.5 px-3">
+              {group.links.map((link) => {
+                const isActive =
+                  location === link.href ||
+                  (link.href === "/dashboard" &&
+                    (location === "/dashboard/brand" || location === "/dashboard/influencer")) ||
+                  (link.href === "/find-creators" && location === "/influencers");
 
-    {/* ACCOUNT GROUP */}
-    <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 px-4 mb-1.5">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500 font-mono">ACCOUNT</span>
+                return (
+                  <Link key={link.href} href={link.href}>
+                    <div
+                      onClick={onItemClick}
+                      className={cn(
+                        "flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all cursor-pointer",
+                        isActive
+                          ? "bg-[#EEF3FF] dark:bg-blue-950/50 text-[#315BEF] dark:text-blue-400 font-bold shadow-2xs border-l-4 border-l-[#315BEF] pl-2.5"
+                          : "text-[#64748B] dark:text-slate-400 font-medium hover:text-[#0F172A] dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/80"
+                      )}
+                    >
+                      <link.icon
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          isActive ? "text-[#315CF5] dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
+                        )}
+                      />
+                      <span>{link.label}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full py-3.5 antialiased font-sans space-y-4">
+      {/* OVERVIEW GROUP */}
+      <div>
+        <div className="px-4 mb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500 font-mono">
+            OVERVIEW
+          </span>
+        </div>
+        <nav className="space-y-0.5 px-3">
+          {CREATOR_OVERVIEW_LINKS.map((link) => {
+            const isActive =
+              location === link.href ||
+              (link.href === "/dashboard" &&
+                (location === "/dashboard/brand" || location === "/dashboard/influencer")) ||
+              (link.href === "/opportunities" && location === "/campaigns");
+
+            return (
+              <Link key={link.href} href={link.href}>
+                <div
+                  onClick={onItemClick}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all cursor-pointer",
+                    isActive
+                      ? "bg-[#F2F5FF] dark:bg-blue-950/50 text-[#315CF5] dark:text-blue-400 font-bold shadow-2xs border-l-4 border-l-[#315CF5] pl-2.5"
+                      : "text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
+                  )}
+                >
+                  <link.icon
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      isActive ? "text-[#315CF5] dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
+                    )}
+                  />
+                  <span>{link.label}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* INSIGHTS GROUP */}
+      <div>
+        <div className="px-4 mb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500 font-mono">
+            INSIGHTS
+          </span>
+        </div>
+        <nav className="space-y-0.5 px-3">
+          {CREATOR_INSIGHTS_LINKS.map((link) => {
+            const isActive = location === link.href;
+            return (
+              <Link key={link.href} href={link.href}>
+                <div
+                  onClick={onItemClick}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all cursor-pointer",
+                    isActive
+                      ? "bg-[#F2F5FF] dark:bg-blue-950/50 text-[#315CF5] dark:text-blue-400 font-bold shadow-2xs border-l-4 border-l-[#315CF5] pl-2.5"
+                      : "text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
+                  )}
+                >
+                  <link.icon
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      isActive ? "text-[#315CF5] dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
+                    )}
+                  />
+                  <span>{link.label}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* PROFILE GROUP */}
+      <div>
+        <div className="px-4 mb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500 font-mono">
+            PROFILE
+          </span>
+        </div>
+        <nav className="space-y-0.5 px-3">
+          {CREATOR_PROFILE_LINKS.map((link) => {
+            const isActive = location === link.href;
+            return (
+              <Link key={link.href} href={link.href}>
+                <div
+                  onClick={onItemClick}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all cursor-pointer",
+                    isActive
+                      ? "bg-[#F2F5FF] dark:bg-blue-950/50 text-[#315CF5] dark:text-blue-400 font-bold shadow-2xs border-l-4 border-l-[#315CF5] pl-2.5"
+                      : "text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
+                  )}
+                >
+                  <link.icon
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      isActive ? "text-[#315CF5] dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
+                    )}
+                  />
+                  <span>{link.label}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
     </div>
-    <nav className="space-y-0.5 px-3">
-      {ACCOUNT_LINKS.map((link) => {
-        const isActive = location === link.href;
-        return (
-          <Link key={link.href} href={link.href}>
-            <div
-              onClick={onItemClick}
-              className={cn(
-                "flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all cursor-pointer",
-                isActive
-                  ? "bg-blue-50/90 dark:bg-blue-950/50 text-[#315BEF] dark:text-blue-400 font-semibold shadow-2xs border-l-3 border-[#315BEF] pl-2.5"
-                  : "text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
-              )}
-            >
-              <link.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-[#315BEF] dark:text-blue-400" : "text-slate-400 dark:text-slate-500")} />
-              <span>{link.label}</span>
-            </div>
-          </Link>
-        );
-      })}
-    </nav>
-  </div>
-));
+  );
+});
 SidebarContent.displayName = "SidebarContent";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -159,11 +281,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return notifications?.filter(n => !n.isRead).length || 0;
   }, [notifications]);
 
+  const isCreator = user?.role === "influencer";
+
+  const bottomNavLinks = useMemo(() => {
+    if (isCreator) {
+      return [
+        { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+        { href: "/opportunities", label: "Opportunities", icon: Compass },
+        { href: "/my-campaigns", label: "My Campaigns", icon: Megaphone },
+        { href: "/applications", label: "Applications", icon: FileCheck },
+        { href: "/messages", label: "Messages", icon: MessageSquare },
+      ];
+    }
+    return [
+      { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+      { href: "/find-creators", label: "Find Creators", icon: Search },
+      { href: "/campaigns", label: "Campaigns", icon: Megaphone },
+      { href: "/messages", label: "Messages", icon: MessageSquare },
+      { href: "/brand-profile", label: "Profile", icon: Building2 },
+    ];
+  }, [isCreator]);
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white pb-16 md:pb-0 transition-colors antialiased">
+    <div className="min-h-screen bg-[#F6F8FC] dark:bg-[#0B0F19] text-[#0F172A] dark:text-slate-100 flex flex-col font-sans selection:bg-[#315BEF] selection:text-white pb-16 md:pb-0 transition-colors antialiased">
       
       {/* ─── 1. TOP NAVIGATION BAR ────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#11172A]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+      <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#11172A] border-b border-[#E2E8F0] dark:border-slate-800/80 shadow-xs">
         <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           
           {/* Left: Brand Logo + Mobile Drawer Trigger */}
@@ -171,21 +314,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="md:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-600 dark:text-slate-400 -ml-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-[#64748B] dark:text-slate-400 -ml-1">
                     <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-72 bg-white dark:bg-[#11172A] border-r border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center p-5 border-b border-slate-100 dark:border-slate-800">
+                <SheetContent side="left" className="p-0 w-72 bg-white dark:bg-[#11172A] border-r border-[#E2E8F0] dark:border-slate-800">
+                  <div className="flex items-center p-5 border-b border-[#E2E8F0] dark:border-slate-800">
                     <div className="h-8 w-8 bg-[#315BEF] rounded-xl flex items-center justify-center text-white font-black text-base shadow-md mr-2.5">
                       I
                     </div>
-                    <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    <span className="text-lg font-bold tracking-tight text-[#0F172A] dark:text-slate-100">
                       Influencer<span className="text-[#315BEF] dark:text-blue-400">Hub</span>
                     </span>
                   </div>
                   <ScrollArea className="h-[calc(100vh-70px)]">
-                    <SidebarContent location={location} onItemClick={() => setIsMobileMenuOpen(false)} />
+                    <SidebarContent location={location} role={user?.role} onItemClick={() => setIsMobileMenuOpen(false)} />
                   </ScrollArea>
                 </SheetContent>
               </Sheet>
@@ -196,7 +339,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="h-8 w-8 bg-gradient-to-br from-[#315BEF] via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-black text-base shadow-md shadow-blue-600/20 group-hover:scale-105 transition-transform duration-300">
                   I
                 </div>
-                <span className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                <span className="text-base sm:text-lg font-bold tracking-tight text-[#0F172A] dark:text-slate-100">
                   Influencer<span className="text-[#315BEF] dark:text-blue-400">Hub</span>
                 </span>
               </div>
@@ -205,11 +348,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Center/Left: Compact Search Bar */}
           <div className="hidden sm:flex items-center max-w-sm w-full relative mx-4">
-            <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-3" />
+            <Search className="w-3.5 h-3.5 text-[#94A3B8] dark:text-slate-500 absolute left-3" />
             <input
               type="text"
               placeholder="Search creators, campaigns, or metrics..."
-              className="w-full h-8 pl-8 pr-3 bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 focus:border-[#315BEF] dark:focus:border-blue-400 rounded-full text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-all"
+              className="w-full h-8 pl-8 pr-3 bg-[#F6F8FC] dark:bg-slate-800/80 hover:bg-[#EEF3FF] dark:hover:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 focus:border-[#315BEF] dark:focus:border-blue-400 rounded-full text-xs text-[#0F172A] dark:text-slate-100 placeholder:text-[#94A3B8] outline-none transition-all"
             />
           </div>
 
@@ -217,7 +360,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2 sm:gap-2.5">
             <button
               type="button"
-              className="relative p-1.5 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="relative p-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Notifications"
             >
               <Bell className="h-4 w-4" />
@@ -228,48 +371,62 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
             <button
               type="button"
-              className="p-1.5 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer hidden sm:block"
+              className="p-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer hidden sm:block"
               title="Help & Support"
             >
               <HelpCircle className="h-4 w-4" />
             </button>
 
-            <div className="h-3.5 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden sm:block" />
+            <div className="h-3.5 w-px bg-[#E2E8F0] dark:bg-slate-800 mx-0.5 hidden sm:block" />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-2 p-1 sm:p-1 sm:pl-2 rounded-full border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-[#11172A] hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-xs"
+                  className="flex items-center gap-2 p-1 sm:p-1 sm:pl-2 rounded-full border border-[#E2E8F0] dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-[#11172A] hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-xs"
                 >
-                  <Avatar className="h-6.5 w-6.5 border border-slate-200 dark:border-slate-700">
+                  <Avatar className="h-6.5 w-6.5 border border-[#E2E8F0] dark:border-slate-700">
                     <AvatarImage src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop"} />
-                    <AvatarFallback className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs">
+                    <AvatarFallback className="bg-blue-100 dark:bg-blue-950 text-[#315BEF] dark:text-blue-300 font-bold text-xs">
                       {user?.name?.charAt(0) || "D"}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-[12px] font-semibold text-slate-900 dark:text-slate-100 max-w-[80px] sm:max-w-[100px] truncate hidden sm:inline-block">
+                  <span className="text-xs font-bold text-[#0F172A] dark:text-slate-200 max-w-[80px] sm:max-w-[110px] truncate hidden xs:inline">
                     {user?.name || "Demo User"}
                   </span>
-                  <Badge variant="secondary" className="text-[9px] uppercase font-mono font-bold bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200/60 dark:border-blue-800/60 px-1.5 py-0 hidden sm:inline-flex">
-                    {user?.role || "Brand"}
+                  <Badge variant="secondary" className="text-[9px] font-extrabold uppercase px-1.5 py-0 h-4 bg-blue-50 dark:bg-blue-950 text-[#315BEF] dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 shrink-0 hidden sm:inline-flex">
+                    {user?.role === "influencer" ? "CREATOR" : "BRAND"}
                   </Badge>
-                  <ChevronDown className="h-3 w-3 text-slate-400 dark:text-slate-500 mr-0.5 hidden sm:block" />
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0 mr-1" />
                 </button>
               </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-[#11172A] text-slate-900 dark:text-slate-100">
-                <DropdownMenuLabel className="px-3 py-2">
-                  <div className="flex flex-col space-y-0.5">
-                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{user?.name || "Demo User"}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal truncate">{user?.email || "demo@influencerhub.com"}</p>
+              <DropdownMenuContent align="end" className="w-52 rounded-2xl p-1.5 shadow-xl bg-white dark:bg-[#11172A] border-[#E2E8F0] dark:border-slate-800">
+                <DropdownMenuLabel className="font-normal text-xs p-2">
+                  <div className="flex flex-col space-y-1">
+                    <p className="font-bold text-[#0F172A] dark:text-slate-100">{user?.name}</p>
+                    <p className="text-[11px] text-[#64748B] dark:text-slate-400 truncate">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="my-1 bg-slate-100 dark:bg-slate-800" />
+                <DropdownMenuSeparator className="bg-[#E2E8F0] dark:bg-slate-800" />
+                {isCreator ? (
+                  <Link href="/profile">
+                    <DropdownMenuItem className="rounded-xl text-xs font-medium cursor-pointer py-2 px-3">
+                      <User className="mr-2 h-4 w-4 text-slate-400" />
+                      My Profile
+                    </DropdownMenuItem>
+                  </Link>
+                ) : (
+                  <Link href="/brand-profile">
+                    <DropdownMenuItem className="rounded-xl text-xs font-medium cursor-pointer py-2 px-3">
+                      <Building2 className="mr-2 h-4 w-4 text-slate-400" />
+                      Brand Profile
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <Link href="/settings">
-                  <DropdownMenuItem className="rounded-xl text-xs font-medium cursor-pointer py-2 px-3 focus:bg-slate-100 dark:focus:bg-slate-800">
+                  <DropdownMenuItem className="rounded-xl text-xs font-medium cursor-pointer py-2 px-3">
                     <Settings className="mr-2 h-4 w-4 text-slate-400" />
-                    Profile & Settings
+                    Settings
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem onClick={logout} className="rounded-xl text-xs font-medium text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer py-2 px-3">
@@ -286,9 +443,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* ─── 2. MAIN LAYOUT WITH COMPACT SIDEBAR & WORKSPACE CONTENT ────────────── */}
       <div className="flex-1 flex w-full">
         
-        {/* Compact Desktop Sidebar */}
-        <aside className="hidden md:block w-56 shrink-0 border-r border-slate-200/80 dark:border-slate-800/80 bg-white/60 dark:bg-[#11172A]/60 min-h-[calc(100vh-3.5rem)]">
-          <SidebarContent location={location} />
+        {/* SIDEBAR PANEL */}
+        <aside className="w-60 border-r border-[#E2E8F0] dark:border-slate-800/80 bg-[#F1F4F9] dark:bg-[#11172A]/60 shrink-0 hidden md:block overflow-y-auto">
+          <SidebarContent location={location} role={user?.role} />
         </aside>
 
         {/* Fluid Workspace Main Viewport */}
@@ -299,13 +456,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ─── 3. MOBILE BOTTOM NAVIGATION BAR ───────────────────────────────── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#11172A]/95 border-t border-slate-200/90 dark:border-slate-800/90 backdrop-blur-md px-3 py-1.5 flex items-center justify-around shadow-lg">
-        {BOTTOM_NAV_LINKS.map((link) => {
-          const isActive = location === link.href || (link.href === "/dashboard" && (location === "/dashboard/brand" || location === "/dashboard/influencer"));
+        {bottomNavLinks.map((link) => {
+          const isActive =
+            location === link.href ||
+            (link.href === "/dashboard" &&
+              (location === "/dashboard/brand" || location === "/dashboard/influencer")) ||
+            (link.href === "/find-creators" && location === "/influencers");
+
           return (
             <Link key={link.href} href={link.href}>
-              <div className="flex flex-col items-center gap-0.5 cursor-pointer py-1 px-2.5">
-                <link.icon className={cn("h-4.5 w-4.5 transition-transform", isActive ? "text-[#315BEF] dark:text-blue-400 scale-110" : "text-slate-400 dark:text-slate-500")} />
-                <span className={cn("text-[10px] tracking-tight", isActive ? "text-[#315BEF] dark:text-blue-400 font-semibold" : "text-slate-500 dark:text-slate-400 font-medium")}>
+              <div className="flex flex-col items-center gap-0.5 py-1 px-2 cursor-pointer">
+                <link.icon className={cn("h-4 w-4", isActive ? "text-[#315CF5] dark:text-blue-400 font-bold" : "text-slate-400 dark:text-slate-500")} />
+                <span className={cn("text-[10px]", isActive ? "font-bold text-[#315CF5] dark:text-blue-400" : "text-slate-500 dark:text-slate-400")}>
                   {link.label}
                 </span>
               </div>

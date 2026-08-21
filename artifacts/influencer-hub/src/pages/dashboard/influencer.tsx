@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SocialPresenceSection } from "@/components/social-presence";
 import {
   AreaChart,
   Area,
@@ -147,44 +148,96 @@ export default function InfluencerDashboard() {
       {/* ─── 2. ROW 1: SPLIT CREATOR PROFILE & PROFILE COMPLETION ──────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-5">
         
-        {/* Left Card: CREATOR PROFILE */}
-        <div className="lg:col-span-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-white dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-[#11172A] border border-blue-100/80 dark:border-blue-900/60 p-5 shadow-xs flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
-              <Avatar className="h-13 w-13 border-2 border-white dark:border-slate-800 shadow-md ring-2 ring-blue-500/20">
+        {/* Left Card: CREATOR PROFILE IDENTITY TILE */}
+        <div className="lg:col-span-4 rounded-2xl bg-white dark:bg-[#0D1220] border border-slate-200/90 dark:border-slate-800/90 p-5 sm:p-6 shadow-xs flex flex-col justify-between space-y-5 relative overflow-hidden">
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute -top-16 -right-16 w-36 h-36 rounded-full bg-blue-500/5 dark:bg-blue-500/10 blur-2xl pointer-events-none" />
+
+          {/* Header Row: Avatar + Name + Handles + Verified Badge */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-13 w-13 sm:h-14 sm:w-14 border-2 border-white dark:border-slate-800 shadow-md shadow-blue-500/10 ring-2 ring-blue-500/20 shrink-0">
                 <AvatarImage src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop"} />
-                <AvatarFallback className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-extrabold text-sm">
-                  {user?.name?.charAt(0) || "T"}
+                <AvatarFallback className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-extrabold text-base">
+                  {user?.name?.charAt(0) || "C"}
                 </AvatarFallback>
               </Avatar>
 
-              <div>
+              <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-base font-bold text-[#11182F] dark:text-slate-100">{user?.name || "Test"}</h3>
-                  <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 fill-blue-600/20 dark:fill-blue-400/20" />
+                  <h3 className="text-lg sm:text-xl font-extrabold text-[#11182F] dark:text-slate-100 tracking-tight leading-none">
+                    {user?.name || "Creator"}
+                  </h3>
+                  <CheckCircle2 className="w-4.5 h-4.5 text-[#315BEF] dark:text-blue-400 fill-blue-600/20 dark:fill-blue-400/20 shrink-0" aria-label="Verified Creator" />
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Lifestyle & Fashion Creator • Verified Roster</p>
+                <span className="text-xs font-mono font-semibold text-[#315BEF] dark:text-blue-400 block">
+                  @alexrivera
+                </span>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-normal">
+                  Lifestyle & Fashion Creator · <span className="text-slate-700 dark:text-slate-300 font-semibold">Verified Roster</span>
+                </p>
               </div>
             </div>
 
-            <Badge variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/90 dark:border-emerald-800/80 text-[11px] font-bold px-2.5 py-1 rounded-full shadow-xs">
+            <Badge variant="secondary" className="self-start sm:self-center bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full shadow-2xs shrink-0">
               ✓ Profile Verified
             </Badge>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 pt-2.5 border-t border-blue-100/60 dark:border-slate-800">
-            <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/60 border border-blue-100/60 dark:border-slate-700/60 text-center shadow-2xs">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">Instagram</span>
-              <span className="text-sm font-black text-[#11182F] dark:text-slate-100 block mt-0.5">{followersCount}</span>
+          {/* Social Platform & Engagement Summary Cards Grid (Matching Social Presence system) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+            
+            {/* Instagram Summary Card */}
+            <div className="group relative rounded-xl p-3 bg-[#F9FAFD] dark:bg-[#11172A] border border-[#E3E8F2] dark:border-slate-800/90 hover:border-pink-500/40 dark:hover:border-pink-500/50 hover:bg-[#F2F5FF] dark:hover:bg-slate-800/60 hover:-translate-y-0.5 hover:shadow-[0_0_20px_-4px_rgba(219,39,119,0.25)] transition-all duration-300 cursor-pointer shadow-2xs space-y-2 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                    <Instagram className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">INSTAGRAM</span>
+                </div>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-pink-50 dark:bg-pink-950/80 text-pink-700 dark:text-pink-300 border border-pink-200/80 dark:border-pink-800/80">● Connected</span>
+              </div>
+              <div>
+                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">{followersCount}</span>
+                <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">Followers</span>
+              </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/60 border border-blue-100/60 dark:border-slate-700/60 text-center shadow-2xs">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">TikTok</span>
-              <span className="text-sm font-black text-[#11182F] dark:text-slate-100 block mt-0.5">86K</span>
+
+            {/* TikTok Summary Card */}
+            <div className="group relative rounded-xl p-3 bg-[#F9FAFD] dark:bg-[#11172A] border border-[#E3E8F2] dark:border-slate-800/90 hover:border-cyan-400/40 dark:hover:border-cyan-400/50 hover:bg-[#F2F5FF] dark:hover:bg-slate-800/60 hover:-translate-y-0.5 hover:shadow-[0_0_20px_-4px_rgba(6,182,212,0.25)] transition-all duration-300 cursor-pointer shadow-2xs space-y-2 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-slate-950 dark:bg-slate-900 border border-slate-800 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-current" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                  </div>
+                  <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">TIKTOK</span>
+                </div>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-200/80 dark:border-cyan-800/80">● Connected</span>
+              </div>
+              <div>
+                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">86K</span>
+                <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">Followers</span>
+              </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/60 border border-blue-100/60 dark:border-slate-700/60 text-center shadow-2xs">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">Avg Eng.</span>
-              <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 block mt-0.5">4.8%</span>
+
+            {/* Engagement Summary Card */}
+            <div className="group relative rounded-xl p-3 bg-[#F9FAFD] dark:bg-[#11172A] border border-[#E3E8F2] dark:border-slate-800/90 hover:border-blue-500/40 dark:hover:border-blue-500/50 hover:bg-[#F2F5FF] dark:hover:bg-slate-800/60 hover:-translate-y-0.5 hover:shadow-[0_0_20px_-4px_rgba(49,91,239,0.25)] transition-all duration-300 cursor-pointer shadow-2xs space-y-2 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/80 text-[#315CF5] dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 flex items-center justify-center shrink-0 shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">AVG. ENG.</span>
+                </div>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80">● Strong</span>
+              </div>
+              <div>
+                <span className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 block font-mono leading-none">4.8%</span>
+                <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">Engagement rate</span>
+              </div>
             </div>
+
           </div>
         </div>
 
@@ -356,86 +409,9 @@ export default function InfluencerDashboard() {
 
       </div>
 
-      {/* ─── 5. ROW 4: SPLIT YOUR SOCIAL PRESENCE & ✨ AI ASSISTANT ─────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-5">
-        
-        {/* Left Card: Your Social Presence */}
-        <div className="lg:col-span-4 rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
-            <div>
-              <h3 className="text-base font-bold text-[#11182F] dark:text-slate-100">Your Social Presence</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Connected handles & verified stats.</p>
-            </div>
-            
-            <Link href="/settings">
-              <button
-                type="button"
-                className="text-[11px] font-bold text-[#315BEF] dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 inline-flex items-center gap-1 cursor-pointer transition-colors group"
-              >
-                <span>Manage social accounts</span>
-                <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-            <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Instagram className="w-4 h-4 text-pink-600 dark:text-pink-400" />
-                <Badge className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[9px] font-bold">✓ Verified</Badge>
-              </div>
-              <div>
-                <span className="font-bold text-xs text-[#11182F] dark:text-slate-100 block">IG {followersCount}</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Instagram handle</span>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Video className="w-4 h-4 text-slate-900 dark:text-slate-100" />
-                <Badge className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[9px] font-bold">✓ Verified</Badge>
-              </div>
-              <div>
-                <span className="font-bold text-xs text-[#11182F] dark:text-slate-100 block">TikTok 86K</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">TikTok handle</span>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Youtube className="w-4 h-4 text-red-600 dark:text-red-400" />
-                <Badge className="bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-[9px] font-bold">✓ Connected</Badge>
-              </div>
-              <div>
-                <span className="font-bold text-xs text-[#11182F] dark:text-slate-100 block">YT 32K</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">YouTube channel</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Card: ✨ AI Assistant */}
-        <div className="lg:col-span-3 rounded-2xl bg-gradient-to-br from-[#315BEF] via-indigo-600 to-indigo-800 text-white p-5 shadow-md shadow-blue-600/15 flex flex-col justify-between space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-white/15 backdrop-blur-md flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200 font-mono">✨ AI Assistant</span>
-          </div>
-
-          <p className="text-xs sm:text-sm font-bold leading-snug">
-            3 campaigns match your audience & niche profile.
-          </p>
-
-          <div>
-            <Link href="/ai-assistant">
-              <Button className="h-8 px-4 rounded-xl bg-white text-[#11182F] hover:bg-slate-100 font-bold text-xs shadow-xs hover:-translate-y-0.5 transition-all cursor-pointer">
-                Ask AI →
-              </Button>
-            </Link>
-          </div>
-        </div>
-
+      {/* ─── 5. ROW 4: YOUR SOCIAL PRESENCE & ✨ AI ASSISTANT ─────────── */}
+      <div className="w-full">
+        <SocialPresenceSection />
       </div>
 
     </div>

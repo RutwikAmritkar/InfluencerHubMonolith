@@ -154,16 +154,16 @@ const BrandKPICard = memo(({ label, value, badgeText, icon: Icon, iconStyle }: {
   icon: any;
   iconStyle: string;
 }) => (
-  <div className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-4.5 shadow-xs hover:shadow-md transition-all h-[108px] flex flex-col justify-between">
+  <div className="rounded-[16px] bg-white dark:bg-[#11172A] border border-[#E2E8F0] dark:border-slate-800/90 p-4 sm:p-5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.09)] transition-all duration-200 h-[112px] flex flex-col justify-between">
     <div className="flex items-center justify-between">
-      <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">{label}</span>
+      <span className="text-[10px] font-bold text-[#94A3B8] dark:text-slate-500 uppercase tracking-wider font-mono">{label}</span>
       <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${iconStyle}`}>
         <Icon className="h-3.5 w-3.5" />
       </div>
     </div>
     <div className="flex items-baseline justify-between">
-      <span className="text-2xl sm:text-[1.65rem] font-black text-[#11182F] dark:text-slate-100">{value}</span>
-      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">{badgeText}</span>
+      <span className="text-2xl sm:text-[1.65rem] font-black text-[#0F172A] dark:text-slate-100">{value}</span>
+      <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/60 px-2 py-0.5 rounded-full">{badgeText}</span>
     </div>
   </div>
 ));
@@ -231,14 +231,14 @@ export default function BrandDashboard() {
       </div>
 
       {/* ─── 3. MAIN CAMPAIGN PERFORMANCE SECTION ───────────────────────── */}
-      <div className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-4.5 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div className="rounded-[16px] bg-white dark:bg-[#11172A] border border-[#E2E8F0] dark:border-slate-800/90 p-5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#E2E8F0] dark:border-slate-800 pb-3">
           <div>
-            <h3 className="text-sm sm:text-base font-bold text-[#11182F] dark:text-slate-100">Campaign Performance</h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Real-time aggregate reach, engagement rate, and ROI telemetry.</p>
+            <h3 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-slate-100">Campaign Performance</h3>
+            <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-0.5">Real-time aggregate reach, engagement rate, and ROI telemetry.</p>
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-full border border-slate-200/60 dark:border-slate-700/60">
+          <div className="flex items-center gap-1 bg-[#F1F4F9] dark:bg-slate-800/80 p-1 rounded-full border border-[#E2E8F0] dark:border-slate-700/60">
             {(["7D", "30D", "90D", "1Y"] as const).map((tf) => (
               <button
                 key={tf}
@@ -246,8 +246,8 @@ export default function BrandDashboard() {
                 onClick={() => setTimeframe(tf)}
                 className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                   timeframe === tf
-                    ? "bg-white dark:bg-slate-700 text-[#11182F] dark:text-slate-100 shadow-xs"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                    ? "bg-white dark:bg-slate-700 text-[#315BEF] dark:text-blue-400 shadow-2xs border border-[#E2E8F0]"
+                    : "text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-200"
                 }`}
               >
                 {tf}
@@ -261,18 +261,18 @@ export default function BrandDashboard() {
             <AreaChart data={currentChartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorReachBrand" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#315BEF" stopOpacity={0.3} />
+                  <stop offset="5%" stopColor="#315BEF" stopOpacity={0.25} />
                   <stop offset="95%" stopColor="#315BEF" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1E293B20" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
               <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#64748B" }} dy={5} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#64748B" }} />
               <Tooltip
-                contentStyle={{ borderRadius: "10px", border: "1px solid #334155", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.3)", background: "#1E293B" }}
-                itemStyle={{ color: "#F8FAFC", fontWeight: 700, fontSize: "11px" }}
+                contentStyle={{ borderRadius: "10px", border: "1px solid #E2E8F0", boxShadow: "0 4px 16px rgba(15,23,42,0.08)", background: "#FFFFFF" }}
+                itemStyle={{ color: "#0F172A", fontWeight: 700, fontSize: "11px" }}
               />
-              <Area type="monotone" dataKey="reach" stroke="#315BEF" strokeWidth={2} fillOpacity={1} fill="url(#colorReachBrand)" />
+              <Area type="monotone" dataKey="reach" stroke="#315BEF" strokeWidth={2.5} fillOpacity={1} fill="url(#colorReachBrand)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -282,14 +282,14 @@ export default function BrandDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-5">
         
         {/* Active Campaigns Table/Cards (4 Cols) */}
-        <div className="lg:col-span-4 rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-4.5 sm:p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+        <div className="lg:col-span-4 rounded-[16px] bg-white dark:bg-[#11172A] border border-[#E2E8F0] dark:border-slate-800/90 p-5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] space-y-3">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-800 pb-2.5">
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-[#11182F] dark:text-slate-100">Active Campaigns</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">4 active brand campaigns in flight.</p>
+              <h3 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-slate-100">Active Campaigns</h3>
+              <p className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">4 active brand campaigns in flight.</p>
             </div>
             <Link href="/campaigns">
-              <Button variant="ghost" size="sm" className="text-[11px] text-[#315BEF] dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50 font-bold rounded-full h-8">
+              <Button variant="ghost" size="sm" className="text-[11px] text-[#315BEF] dark:text-blue-400 hover:text-blue-700 hover:bg-[#EEF3FF] dark:hover:bg-blue-950/50 font-bold rounded-full h-8">
                 View all →
               </Button>
             </Link>
@@ -299,28 +299,28 @@ export default function BrandDashboard() {
             {ACTIVE_CAMPAIGNS_LIST.map((campaign) => (
               <div
                 key={campaign.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group cursor-pointer"
+                className="flex items-center justify-between p-3 rounded-xl bg-[#F9FAFD] dark:bg-slate-800/50 border border-[#E2E8F0] dark:border-slate-700/60 hover:bg-[#F8FAFC] dark:hover:bg-slate-800 transition-all group cursor-pointer"
               >
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs text-[#11182F] dark:text-slate-100 group-hover:text-[#315BEF] dark:group-hover:text-blue-400 transition-colors">
+                    <span className="font-bold text-xs text-[#0F172A] dark:text-slate-100 group-hover:text-[#315BEF] dark:group-hover:text-blue-400 transition-colors">
                       {campaign.title}
                     </span>
-                    <Badge variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/60 text-[9px] py-0 font-bold">
+                    <Badge variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 text-[9px] py-0 font-bold">
                       ● {campaign.status}
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  <p className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">
                     {campaign.brand} • {campaign.creatorsCount} creators • {campaign.budget}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2.5">
                   <div className="text-right">
-                    <span className="text-xs font-black text-[#11182F] dark:text-slate-100 block">{campaign.engagement}</span>
-                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">Engagement</span>
+                    <span className="text-xs font-black text-[#0F172A] dark:text-slate-100 block">{campaign.engagement}</span>
+                    <span className="text-[9px] text-[#94A3B8] dark:text-slate-500 font-medium">Engagement</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-[#315BEF] dark:group-hover:text-blue-400 transition-colors" />
+                  <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] dark:text-slate-500 group-hover:text-[#315BEF] dark:group-hover:text-blue-400 transition-colors" />
                 </div>
               </div>
             ))}
@@ -328,14 +328,14 @@ export default function BrandDashboard() {
         </div>
 
         {/* Top Performing Creators (3 Cols) */}
-        <div className="lg:col-span-3 rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-4.5 sm:p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+        <div className="lg:col-span-3 rounded-[16px] bg-white dark:bg-[#11172A] border border-[#E2E8F0] dark:border-slate-800/90 p-5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] space-y-3">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-800 pb-2.5">
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-[#11182F] dark:text-slate-100">Top Performing Creators</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Highest engagement rate roster.</p>
+              <h3 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-slate-100">Top Performing Creators</h3>
+              <p className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">Highest engagement rate roster.</p>
             </div>
-            <Link href="/influencers">
-              <Button variant="ghost" size="sm" className="text-[11px] text-[#315BEF] dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50 font-bold rounded-full h-8">
+            <Link href="/find-creators">
+              <Button variant="ghost" size="sm" className="text-[11px] text-[#315BEF] dark:text-blue-400 hover:text-blue-700 hover:bg-[#EEF3FF] dark:hover:bg-blue-950/50 font-bold rounded-full h-8">
                 Explore →
               </Button>
             </Link>
@@ -345,25 +345,25 @@ export default function BrandDashboard() {
             {TOP_CREATORS_LIST.map((creator) => (
               <div
                 key={creator.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                className="flex items-center justify-between p-3 rounded-xl bg-[#F9FAFD] dark:bg-slate-800/50 border border-[#E2E8F0] dark:border-slate-700/60 hover:bg-[#F8FAFC] dark:hover:bg-slate-800 transition-all"
               >
                 <div className="flex items-center gap-2.5">
-                  <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                  <Avatar className="h-8 w-8 border border-[#E2E8F0] dark:border-slate-700">
                     <AvatarImage src={creator.avatar} />
-                    <AvatarFallback className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs">{creator.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-blue-100 dark:bg-blue-950 text-[#315BEF] dark:text-blue-300 font-bold text-xs">{creator.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
                     <div className="flex items-center gap-1">
-                      <span className="font-bold text-xs text-[#11182F] dark:text-slate-100">{creator.name}</span>
-                      {creator.verified && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 fill-blue-600/20" />}
+                      <span className="font-bold text-xs text-[#0F172A] dark:text-slate-100">{creator.name}</span>
+                      {creator.verified && <CheckCircle2 className="w-3.5 h-3.5 text-[#315BEF] dark:text-blue-400 fill-blue-600/20" />}
                     </div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{creator.platform} • {creator.followers}</span>
+                    <span className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">{creator.platform} • {creator.followers}</span>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 block">{creator.engagement}</span>
-                  <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">Rate</span>
+                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block">{creator.engagement}</span>
+                  <span className="text-[9px] text-[#94A3B8] dark:text-slate-500 font-medium">Rate</span>
                 </div>
               </div>
             ))}
@@ -376,20 +376,20 @@ export default function BrandDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         
         {/* Recent Activity Log */}
-        <div className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-4.5 sm:p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
-            <h3 className="text-sm sm:text-base font-bold text-[#11182F] dark:text-slate-100">Recent Activity</h3>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Live Feed</span>
+        <div className="rounded-[16px] bg-white dark:bg-[#11172A] border border-[#E2E8F0] dark:border-slate-800/90 p-5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] space-y-3">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-800 pb-2.5">
+            <h3 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-slate-100">Recent Activity</h3>
+            <span className="text-[10px] text-[#94A3B8] dark:text-slate-500 font-mono">Live Feed</span>
           </div>
 
           <div className="space-y-2 pt-1">
             {RECENT_ACTIVITY_LOG.map((act) => (
-              <div key={act.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-none">
+              <div key={act.id} className="flex items-center justify-between text-xs py-2 border-b border-[#E2E8F0] dark:border-slate-800/60 last:border-none">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <span className="text-slate-700 dark:text-slate-300 font-medium">{act.text}</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#315BEF] dark:text-blue-400 shrink-0" />
+                  <span className="text-[#0F172A] dark:text-slate-300 font-medium">{act.text}</span>
                 </div>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono shrink-0 ml-2">{act.time}</span>
+                <span className="text-[10px] text-[#94A3B8] dark:text-slate-500 font-mono shrink-0 ml-2">{act.time}</span>
               </div>
             ))}
           </div>

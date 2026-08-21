@@ -19,12 +19,18 @@ import InfluencerDetail from '@/pages/influencers/detail';
 import Campaigns from '@/pages/campaigns/index';
 import CampaignCreate from '@/pages/campaigns/create';
 import CampaignDetail from '@/pages/campaigns/detail';
+import Opportunities from '@/pages/opportunities';
+import MyCampaigns from '@/pages/my-campaigns';
 import Applications from '@/pages/applications';
 import Messages from '@/pages/messages';
 import Analytics from '@/pages/analytics';
 import AiAssistant from '@/pages/ai-assistant';
+import MyProfile from '@/pages/profile';
 import Settings from '@/pages/settings';
 import CreatorOnboarding from '@/pages/onboarding';
+import BrandProfilePage from '@/pages/brand-profile/index';
+import FindCreatorsPage from '@/pages/find-creators/index';
+import SavedCreatorsPage from '@/pages/saved-creators/index';
 import { Loader2 } from 'lucide-react';
 
 const queryClient = new QueryClient({
@@ -201,11 +207,41 @@ function Router() {
         <ProtectedRoute component={DashboardRouter} />
       </Route>
       
+      <Route path="/find-creators">
+        <ProtectedRoute component={FindCreatorsPage} />
+      </Route>
+      <Route path="/brand/creators">
+        <ProtectedRoute component={FindCreatorsPage} />
+      </Route>
+      <Route path="/saved-creators">
+        <ProtectedRoute component={SavedCreatorsPage} />
+      </Route>
+      <Route path="/brand/shortlists">
+        <ProtectedRoute component={SavedCreatorsPage} />
+      </Route>
+      <Route path="/brand-profile">
+        <ProtectedRoute component={BrandProfilePage} />
+      </Route>
+      <Route path="/brand/profile">
+        <ProtectedRoute component={BrandProfilePage} />
+      </Route>
+
       <Route path="/influencers/:id">
         {params => <ProtectedRoute component={InfluencerDetail} params={params} />}
       </Route>
+      <Route path="/brand/creators/:id">
+        {params => <ProtectedRoute component={InfluencerDetail} params={params} />}
+      </Route>
       <Route path="/influencers">
-        <ProtectedRoute component={Influencers} />
+        <ProtectedRoute component={FindCreatorsPage} />
+      </Route>
+
+      <Route path="/opportunities">
+        <ProtectedRoute component={Opportunities} />
+      </Route>
+
+      <Route path="/my-campaigns">
+        <ProtectedRoute component={MyCampaigns} />
       </Route>
 
       <Route path="/campaigns/create">
@@ -232,6 +268,10 @@ function Router() {
 
       <Route path="/ai-assistant">
         <ProtectedRoute component={AiAssistant} />
+      </Route>
+
+      <Route path="/profile">
+        <ProtectedRoute component={MyProfile} />
       </Route>
 
       <Route path="/settings">

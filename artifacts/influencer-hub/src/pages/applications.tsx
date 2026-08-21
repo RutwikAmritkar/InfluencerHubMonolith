@@ -248,7 +248,7 @@ export default function Applications() {
 
                 {/* Pitch Message */}
                 {app.message && (
-                  <div className="p-3.5 bg-slate-50/80 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
+                  <div className="p-3.5 bg-[#F8FAFF] dark:bg-slate-800/50 rounded-xl border border-[#E2E8F3] dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
                     <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] block mb-1 font-mono">
                       Submitted Pitch:
                     </span>
