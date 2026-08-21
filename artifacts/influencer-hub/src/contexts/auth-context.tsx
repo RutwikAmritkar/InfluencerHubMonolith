@@ -10,9 +10,31 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const STORAGE_KEY = "influencer_hub_user";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
+
+  const setUser = (newUser: User | null) => {
+    setUserState(newUser);
+    try {
+      if (newUser) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch (_err) {
+      // Ignore storage write errors
+    }
+  };
 
   const { data: meData, isLoading: meLoading, isError } = useGetMe({
     query: {
@@ -27,7 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (meData?.user) {
         setUser(meData.user);
       } else if (isError) {
-        setUser(null);
+        try {
+          if (!localStorage.getItem(STORAGE_KEY)) {
+            setUserState(null);
+          }
+        } catch (_err) {
+          setUserState(null);
+        }
       }
       setIsLoading(false);
     }
@@ -35,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     logoutMutation.mutate(undefined, {
-      onSuccess: () => {
+      onSettled: () => {
         setUser(null);
       }
     });
