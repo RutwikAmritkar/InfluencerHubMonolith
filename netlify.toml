@@ -1,0 +1,16 @@
+[build]
+  command = "pnpm --filter influencer-hub-fe build"
+  publish = "artifacts/influencer-hub/dist/public"
+
+# Proxy /api requests to live backend API server (configured via API_SERVER_URL environment variable or placeholder)
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-api-server.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA client-side routing for React/Wouter router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
