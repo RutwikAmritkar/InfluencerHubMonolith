@@ -108,12 +108,12 @@ export default function InfluencerDashboard() {
 
   // MEMOIZED API DATA DERIVATIONS (prevents recalculation on tab changes)
   const { profileCompletion, followersCount, monthlyEarnings, profileViews, campaignInvites, viewsThisWeek } = useMemo(() => ({
-    profileCompletion: data?.profileCompletion ?? 90,
-    followersCount: data?.followers ? `${(data.followers / 1000).toFixed(0)}K` : "125K",
-    monthlyEarnings: data?.monthlyEarnings ? `$${data.monthlyEarnings.toLocaleString()}` : "$8,500",
-    profileViews: data?.profileViews ? data.profileViews.toLocaleString() : "847",
-    campaignInvites: data?.campaignInvites ?? 3,
-    viewsThisWeek: data?.viewsThisWeek && data.viewsThisWeek.length > 0 ? data.viewsThisWeek : defaultViewsData,
+    profileCompletion: typeof data?.profileCompletion === "number" ? data.profileCompletion : 90,
+    followersCount: (typeof data?.followers === "number" && !isNaN(data.followers)) ? `${(data.followers / 1000).toFixed(0)}K` : "125K",
+    monthlyEarnings: (typeof data?.monthlyEarnings === "number" && !isNaN(data.monthlyEarnings)) ? `$${data.monthlyEarnings.toLocaleString()}` : "$8,500",
+    profileViews: (typeof data?.profileViews === "number" && !isNaN(data.profileViews)) ? data.profileViews.toLocaleString() : "847",
+    campaignInvites: typeof data?.campaignInvites === "number" ? data.campaignInvites : 3,
+    viewsThisWeek: (Array.isArray(data?.viewsThisWeek) && data.viewsThisWeek.length > 0) ? data.viewsThisWeek : defaultViewsData,
   }), [data]);
 
   if (isLoading) {

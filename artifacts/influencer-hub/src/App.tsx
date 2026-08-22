@@ -64,19 +64,48 @@ class ErrorBoundary extends React.Component<
         <div className="min-h-screen w-full bg-[#0D111D] text-white flex flex-col items-center justify-center p-6 text-center">
           <div className="max-w-md w-full rounded-2xl bg-slate-900 border border-slate-800 p-8 shadow-2xl space-y-4">
             <h2 className="text-2xl font-bold text-red-400">Application Error</h2>
-            <p className="text-xs text-slate-400">An unexpected error occurred. Resetting your session usually resolves this.</p>
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  localStorage.clear();
-                } catch (_e) {}
-                window.location.href = '/login';
-              }}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full cursor-pointer transition-all shadow-md"
-            >
-              Reset Session & Sign In
-            </button>
+            <p className="text-xs text-slate-400">
+              An unexpected error occurred. Resetting your session usually resolves this.
+            </p>
+            {this.state.error?.message && (
+              <div className="p-3 bg-red-950/40 border border-red-900/60 rounded-xl text-[11px] text-red-300 text-left font-mono overflow-auto max-h-24">
+                {String(this.state.error.message)}
+              </div>
+            )}
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.clear();
+                  } catch (_e) {}
+                  window.location.href = '/login';
+                }}
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full cursor-pointer transition-all shadow-md"
+              >
+                Reset Session & Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const mockUser = {
+                      id: 1,
+                      email: "maya.chen@influencerhub.com",
+                      role: "influencer",
+                      name: "Maya Chen",
+                      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
+                      profileId: 1,
+                    };
+                    localStorage.setItem("influencer_hub_user", JSON.stringify(mockUser));
+                  } catch (_e) {}
+                  window.location.href = '/dashboard/influencer';
+                }}
+                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-full cursor-pointer transition-all border border-slate-700"
+              >
+                Launch Demo Creator Dashboard
+              </button>
+            </div>
           </div>
         </div>
       );
