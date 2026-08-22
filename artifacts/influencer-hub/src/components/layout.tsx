@@ -278,7 +278,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   });
 
   const unreadCount = useMemo(() => {
-    return notifications?.filter(n => !n.isRead).length || 0;
+    return Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0;
   }, [notifications]);
 
   const isCreator = user?.role === "influencer";

@@ -75,7 +75,7 @@ export default function Opportunities() {
   });
 
   const opportunities = useMemo(() => {
-    const list = apiCampaigns && apiCampaigns.length > 0 ? apiCampaigns : defaultOpportunitiesList;
+    const list = Array.isArray(apiCampaigns) && apiCampaigns.length > 0 ? apiCampaigns : defaultOpportunitiesList;
 
     return list.filter((item: any) => {
       const matchesSearch =

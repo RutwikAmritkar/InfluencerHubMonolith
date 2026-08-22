@@ -144,12 +144,13 @@ export default function Influencers() {
 
   // MEMOIZED ARRAY MERGE (prevents re-filtering on every render pass)
   const influencers = useMemo(() => {
-    if (apiInfluencers && apiInfluencers.length >= 8) {
-      return apiInfluencers;
+    const list = Array.isArray(apiInfluencers) ? apiInfluencers : [];
+    if (list.length >= 8) {
+      return list;
     }
     return [
-      ...(apiInfluencers || []),
-      ...defaultCreatorsList.filter(d => !(apiInfluencers || []).some((a: any) => a.id === d.id || a.name === d.name))
+      ...list,
+      ...defaultCreatorsList.filter(d => !list.some((a: any) => a.id === d.id || a.name === d.name))
     ];
   }, [apiInfluencers]);
 

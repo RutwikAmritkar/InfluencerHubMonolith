@@ -101,8 +101,8 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
     }
   );
 
-  const campaign = apiCampaign || (isLoading ? null : defaultCampaignDetail);
-  const applications = apiApplications && apiApplications.length > 0 ? apiApplications : defaultApplicationsList;
+  const campaign = (apiCampaign && typeof apiCampaign === 'object') ? apiCampaign : (isLoading ? null : defaultCampaignDetail);
+  const applications = (Array.isArray(apiApplications) && apiApplications.length > 0) ? apiApplications : defaultApplicationsList;
 
   const createApplication = useCreateApplication();
   const updateApplication = useUpdateApplication();

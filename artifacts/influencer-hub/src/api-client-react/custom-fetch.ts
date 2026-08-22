@@ -267,6 +267,14 @@ async function parseSuccessBody(
     return null;
   }
 
+  const mediaType = getMediaType(response.headers);
+
+  // If a static host (Netlify / Vercel SPA redirect) returns index.html for an API route,
+  // treat this as an API network error rather than valid data.
+  if (mediaType && (mediaType.includes("html") || mediaType === "text/html")) {
+    throw new ApiError(response, "Static SPA host returned HTML instead of API data", requestInfo);
+  }
+
   const effectiveType =
     responseType === "auto" ? inferResponseType(response) : responseType;
 

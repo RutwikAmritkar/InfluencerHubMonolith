@@ -96,7 +96,7 @@ export default function Applications() {
   const updateApplication = useUpdateApplication();
 
   const applications = useMemo(() => {
-    const rawList = apiApplications && apiApplications.length > 0 ? apiApplications : defaultApplications;
+    const rawList = Array.isArray(apiApplications) && apiApplications.length > 0 ? apiApplications : defaultApplications;
     
     return rawList.filter((app: any) => {
       const matchesSearch = 

@@ -72,7 +72,7 @@ export default function Campaigns() {
   });
 
   const campaigns = useMemo(() => {
-    if (apiCampaigns && apiCampaigns.length > 0) {
+    if (Array.isArray(apiCampaigns) && apiCampaigns.length > 0) {
       return apiCampaigns;
     }
     return defaultCampaignsList;

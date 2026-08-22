@@ -84,7 +84,7 @@ export default function MyCampaigns() {
   const campaigns = useMemo(() => {
     // If backend data is returned, filter accepted applications
     let list = defaultAcceptedCampaigns;
-    if (apiApplications && apiApplications.length > 0) {
+    if (Array.isArray(apiApplications) && apiApplications.length > 0) {
       list = apiApplications.map((app: any) => ({
         id: app.id,
         campaignId: app.campaignId,

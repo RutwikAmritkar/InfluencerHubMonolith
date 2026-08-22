@@ -190,7 +190,7 @@ export default function Messages() {
 
   const sendMessage = useSendMessage();
 
-  const rawConversations = apiConvs && apiConvs.length > 0 ? apiConvs : DEFAULT_CONVERSATIONS;
+  const rawConversations = Array.isArray(apiConvs) && apiConvs.length > 0 ? apiConvs : DEFAULT_CONVERSATIONS;
 
   const conversations = rawConversations.filter((c: any) =>
     c.participantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -203,7 +203,7 @@ export default function Messages() {
     }
   }, [conversations, activeId]);
 
-  const activeMessages = (apiMsgs && apiMsgs.length > 0)
+  const activeMessages = (Array.isArray(apiMsgs) && apiMsgs.length > 0)
     ? apiMsgs
     : (activeId ? (localMessages[activeId] || DEFAULT_MESSAGES_MAP[activeId] || []) : []);
 

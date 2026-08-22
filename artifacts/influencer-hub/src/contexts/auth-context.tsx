@@ -49,8 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!meLoading) {
       try {
-        if (meData?.user) {
-          setUser(meData.user);
+        if (meData && typeof meData === "object" && "user" in (meData as any) && (meData as any).user) {
+          setUser((meData as any).user);
         } else if (isError) {
           // Backend unreachable — keep localStorage session if it exists
           if (!localStorage.getItem(STORAGE_KEY)) {
