@@ -1,6 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db } from "@workspace/db";
-import { influencersTable, usersTable, campaignsTable } from "@workspace/db";
+import { db, influencersTable, user as userTable, campaignsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth.js";
 import { llmService, type CreatorContext } from "../services/llm.js";
@@ -27,9 +26,9 @@ router.get("/ai/suggestions", async (req: Request, res: Response): Promise<void>
 // GET /api/ai/match - Existing match endpoint
 router.get("/ai/match", async (req: Request, res: Response): Promise<void> => {
   const rows = await db
-    .select({ influencer: influencersTable, name: usersTable.name })
+    .select({ influencer: influencersTable, name: userTable.name })
     .from(influencersTable)
-    .leftJoin(usersTable, eq(usersTable.id, influencersTable.userId))
+    .leftJoin(userTable, eq(userTable.id, influencersTable.userId))
     .limit(6);
 
   const matches = rows.map((r, i) => ({
@@ -67,7 +66,7 @@ router.get("/ai/match", async (req: Request, res: Response): Promise<void> => {
 // POST /api/ai/generate - Production Server-Side LLM Integration
 router.post("/ai/generate", requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { prompt } = req.body as { prompt?: string };
+    const { prompt, language } = req.body as { prompt?: string; language?: string };
 
     // 1. Prompt Validation
     if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
@@ -81,11 +80,11 @@ router.post("/ai/generate", requireAuth, async (req: Request, res: Response): Pr
     }
 
     // 2. Identify Authenticated User from Session
-    const userId = (req as Request & { userId: number }).userId;
+    const userId = (req as Request & { userId: string | number }).userId;
 
     // 3. Fetch User & Influencer Data from Database
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
-    const [influencer] = await db.select().from(influencersTable).where(eq(influencersTable.userId, userId));
+    const [user] = await db.select().from(userTable).where(eq(userTable.id, String(userId)));
+    const [influencer] = await db.select().from(influencersTable).where(eq(influencersTable.userId, String(userId)));
 
     const activeCampaigns = await db.select().from(campaignsTable).limit(3);
 
@@ -117,7 +116,7 @@ router.post("/ai/generate", requireAuth, async (req: Request, res: Response): Pr
     };
 
     // 5. Generate LLM Insights (with OpenAI or resilient fallback)
-    const result = await llmService.generate(prompt.trim(), context);
+    const result = await llmService.generate(prompt.trim(), context, language || 'en');
 
     // 6. Return Structured Response
     res.json(result);

@@ -37,7 +37,7 @@ export default function CampaignCreate() {
   const createCampaign = useCreateCampaign();
 
   const form = useForm<z.infer<typeof campaignSchema>>({
-    resolver: zodResolver(campaignSchema),
+    resolver: zodResolver(campaignSchema as any),
     defaultValues: {
       title: "",
       description: "",

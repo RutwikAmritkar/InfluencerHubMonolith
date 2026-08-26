@@ -1,5 +1,7 @@
 import { useGetCampaignAnalytics, useGetInfluencerAnalytics } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, TrendingUp, Users, Target, Activity } from "lucide-react";
 import { 
@@ -51,6 +53,7 @@ const defaultInfData = {
 
 export default function Analytics() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const id = user?.profileId || 1; 
   const isBrand = user?.role === "brand";
   
@@ -82,10 +85,10 @@ export default function Analytics() {
       <div className="space-y-8 w-full pb-12 text-slate-900 dark:text-slate-100">
         <div className="border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
-            Campaign Analytics
+            {t('analytics.title')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            Measure total reach, engagement metrics, and estimated ROI across active partnerships.
+            {t('analytics.performance')}
           </p>
         </div>
 

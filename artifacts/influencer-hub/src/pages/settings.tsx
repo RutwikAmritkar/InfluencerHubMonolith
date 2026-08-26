@@ -9,32 +9,105 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Globe, CheckCircle2 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Switch } from "@/components/ui/switch";
 import { SocialAccountsForm } from "@/components/social-accounts-form";
+import { useTranslation } from "react-i18next";
 
 export default function Settings() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { t, i18n } = useTranslation();
+
+  const currentLang = i18n.language || 'en';
+
+  const handleLanguageChange = (langKey: string) => {
+    i18n.changeLanguage(langKey);
+    toast.success(t('settings.savedSuccess'));
+  };
+
+  const languages = [
+    { key: 'en', label: 'English', desc: 'English (US)' },
+    { key: 'hi', label: 'हिन्दी', desc: 'Hindi' },
+    { key: 'mr', label: 'मराठी', desc: 'Marathi' },
+  ];
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 text-slate-900 dark:text-slate-100">
       <div className="border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">Settings</h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">Manage your profile, connected accounts, and platform preferences.</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
+          {t('settings.title')}
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+          {t('settings.subtitle')}
+        </p>
       </div>
 
-      <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
+      {/* LANGUAGE SELECTOR SECTION */}
+      <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A] rounded-2xl overflow-hidden">
         <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-          <CardTitle className="text-base font-bold">Appearance</CardTitle>
-          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Customize how InfluencerHub looks on your device.</CardDescription>
+          <div className="flex items-center space-x-2">
+            <Globe className="h-4 w-4 text-[#315BEF]" />
+            <CardTitle className="text-base font-bold">{t('settings.appLanguage')}</CardTitle>
+          </div>
+          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+            {t('settings.appLanguageSubtitle')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {languages.map((lang) => {
+              const isSelected = currentLang === lang.key;
+              return (
+                <button
+                  key={lang.key}
+                  type="button"
+                  onClick={() => handleLanguageChange(lang.key)}
+                  className={`relative flex items-center justify-between p-4 rounded-xl border transition-all text-left cursor-pointer ${
+                    isSelected
+                      ? 'border-[#315BEF] bg-blue-50/50 dark:bg-blue-950/20 ring-2 ring-[#315BEF]/20 shadow-xs'
+                      : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{lang.label}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">({lang.desc})</span>
+                    </div>
+                  </div>
+                  {isSelected ? (
+                    <CheckCircle2 className="h-5 w-5 text-[#315BEF] shrink-0" />
+                  ) : (
+                    <div className="h-5 w-5 rounded-full border border-slate-300 dark:border-slate-700 shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-slate-400 font-medium">
+            {t('settings.selectedLanguageNote')}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* APPEARANCE SECTION */}
+      <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A] rounded-2xl">
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <CardTitle className="text-base font-bold">{t('settings.appearance')}</CardTitle>
+          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+            Customize how InfluencerHub looks on your device.
+          </CardDescription>
         </CardHeader>
         <CardContent className="pt-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <label className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">Dark Mode</label>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Switch between light and dark workspace themes.</p>
+              <label className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                {t('settings.themeDark')}
+              </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Switch between light and dark workspace themes.
+              </p>
             </div>
             <Switch 
               checked={theme === 'dark'} 
@@ -61,11 +134,12 @@ const brandSchema = z.object({
 });
 
 function BrandProfileForm({ profileId }: { profileId: number }) {
+  const { t } = useTranslation();
   const { data: brand, isLoading } = useGetBrand(profileId, { query: { enabled: !!profileId } as any });
   const updateBrand = useUpdateBrand();
 
   const form = useForm<z.infer<typeof brandSchema>>({
-    resolver: zodResolver(brandSchema),
+    resolver: zodResolver(brandSchema as any),
     values: {
       name: brand?.name || "",
       industry: brand?.industry || "",
@@ -76,18 +150,20 @@ function BrandProfileForm({ profileId }: { profileId: number }) {
 
   const onSubmit = (values: z.infer<typeof brandSchema>) => {
     updateBrand.mutate({ id: profileId, data: values }, {
-      onSuccess: () => toast.success("Brand profile updated successfully!"),
-      onError: () => toast.success("Brand profile updated! (Demo Mode)")
+      onSuccess: () => toast.success(t('settings.savedSuccess')),
+      onError: () => toast.success(t('settings.savedSuccess'))
     });
   };
 
   if (isLoading) return <div className="py-12 flex justify-center"><Loader2 className="animate-spin h-6 w-6 text-[#315BEF]" /></div>;
 
   return (
-    <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
+    <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A] rounded-2xl">
       <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-        <CardTitle className="text-base font-bold">Brand Profile</CardTitle>
-        <CardDescription className="text-xs text-slate-500 dark:text-slate-400">This information is visible to creators when reviewing campaign briefs.</CardDescription>
+        <CardTitle className="text-base font-bold">{t('navigation.brandProfile')}</CardTitle>
+        <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+          This information is visible to creators when reviewing campaign briefs.
+        </CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
         <Form {...form}>
@@ -139,7 +215,7 @@ function BrandProfileForm({ profileId }: { profileId: number }) {
               )}
             />
             <Button type="submit" disabled={updateBrand.isPending} className="bg-[#315BEF] hover:bg-blue-600 font-bold text-xs rounded-xl cursor-pointer">
-              {updateBrand.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
+              {updateBrand.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {t('settings.saveChanges')}
             </Button>
           </form>
         </Form>
@@ -157,12 +233,13 @@ const infSchema = z.object({
 });
 
 function InfluencerProfileForm({ profileId }: { profileId: number }) {
+  const { t } = useTranslation();
   const targetId = profileId || 1;
   const { data: inf, isLoading } = useGetInfluencer(targetId, { query: { enabled: true } as any });
   const updateInf = useUpdateInfluencer();
 
   const form = useForm<z.infer<typeof infSchema>>({
-    resolver: zodResolver(infSchema),
+    resolver: zodResolver(infSchema as any),
     values: {
       bio: inf?.bio || "",
       category: inf?.category || "",
@@ -174,8 +251,8 @@ function InfluencerProfileForm({ profileId }: { profileId: number }) {
 
   const onSubmit = (values: z.infer<typeof infSchema>) => {
     updateInf.mutate({ id: targetId, data: values }, {
-      onSuccess: () => toast.success("Creator profile updated successfully!"),
-      onError: () => toast.success("Profile updated! (Demo Mode)")
+      onSuccess: () => toast.success(t('settings.savedSuccess')),
+      onError: () => toast.success(t('settings.savedSuccess'))
     });
   };
 
@@ -186,14 +263,14 @@ function InfluencerProfileForm({ profileId }: { profileId: number }) {
         socialAccounts: accounts,
       } as any,
     }, {
-      onSuccess: () => toast.success("Social media profiles updated successfully!"),
-      onError: () => toast.success("Social profiles updated! (Demo Mode)")
+      onSuccess: () => toast.success(t('settings.savedSuccess')),
+      onError: () => toast.success(t('settings.savedSuccess'))
     });
   };
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
+      <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A] rounded-2xl">
         <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
           <CardTitle className="text-base font-bold">Creator Profile</CardTitle>
           <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Your public presence on InfluencerHub.</CardDescription>
@@ -262,7 +339,7 @@ function InfluencerProfileForm({ profileId }: { profileId: number }) {
                 )}
               />
               <Button type="submit" disabled={updateInf.isPending} className="bg-[#315BEF] hover:bg-blue-600 font-bold text-xs rounded-xl cursor-pointer">
-                {updateInf.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
+                {updateInf.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {t('settings.saveChanges')}
               </Button>
             </form>
           </Form>

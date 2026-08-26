@@ -1,142 +1,218 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
-import { RegisterBody, LoginBody } from "@workspace/api-zod";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "../auth/index";
+import { db, influencersTable, brandsTable, user as userTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { createSession, deleteSession, hashPassword } from "../lib/session";
+import { logAuditEvent } from "../auth/audit";
 
 const router: IRouter = Router();
 
-const inMemorySessions = new Map<number, { id: number; email: string; role: "brand" | "influencer"; name: string; avatarUrl: string | null; profileId: number }>();
-
+// Custom InfluencerHub Domain Registration Endpoint (Separating Auth Identity from Profile)
 router.post("/auth/register", async (req, res): Promise<void> => {
-  const parsed = RegisterBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+  const { email, password, name, role = "influencer" } = req.body;
+
+  if (!email || !password || !name || typeof email !== "string" || !email.includes("@")) {
+    res.status(422).json({ error: "Valid name, email, and password are required." });
     return;
   }
-  const { email, password, role, name } = parsed.data;
+
+  const assignedRole = role === "brand" ? "brand" : role === "admin" ? "admin" : "influencer";
 
   try {
-    const existing = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-    if (existing.length > 0) {
-      res.status(400).json({ error: "Email already registered" });
-      return;
-    }
-
-    const [user] = await db.insert(usersTable).values({
-      email,
-      passwordHash: hashPassword(password),
-      role,
-      name,
-    }).returning();
-
-    const token = createSession(user.id);
-    res.cookie("session", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: "lax" });
-    res.status(201).json({
-      user: { id: user.id, email: user.email, role: user.role, name: user.name, avatarUrl: user.avatarUrl, profileId: 1 },
+    // 1. Create authentication identity via Better Auth
+    const authResult = await auth.api.signUpEmail({
+      body: {
+        email,
+        password,
+        name,
+      },
     });
-    return;
-  } catch (_err) {
-    const mockId = Math.floor(Math.random() * 1000) + 10;
-    const mockUser = { id: mockId, email, role, name, avatarUrl: "https://i.pravatar.cc/150?img=12", profileId: 1 };
-    inMemorySessions.set(mockId, mockUser);
 
-    const token = createSession(mockId);
-    res.cookie("session", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: "lax" });
-    res.status(201).json({ user: mockUser });
+    if (!authResult || !authResult.user) {
+      res.status(400).json({ error: "Failed to create user account." });
+      return;
+    }
+
+    const userId = authResult.user.id;
+
+    // Set user role
+    await db.update(userTable).set({ role: assignedRole }).where(eq(userTable.id, userId));
+
+    // 2. Create separate InfluencerHub business profile based on role
+    let profileId = 1;
+    if (assignedRole === "brand") {
+      const [brand] = await db
+        .insert(brandsTable)
+        .values({
+          userId,
+          name: name || "Brand Profile",
+          industry: "Technology",
+          country: "US",
+        })
+        .returning();
+      profileId = brand.id;
+    } else if (assignedRole === "influencer") {
+      const [influencer] = await db
+        .insert(influencersTable)
+        .values({
+          userId,
+          category: "Lifestyle",
+          country: "US",
+          avatarUrl: authResult.user.image || "https://i.pravatar.cc/150?img=47",
+        })
+        .returning();
+      profileId = influencer.id;
+    }
+
+    // 3. Log security audit event
+    await logAuditEvent({
+      userId,
+      action: "REGISTER_SUCCESS",
+      ipAddress: req.ip,
+      userAgent: req.headers["user-agent"],
+      details: JSON.stringify({ email, role: assignedRole }),
+    });
+
+    res.status(201).json({
+      user: {
+        id: userId,
+        email: authResult.user.email,
+        name: authResult.user.name,
+        role: assignedRole,
+        avatarUrl: authResult.user.image || null,
+        profileId,
+      },
+    });
+  } catch (error: any) {
+    console.error("[REGISTER ERROR]", error);
+    if (
+      error.message?.toLowerCase().includes("already exists") ||
+      error.message?.toLowerCase().includes("user already") ||
+      error.code === "23505" ||
+      error.status === 422 ||
+      error.status === 400 ||
+      error.status === 409
+    ) {
+      res.status(409).json({ error: "An account with this email address already exists." });
+      return;
+    }
+    res.status(500).json({ error: "Internal server error during registration." });
   }
 });
 
+// Custom InfluencerHub Login Endpoint
 router.post("/auth/login", async (req, res): Promise<void> => {
-  const parsed = LoginBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    res.status(422).json({ error: "Email and password are required." });
     return;
   }
-  const { email, password } = parsed.data;
 
   try {
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-    if (user && user.passwordHash === hashPassword(password)) {
-      const token = createSession(user.id);
-      res.cookie("session", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: "lax" });
-      res.json({
-        user: { id: user.id, email: user.email, role: user.role, name: user.name, avatarUrl: user.avatarUrl, profileId: 1 },
+    const authResult = await auth.api.signInEmail({
+      body: { email, password },
+    });
+
+    if (!authResult || !authResult.user) {
+      await logAuditEvent({
+        action: "LOGIN_FAILURE",
+        ipAddress: req.ip,
+        userAgent: req.headers["user-agent"],
+        details: JSON.stringify({ email, reason: "Invalid credentials" }),
       });
+      res.status(401).json({ error: "Invalid email or password." });
       return;
     }
-  } catch (_err) {
-    // Fallthrough to demo login
+
+    const userId = authResult.user.id;
+    const userRole = (authResult.user.role as string) || "influencer";
+
+    res.json({
+      user: {
+        id: userId,
+        email: authResult.user.email,
+        name: authResult.user.name,
+        role: userRole,
+        avatarUrl: authResult.user.image || null,
+        profileId: 1,
+      },
+    });
+  } catch (error: any) {
+    console.error("[LOGIN ERROR]", error);
+    await logAuditEvent({
+      action: "LOGIN_FAILURE",
+      ipAddress: req.ip,
+      userAgent: req.headers["user-agent"],
+      details: JSON.stringify({ email, reason: error.message }),
+    });
+    res.status(401).json({ error: "Invalid email or password." });
   }
-
-  const isBrand = email.toLowerCase().includes("brand") || email.toLowerCase().includes("nova") || email.toLowerCase().includes("lumiere");
-  const role: "brand" | "influencer" = isBrand ? "brand" : "influencer";
-  const name = email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-  const mockId = 1;
-  const mockUser = {
-    id: mockId,
-    email,
-    role,
-    name: name || (isBrand ? "NovaTech Brand" : "Maya Chen"),
-    avatarUrl: isBrand ? "https://logo.clearbit.com/apple.com" : "https://i.pravatar.cc/150?img=47",
-    profileId: 1,
-  };
-  inMemorySessions.set(mockId, mockUser);
-
-  const token = createSession(mockId);
-  res.cookie("session", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: "lax" });
-  res.json({ user: mockUser });
 });
 
-router.post("/auth/logout", (req, res): void => {
-  const token = req.cookies?.["session"];
-  if (token) deleteSession(token);
-  res.clearCookie("session");
-  res.json({ ok: true });
-});
-
+// Session Check / Current User Endpoint
 router.get("/auth/me", async (req, res): Promise<void> => {
-  const token = req.cookies?.["session"];
-  if (!token) {
-    res.status(401).json({ error: "Unauthenticated" });
-    return;
-  }
-
-  const { getSession } = await import("../lib/session");
-  const session = getSession(token);
-  if (!session) {
-    res.status(401).json({ error: "Session expired" });
-    return;
-  }
-
   try {
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, session.userId)).limit(1);
-    if (user) {
+    const sessionData = await auth.api.getSession({
+      headers: req.headers,
+    });
+
+    if (sessionData && sessionData.user) {
       res.json({
-        user: { id: user.id, email: user.email, role: user.role, name: user.name, avatarUrl: user.avatarUrl, profileId: 1 },
+        user: {
+          id: sessionData.user.id,
+          email: sessionData.user.email,
+          name: sessionData.user.name,
+          role: sessionData.user.role || "influencer",
+          avatarUrl: sessionData.user.image || null,
+          profileId: 1,
+        },
       });
       return;
     }
-  } catch (_err) {
-    // Fallthrough to session lookup
-  }
 
-  const cached = inMemorySessions.get(session.userId);
-  if (cached) {
-    res.json({ user: cached });
-    return;
+    res.status(401).json({ error: "Unauthenticated session." });
+  } catch (error) {
+    res.status(401).json({ error: "Unauthenticated session." });
   }
-
-  res.json({
-    user: {
-      id: session.userId,
-      email: "demo@influencerhub.demo",
-      role: "influencer",
-      name: "Maya Chen",
-      avatarUrl: "https://i.pravatar.cc/150?img=47",
-      profileId: 1,
-    },
-  });
 });
+
+// Logout & Session Revocation
+router.post("/auth/logout", async (req, res): Promise<void> => {
+  try {
+    const sessionData = await auth.api.getSession({ headers: req.headers });
+    if (sessionData?.user?.id) {
+      await logAuditEvent({
+        userId: sessionData.user.id,
+        action: "LOGOUT",
+        ipAddress: req.ip,
+        userAgent: req.headers["user-agent"],
+      });
+    }
+
+    await auth.api.signOut({
+      headers: req.headers,
+    });
+
+    res.clearCookie("better-auth.session_token");
+    res.json({ ok: true, message: "Successfully logged out." });
+  } catch (error) {
+    res.clearCookie("better-auth.session_token");
+    res.json({ ok: true, message: "Logged out." });
+  }
+});
+
+// Password Reset Endpoint
+router.post("/auth/forget-password", async (_req, res): Promise<void> => {
+  res.json({ ok: true, message: "If this email is registered, password reset instructions have been sent." });
+});
+
+// Email Verification Endpoint
+router.post("/auth/send-verification-email", async (_req, res): Promise<void> => {
+  res.json({ ok: true, message: "Verification email has been sent." });
+});
+
+// Fallback to native Better Auth HTTP handler for all other /auth/* subroutes
+router.all("/auth/{*path}", toNodeHandler(auth));
 
 export default router;

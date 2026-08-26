@@ -1,5 +1,6 @@
 import { useState, useMemo, memo } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import {
   Megaphone,
@@ -171,6 +172,7 @@ BrandKPICard.displayName = "BrandKPICard";
 
 export default function BrandDashboard() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [timeframe, setTimeframe] = useState<"7D" | "30D" | "90D" | "1Y">("30D");
 
   // MEMOIZED TIMEFRAME DATA LOOKUP
@@ -183,17 +185,17 @@ export default function BrandDashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200/60 dark:border-slate-800/80 pb-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#11182F] dark:text-slate-100 tracking-tight">
-            Good morning, {user?.name?.split(" ")[0] || "Demo"} 👋
+            {t('dashboard.welcome', { name: user?.name?.split(" ")[0] || "Brand" })} 👋
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            Here's what's happening with your influencer marketing campaigns.
+            {t('dashboard.overview')}
           </p>
         </div>
 
         <Link href="/campaigns/create" className="w-full sm:w-auto">
           <Button className="w-full sm:w-auto h-9 px-5 rounded-full bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs shadow-md shadow-blue-600/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer">
             <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Create Campaign
+            {t('campaigns.createCampaign')}
           </Button>
         </Link>
       </div>

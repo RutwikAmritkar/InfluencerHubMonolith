@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { influencersTable, usersTable, type SocialAccount } from "@workspace/db";
+import { influencersTable, user as userTable, type SocialAccount } from "@workspace/db";
 import { UpdateInfluencerBody } from "@workspace/api-zod";
 import { eq, and, gte, lte, ilike, sql } from "drizzle-orm";
 import { socialVerificationService } from "../services/social-verification.service";
@@ -109,10 +109,10 @@ router.get("/influencers", async (req, res): Promise<void> => {
     let rows = await db
       .select({
         influencer: influencersTable,
-        userName: usersTable.name,
+        userName: userTable.name,
       })
       .from(influencersTable)
-      .leftJoin(usersTable, eq(usersTable.id, influencersTable.userId))
+      .leftJoin(userTable, eq(userTable.id, influencersTable.userId))
       .where(conditions.length > 0 ? and(...conditions) : undefined);
 
     if (platform) {
@@ -159,9 +159,9 @@ router.get("/influencers/:id", async (req, res): Promise<void> => {
 
   try {
     const [row] = await db
-      .select({ influencer: influencersTable, userName: usersTable.name })
+      .select({ influencer: influencersTable, userName: userTable.name })
       .from(influencersTable)
-      .leftJoin(usersTable, eq(usersTable.id, influencersTable.userId))
+      .leftJoin(userTable, eq(userTable.id, influencersTable.userId))
       .where(eq(influencersTable.id, id))
       .limit(1);
 
@@ -251,7 +251,7 @@ router.patch("/influencers/:id", requireAuth, async (req, res): Promise<void> =>
       .returning();
 
     if (updated) {
-      const [user] = await db.select().from(usersTable).where(eq(usersTable.id, updated.userId)).limit(1);
+      const [user] = await db.select().from(userTable).where(eq(userTable.id, String(updated.userId))).limit(1);
 
       res.json({
         id: updated.id,
@@ -329,7 +329,7 @@ router.post("/influencers/:id/social-accounts", requireAuth, async (req, res): P
   }
 
   let currentAccounts: SocialAccount[] = [];
-  let influencerUserId = 1;
+  let influencerUserId: string | number = 1;
   try {
     const [row] = await db.select().from(influencersTable).where(eq(influencersTable.id, id)).limit(1);
     if (row) {

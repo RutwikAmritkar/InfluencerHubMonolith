@@ -1,5 +1,6 @@
 import { useState, useMemo, memo } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "react-i18next";
 import { useGetInfluencerDashboard, getGetInfluencerDashboardQueryKey } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import {
@@ -97,6 +98,7 @@ OpportunityRow.displayName = "OpportunityRow";
 
 export default function InfluencerDashboard() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"Views" | "Reach" | "Engagement" | "Earnings">("Views");
 
   // Fetch Real API Data
@@ -131,16 +133,16 @@ export default function InfluencerDashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200/60 dark:border-slate-800/80 pb-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#11182F] dark:text-slate-100 tracking-tight">
-            Welcome back, {user?.name?.split(" ")[0] || "Test"} 👋
+            {t('dashboard.welcome', { name: user?.name?.split(" ")[0] || "Creator" })} 👋
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            Your influence is growing. Here's what's happening across your audience, campaigns and earnings.
+            {t('dashboard.overview')}
           </p>
         </div>
 
         <Link href="/campaigns">
           <Button className="h-9 px-5 rounded-xl bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs shadow-md shadow-blue-600/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer">
-            Explore <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
+            {t('navigation.discover')} <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
         </Link>
       </div>

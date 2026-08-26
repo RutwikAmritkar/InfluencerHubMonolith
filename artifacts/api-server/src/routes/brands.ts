@@ -4,6 +4,8 @@ import { brandsTable, usersTable, campaignsTable, applicationsTable, influencers
 import { UpdateBrandBody } from "@workspace/api-zod";
 import { eq, count, and } from "drizzle-orm";
 
+import { requireAuth } from "../middlewares/auth";
+
 const router: IRouter = Router();
 
 router.get("/brands", async (_req, res): Promise<void> => {
@@ -57,7 +59,7 @@ router.get("/brands/:id", async (req, res): Promise<void> => {
   });
 });
 
-router.patch("/brands/:id", async (req, res): Promise<void> => {
+router.patch("/brands/:id", requireAuth, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
 

@@ -47,7 +47,7 @@ export interface CreatorContext {
 }
 
 export interface LLMProvider {
-  generateInsights(prompt: string, context: CreatorContext): Promise<LLMResponse>;
+  generateInsights(prompt: string, context: CreatorContext, language?: string): Promise<LLMResponse>;
 }
 
 export class OpenAIProvider implements LLMProvider {
@@ -57,8 +57,15 @@ export class OpenAIProvider implements LLMProvider {
     this.apiKey = apiKey;
   }
 
-  async generateInsights(prompt: string, context: CreatorContext): Promise<LLMResponse> {
+  async generateInsights(prompt: string, context: CreatorContext, language: string = 'en'): Promise<LLMResponse> {
+    const langInstruction = language === 'hi'
+      ? 'Respond in Hindi. Do NOT translate creator names, brand names, campaign names, social usernames, URLs, or technical terms.'
+      : language === 'mr'
+      ? 'Respond in Marathi. Do NOT translate creator names, brand names, campaign names, social usernames, URLs, or technical terms.'
+      : 'Respond in English.';
+
     const systemInstruction = `You are InfluencerHub Intelligence — an AI advisor for creators.
+${langInstruction}
 Your job is to analyze creator telemetry and provide practical recommendations around:
 - audience growth
 - engagement
@@ -308,10 +315,10 @@ export class LLMService {
     }
   }
 
-  async generate(prompt: string, context: CreatorContext): Promise<LLMResponse> {
+  async generate(prompt: string, context: CreatorContext, language: string = 'en'): Promise<LLMResponse> {
     if (this.provider) {
       try {
-        return await this.provider.generateInsights(prompt, context);
+        return await this.provider.generateInsights(prompt, context, language);
       } catch (err: any) {
         console.warn("[LLMService] OpenAI provider error, falling back to rule engine:", err?.message || err);
       }

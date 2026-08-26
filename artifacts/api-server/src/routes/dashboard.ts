@@ -7,10 +7,10 @@ import { requireAuth } from "../middlewares/auth";
 const router: IRouter = Router();
 
 router.get("/dashboard/brand", requireAuth, async (req, res): Promise<void> => {
-  const userId = (req as typeof req & { userId: number }).userId;
+  const userId = (req as typeof req & { userId: string | number }).userId;
 
   try {
-    const [brand] = await db.select().from(brandsTable).where(eq(brandsTable.userId, userId)).limit(1);
+    const [brand] = await db.select().from(brandsTable).where(eq(brandsTable.userId, String(userId))).limit(1);
     if (brand) {
       const [{ total }] = await db.select({ total: count() }).from(campaignsTable).where(eq(campaignsTable.brandId, brand.id));
       const [{ active }] = await db.select({ active: count() }).from(campaignsTable).where(and(eq(campaignsTable.brandId, brand.id), eq(campaignsTable.status, "active")));
@@ -68,10 +68,10 @@ router.get("/dashboard/brand", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get("/dashboard/influencer", requireAuth, async (req, res): Promise<void> => {
-  const userId = (req as typeof req & { userId: number }).userId;
+  const userId = (req as typeof req & { userId: string | number }).userId;
 
   try {
-    const [influencer] = await db.select().from(influencersTable).where(eq(influencersTable.userId, userId)).limit(1);
+    const [influencer] = await db.select().from(influencersTable).where(eq(influencersTable.userId, String(userId))).limit(1);
     if (influencer) {
       const apps = await db.select().from(applicationsTable).where(eq(applicationsTable.influencerId, influencer.id)).orderBy(desc(applicationsTable.createdAt)).limit(5);
       const formatted = await Promise.all(apps.map(async a => {

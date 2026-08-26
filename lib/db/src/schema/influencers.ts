@@ -22,7 +22,7 @@ export interface SocialAccount {
 
 export const influencersTable = pgTable("influencers", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: text("user_id").notNull(),
   bio: text("bio"),
   category: text("category").notNull().default("Lifestyle"),
   country: text("country").notNull().default("US"),

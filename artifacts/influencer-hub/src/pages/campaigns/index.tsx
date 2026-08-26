@@ -8,6 +8,8 @@ import { Link } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 
 // Realistic Fallback Campaigns Roster
 const defaultCampaignsList = [
@@ -63,6 +65,7 @@ const defaultCampaignsList = [
 
 export default function Campaigns() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [status, setStatus] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
   
@@ -94,16 +97,18 @@ export default function Campaigns() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">Campaigns</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
+            {t('campaigns.title')}
+          </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            {user?.role === "brand" ? "Manage your brand influencer campaigns." : "Discover active brand campaign opportunities."}
+            {user?.role === "brand" ? t('campaigns.title') : t('campaigns.title')}
           </p>
         </div>
         {user?.role === "brand" && (
           <Link href="/campaigns/create">
             <Button className="h-9 px-4 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer">
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Create Campaign
+              {t('campaigns.createCampaign')}
             </Button>
           </Link>
         )}

@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/formatters";
 
 // Realistic Fallback Conversations Test Data Roster
 const DEFAULT_CONVERSATIONS = [
@@ -171,6 +173,7 @@ const DEFAULT_MESSAGES_MAP: Record<number, any[]> = {
 
 export default function Messages() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activeId, setActiveId] = useState<number | null>(null);
   const [showMobileChat, setShowMobileChat] = useState<boolean>(false);
   const [message, setMessage] = useState("");

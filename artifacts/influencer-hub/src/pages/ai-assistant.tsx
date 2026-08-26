@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useGetAiSuggestions } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,28 +21,32 @@ import {
   RefreshCw,
   Activity,
   Layers,
-  BarChart2,
-  PieChart,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-// Suggested Prompt Chips List
-const SUGGESTED_PROMPTS = [
-  "How can I grow faster?",
-  "What should I post next?",
-  "Find campaigns for me",
-  "Increase my earnings",
-  "Analyze my audience",
-];
+// Response Interfaces matching backend JSON
+interface LLMInsight {
+  category: "audience" | "timing" | "growth" | "revenue" | "engagement" | "campaign";
+  title: string;
+  description: string;
+  metric: string | null;
+  priority: "high" | "medium" | "low";
+  relevance: number;
+  action: string;
+}
 
-// Context Quick Filters
-const CONTEXT_TAGS = [
-  { label: "Audience", icon: Users },
-  { label: "Content", icon: Layers },
-  { label: "Earnings", icon: DollarSign },
-  { label: "Campaigns", icon: Megaphone },
-];
+interface LLMRecommendation {
+  title: string;
+  description: string;
+  action: string;
+}
+
+interface LLMGeneratedResult {
+  answer: string;
+  insights: LLMInsight[];
+  recommendations: LLMRecommendation[];
+}
 
 // Semantic Category Color Configs
 const CATEGORY_STYLES: Record<string, { bg: string; text: string; border: string; icon: any }> = {
@@ -83,86 +88,59 @@ const CATEGORY_STYLES: Record<string, { bg: string; text: string; border: string
   },
 };
 
-// Response Interfaces matching backend JSON
-interface LLMInsight {
-  category: "audience" | "timing" | "growth" | "revenue" | "engagement" | "campaign";
-  title: string;
-  description: string;
-  metric: string | null;
-  priority: "high" | "medium" | "low";
-  relevance: number;
-  action: string;
-}
-
-interface LLMRecommendation {
-  title: string;
-  description: string;
-  action: string;
-}
-
-interface LLMGeneratedResult {
-  answer: string;
-  insights: LLMInsight[];
-  recommendations: LLMRecommendation[];
-}
-
-// Initial Default Insights
-const DEFAULT_INSIGHTS: LLMInsight[] = [
-  {
-    category: "timing",
-    title: "Post between 6PM and 8PM for maximum reach",
-    description: "Telemetry shows peak follower activity during weekday evenings. Scheduled posts get 34% higher impression rates.",
-    metric: "+3.4x",
-    priority: "medium",
-    relevance: 91,
-    action: "Schedule next post →",
-  },
-  {
-    category: "campaign",
-    title: "3 active brand briefs match your profile 92%",
-    description: "Strong demographic alignment in beauty & lifestyle with 4.8% average engagement rate.",
-    metric: "92%",
-    priority: "high",
-    relevance: 92,
-    action: "Browse briefs →",
-  },
-  {
-    category: "growth",
-    title: "Reels drive 2.8x more follower growth",
-    description: "Short-form video content generates significantly higher virality than static photo posts on Instagram.",
-    metric: "2.8x",
-    priority: "high",
-    relevance: 88,
-    action: "View video strategy →",
-  },
-  {
-    category: "revenue",
-    title: "You could earn $2,400 more this month",
-    description: "Based on your engagement tier, updating your collaboration rate card for Q3 campaigns can boost monthly revenue.",
-    metric: "+$2,400",
-    priority: "high",
-    relevance: 95,
-    action: "Update rate card →",
-  },
-  {
-    category: "engagement",
-    title: "Engagement drops after 5 posts per week",
-    description: "Audience fatigue sets in past 5 posts/week. Quality over frequency preserves high comment-to-view ratios.",
-    metric: "-15%",
-    priority: "low",
-    relevance: 89,
-    action: "Adjust frequency →",
-  },
-];
-
 export default function AiAssistant() {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [query, setQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [generatedResult, setGeneratedResult] = useState<LLMGeneratedResult | null>(null);
 
   const { data: apiSuggestions, isLoading: suggLoading } = useGetAiSuggestions();
+
+  const suggestedPrompts = [
+    t('ai.chip1'),
+    t('ai.chip2'),
+    t('ai.chip3'),
+    t('ai.chip4'),
+  ];
+
+  const contextTags = [
+    { label: t('analytics.audience') || "Audience", icon: Users },
+    { label: "Content", icon: Layers },
+    { label: t('campaigns.budget') || "Earnings", icon: DollarSign },
+    { label: t('campaigns.title') || "Campaigns", icon: Megaphone },
+  ];
+
+  const defaultInsights: LLMInsight[] = [
+    {
+      category: "timing",
+      title: t('ai.chip2'),
+      description: "Telemetry shows peak follower activity during weekday evenings.",
+      metric: "+3.4x",
+      priority: "medium",
+      relevance: 91,
+      action: "Schedule next post →",
+    },
+    {
+      category: "campaign",
+      title: "3 active brand briefs match your profile 92%",
+      description: "Strong demographic alignment with high engagement potential.",
+      metric: "92%",
+      priority: "high",
+      relevance: 92,
+      action: "Browse briefs →",
+    },
+    {
+      category: "growth",
+      title: "Reels drive 2.8x more follower growth",
+      description: "Short-form video content generates significantly higher virality.",
+      metric: "2.8x",
+      priority: "high",
+      relevance: 88,
+      action: "View video strategy →",
+    },
+  ];
 
   // Multi-step loading simulation sequence
   useEffect(() => {
@@ -195,10 +173,9 @@ export default function AiAssistant() {
         };
       });
     }
-    return DEFAULT_INSIGHTS;
-  }, [apiSuggestions]);
+    return defaultInsights;
+  }, [apiSuggestions, t]);
 
-  // Active displayed insights
   const activeInsights = generatedResult?.insights || baseInsights;
   const activeAnswer = generatedResult?.answer;
   const activeRecs = generatedResult?.recommendations || [];
@@ -216,7 +193,10 @@ export default function AiAssistant() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt: textToSubmit.trim() }),
+        body: JSON.stringify({
+          prompt: textToSubmit.trim(),
+          language: i18n.language || 'en',
+        }),
       });
 
       if (!response.ok) {
@@ -245,17 +225,17 @@ export default function AiAssistant() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#315BEF] opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#315BEF]"></span>
           </span>
-          <span>✦ AI INSIGHTS ACTIVE</span>
+          <span>✦ {t('ai.title')} ACTIVE</span>
         </div>
 
         {/* Product Title */}
         <h1 className="text-[30px] sm:text-[36px] md:text-[40px] font-bold tracking-[-0.025em] leading-[1.08] text-[#11182F] dark:text-slate-100">
-          Your creator copilot.
+          {t('ai.title')}
         </h1>
 
         {/* Subtitle */}
         <p className="max-w-[640px] text-[14px] font-normal leading-[1.5] text-slate-500 dark:text-slate-400">
-          Turn your audience, content, earnings, and campaign telemetry into your next best move.
+          {t('ai.subtitle')}
         </p>
       </div>
 
@@ -278,7 +258,7 @@ export default function AiAssistant() {
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask InfluencerHub AI anything about your audience, growth, or earnings..."
+                placeholder={t('ai.placeholder')}
                 className="w-full border-none bg-transparent shadow-none focus-visible:ring-0 text-[14px] font-medium leading-[1.4] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 h-9 px-0"
               />
             </div>
@@ -288,7 +268,7 @@ export default function AiAssistant() {
               
               {/* Category Quick Tags */}
               <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
-                {CONTEXT_TAGS.map((tag) => (
+                {contextTags.map((tag) => (
                   <button
                     key={tag.label}
                     type="button"
@@ -310,11 +290,11 @@ export default function AiAssistant() {
                 {isGenerating ? (
                   <>
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                    Analyzing...
+                    {t('common.loading')}
                   </>
                 ) : (
                   <>
-                    Generate <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                    {t('ai.send')} <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                   </>
                 )}
               </Button>
@@ -325,9 +305,9 @@ export default function AiAssistant() {
         {/* Suggested Prompt Chips */}
         <div className="flex flex-wrap items-center gap-2 justify-center pt-0.5">
           <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 font-mono uppercase tracking-[0.08em] mr-1">
-            Try asking:
+            {t('ai.suggestedChips')}:
           </span>
-          {SUGGESTED_PROMPTS.map((prompt) => (
+          {suggestedPrompts.map((prompt) => (
             <button
               key={prompt}
               type="button"
@@ -345,7 +325,7 @@ export default function AiAssistant() {
         <div className="max-w-[760px] mx-auto p-5 rounded-2xl bg-white dark:bg-[#11172A] border border-blue-100 dark:border-blue-900/60 shadow-xs space-y-3 animate-pulse my-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#315BEF] font-mono uppercase tracking-wider">
             <Loader2 className="h-4 w-4 animate-spin text-[#315BEF]" />
-            <span>Analyzing Creator Telemetry...</span>
+            <span>{t('common.loading')}</span>
           </div>
 
           <div className="space-y-1.5 pl-6 text-xs text-slate-600 dark:text-slate-300 font-medium">
@@ -365,7 +345,7 @@ export default function AiAssistant() {
         </div>
       )}
 
-      {/* ─── 4. CREATOR SIGNAL STRIP (BRIDGE TO DATA) ───────────────────── */}
+      {/* ─── 4. CREATOR SIGNAL STRIP ───────────────────── */}
       <div className="w-full rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-slate-50 dark:from-blue-950/40 dark:via-indigo-950/20 dark:to-[#11172A] border border-blue-100/90 dark:border-blue-900/50 p-3.5 px-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-7 w-7 rounded-lg bg-[#315BEF] text-white flex items-center justify-center shrink-0">
@@ -376,13 +356,13 @@ export default function AiAssistant() {
               ✦ CREATOR SIGNAL
             </span>
             <p className="text-xs font-semibold text-[#11182F] dark:text-slate-100">
-              Your engagement rate is trending upward <span className="text-emerald-600 dark:text-emerald-400">+22% this week</span> across short-form videos.
+              Your engagement rate is trending upward <span className="text-emerald-600 dark:text-emerald-400">+22% this week</span>.
             </p>
           </div>
         </div>
 
         <a href="/analytics" className="text-xs font-semibold text-[#315BEF] dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 inline-flex items-center gap-1 cursor-pointer shrink-0">
-          <span>View analytics</span>
+          <span>{t('navigation.analytics')}</span>
           <ChevronRight className="w-3.5 h-3.5" />
         </a>
       </div>
@@ -410,126 +390,15 @@ export default function AiAssistant() {
         </div>
       )}
 
-      {/* ─── 6. INSIGHTS SECTION FULL-WIDTH HEADER ───────────────────────── */}
-      <div className="w-full flex items-center justify-between pt-3 border-b border-slate-200/60 dark:border-slate-800/80 pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-[20px] font-bold text-[#11182F] dark:text-slate-100 tracking-[-0.015em] leading-[1.2]">
-              Your AI intelligence
-            </h2>
-            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 font-mono">
-              Updated 2 min ago
-            </span>
-          </div>
-          <p className="text-[13px] font-normal text-slate-500 dark:text-slate-400 mt-0.5">
-            Personalized recommendations based on your creator telemetry.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => handleGenerate("Analyze my latest insights")}
-          className="text-[12px] font-semibold text-[#315BEF] dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 inline-flex items-center gap-1 cursor-pointer transition-colors shrink-0"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Refresh</span>
-        </button>
-      </div>
-
-      {/* ─── 7. FEATURED 2-COLUMN INSIGHT + SECONDARY 3-COLUMN GRID ─────── */}
+      {/* ─── 6. INSIGHTS GRID ───────────────────────── */}
       <div className="w-full space-y-6">
-        
-        {/* Top Row: 2-Column Featured Hero Insight + 1-Column Secondary Insight */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
-          
-          {/* FEATURED INSIGHT CARD (SPANS 2 COLUMNS) */}
-          <Card className="lg:col-span-2 rounded-2xl bg-white dark:bg-[#11172A] border border-blue-100 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 p-6 flex flex-col justify-between group">
-            <div className="space-y-4">
-              
-              {/* Badge Row */}
-              <div className="flex items-center justify-between">
-                <Badge variant="outline" className="text-[10px] font-semibold tracking-[0.06em] uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-200/80">
-                  <Users className="w-3 h-3" />
-                  <span>FEATURED AUDIENCE INSIGHT</span>
-                </Badge>
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-mono">
-                  94% relevant
-                </span>
-              </div>
-
-              {/* Title & Body */}
-              <div className="space-y-1.5">
-                <h3 className="text-[18px] sm:text-[20px] font-bold text-[#11182F] dark:text-slate-100 group-hover:text-[#315BEF] dark:group-hover:text-blue-400 transition-colors">
-                  Your audience is strongest in India
-                </h3>
-                <p className="text-[13.5px] font-normal leading-[1.55] text-slate-500 dark:text-slate-400 max-w-xl">
-                  62% of your engaged followers are based in India. Telemetry shows peak activity during evening windows between 7PM and 10PM IST.
-                </p>
-              </div>
-
-              {/* Mini Demographic Bar Visual */}
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 space-y-2">
-                <div className="flex justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                  <span>India Demographic Share</span>
-                  <span className="font-mono text-[#315BEF]">62%</span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-[#315BEF] to-indigo-500 rounded-full w-[62%]" />
-                </div>
-              </div>
-            </div>
-
-            {/* CTA */}
-            <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[12.5px] font-semibold text-[#315BEF] dark:text-blue-400">
-              <span>Optimize posting schedule →</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </Card>
-
-          {/* SECONDARY TIMING INSIGHT (1 COLUMN) */}
-          <Card className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 p-6 flex flex-col justify-between group">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Badge variant="outline" className="text-[10px] font-semibold tracking-[0.06em] uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border-purple-200/80">
-                  <Clock className="w-3 h-3" />
-                  <span>TIMING</span>
-                </Badge>
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-mono">
-                  91% relevant
-                </span>
-              </div>
-
-              <div className="space-y-1">
-                <h3 className="text-[15px] font-semibold leading-[1.3] text-[#11182F] dark:text-slate-100 group-hover:text-[#315BEF] transition-colors">
-                  Post between 6PM–8PM
-                </h3>
-                <p className="text-[13px] font-normal leading-[1.5] text-slate-500 dark:text-slate-400">
-                  Data shows 3.4x higher engagement during weekday evening posting slots.
-                </p>
-              </div>
-
-              <div className="py-2 px-3 rounded-lg bg-purple-50/60 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/60 flex items-center justify-between text-xs font-semibold text-purple-700 dark:text-purple-300 font-mono">
-                <span>Engagement Boost</span>
-                <span>+3.4x</span>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[12px] font-semibold text-[#315BEF] dark:text-blue-400">
-              <span>Schedule next post →</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </Card>
-
-        </div>
-
-        {/* Bottom Row: 3-Column Secondary Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5.5 sm:gap-6 w-full">
           {suggLoading ? (
             <div className="col-span-3 flex justify-center py-12">
               <Loader2 className="animate-spin text-[#315BEF] h-7 w-7" />
             </div>
           ) : (
-            activeInsights.slice(1).map((insight, idx) => {
+            activeInsights.map((insight, idx) => {
               const catKey = (insight.category?.toLowerCase() || "growth") as string;
               const style = CATEGORY_STYLES[catKey] || CATEGORY_STYLES.growth;
               const CategoryIcon = style.icon;
@@ -541,7 +410,6 @@ export default function AiAssistant() {
                 >
                   <CardContent className="p-5 sm:p-6 space-y-3 flex-1 flex flex-col justify-between">
                     
-                    {/* Top Badge Row */}
                     <div className="flex items-center justify-between">
                       <Badge variant="outline" className={`text-[10px] font-semibold tracking-[0.06em] uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1 ${style.bg} ${style.text} ${style.border}`}>
                         <CategoryIcon className="w-3 h-3" />
@@ -560,7 +428,6 @@ export default function AiAssistant() {
                       </div>
                     </div>
 
-                    {/* Body Text */}
                     <div className="space-y-1 flex-1">
                       <h3 className="text-[15px] font-semibold leading-[1.3] text-[#11182F] dark:text-slate-100 group-hover:text-[#315BEF] dark:group-hover:text-blue-400 transition-colors">
                         {insight.title}
@@ -570,7 +437,6 @@ export default function AiAssistant() {
                       </p>
                     </div>
 
-                    {/* CTA Row */}
                     <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[12px] font-semibold text-[#315BEF] dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">
                       <span>{insight.action}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -582,10 +448,9 @@ export default function AiAssistant() {
             })
           )}
         </div>
-
       </div>
 
-      {/* ─── 8. RECOMMENDED ACTION PLAN SECTION (FULL WIDTH) ─────────────────── */}
+      {/* ─── 7. RECOMMENDED ACTION PLAN SECTION ─────────────────── */}
       {activeRecs.length > 0 && (
         <div className="w-full rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">

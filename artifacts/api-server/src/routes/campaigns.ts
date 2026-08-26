@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { campaignsTable, brandsTable, applicationsTable } from "@workspace/db";
 import { CreateCampaignBody, UpdateCampaignBody } from "@workspace/api-zod";
 import { eq, and, count } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
@@ -47,15 +47,15 @@ router.get("/campaigns", async (req, res): Promise<void> => {
   res.json(result);
 });
 
-router.post("/campaigns", requireAuth, async (req, res): Promise<void> => {
-  const userId = (req as typeof req & { userId: number }).userId;
+router.post("/campaigns", requireAuth, requireRole(["brand"]), async (req, res): Promise<void> => {
+  const userId = (req as typeof req & { userId: string | number }).userId;
   const parsed = CreateCampaignBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
-  const [brand] = await db.select().from(brandsTable).where(eq(brandsTable.userId, userId)).limit(1);
+  const [brand] = await db.select().from(brandsTable).where(eq(brandsTable.userId, String(userId))).limit(1);
   if (!brand) {
     res.status(403).json({ error: "Only brands can create campaigns" });
     return;

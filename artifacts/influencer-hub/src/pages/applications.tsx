@@ -25,6 +25,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/formatters";
 
 // Realistic Fallback Applications List
 const defaultApplications = [
@@ -74,6 +76,7 @@ const defaultApplications = [
 
 export default function Applications() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -117,11 +120,11 @@ export default function Applications() {
       { id: appId, data: { status } },
       {
         onSuccess: () => {
-          toast.success(`Application marked as ${status}.`);
           queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
+          toast.success(`Application status updated to ${status}`);
         },
         onError: () => {
-          toast.success(`Application updated to ${status} (Demo Mode).`);
+          toast.success(`Application updated to ${status} (Demo Mode)`);
         },
       }
     );
@@ -131,20 +134,20 @@ export default function Applications() {
     switch (status) {
       case "accepted":
         return (
-          <Badge className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[11px] font-bold px-2.5 py-0.5">
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Accepted
+          <Badge className="bg-[#EEF3FF] dark:bg-blue-950/80 text-[#315BEF] dark:text-blue-300 border-blue-200 dark:border-blue-800 text-[11px] font-bold px-2.5 py-0.5">
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> {t('applications.accepted')}
           </Badge>
         );
       case "rejected":
         return (
           <Badge className="bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800 text-[11px] font-bold px-2.5 py-0.5">
-            <XCircle className="w-3.5 h-3.5 mr-1" /> Declined
+            <XCircle className="w-3.5 h-3.5 mr-1" /> {t('applications.rejected')}
           </Badge>
         );
       default:
         return (
           <Badge className="bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 text-[11px] font-bold px-2.5 py-0.5">
-            <Clock className="w-3.5 h-3.5 mr-1" /> Pending Review
+            <Clock className="w-3.5 h-3.5 mr-1" /> {t('applications.pending')}
           </Badge>
         );
     }
@@ -156,18 +159,16 @@ export default function Applications() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
-            {user?.role === "brand" ? "Campaign Applications" : "My Applications & Pitches"}
+            {t('applications.title')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            {user?.role === "brand"
-              ? "Review creator pitches and manage applicant statuses."
-              : "Track the status of your campaign pitches and active proposals."}
+            {t('applications.subtitle')}
           </p>
         </div>
 
         <Link href="/campaigns">
           <Button className="h-9 px-4 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer">
-            Explore Campaigns <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            {t('navigation.campaigns')} <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
         </Link>
       </div>

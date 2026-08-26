@@ -10,6 +10,7 @@ import notificationsRouter from "./notifications";
 import dashboardRouter from "./dashboard";
 import analyticsRouter from "./analytics";
 import aiRouter from "./ai";
+import socialRouter from "./social";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(notificationsRouter);
 router.use(dashboardRouter);
 router.use(analyticsRouter);
 router.use(aiRouter);
+router.use(socialRouter);
 
 export default router;

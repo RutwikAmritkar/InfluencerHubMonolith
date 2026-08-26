@@ -1,16 +1,16 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { applicationsTable, campaignsTable, influencersTable, usersTable } from "@workspace/db";
+import { applicationsTable, campaignsTable, influencersTable, user as userTable } from "@workspace/db";
 import { CreateApplicationBody, UpdateApplicationBody } from "@workspace/api-zod";
 import { eq, and } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
 async function formatApplication(a: typeof applicationsTable.$inferSelect) {
   const [campaign] = await db.select().from(campaignsTable).where(eq(campaignsTable.id, a.campaignId)).limit(1);
   const [influencer] = await db.select().from(influencersTable).where(eq(influencersTable.id, a.influencerId)).limit(1);
-  const [user] = influencer ? await db.select().from(usersTable).where(eq(usersTable.id, influencer.userId)).limit(1) : [null];
+  const [user] = influencer ? await db.select().from(userTable).where(eq(userTable.id, String(influencer.userId))).limit(1) : [null];
 
   return {
     id: a.id,
@@ -42,15 +42,15 @@ router.get("/applications", async (req, res): Promise<void> => {
   res.json(await Promise.all(rows.map(formatApplication)));
 });
 
-router.post("/applications", requireAuth, async (req, res): Promise<void> => {
-  const userId = (req as typeof req & { userId: number }).userId;
+router.post("/applications", requireAuth, requireRole(["influencer"]), async (req, res): Promise<void> => {
+  const userId = (req as typeof req & { userId: string | number }).userId;
   const parsed = CreateApplicationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
-  const [influencer] = await db.select().from(influencersTable).where(eq(influencersTable.userId, userId)).limit(1);
+  const [influencer] = await db.select().from(influencersTable).where(eq(influencersTable.userId, String(userId))).limit(1);
   if (!influencer) {
     res.status(403).json({ error: "Only influencers can apply" });
     return;

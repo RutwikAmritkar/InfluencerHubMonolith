@@ -1,9 +1,9 @@
 import { useState, useMemo, memo } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "react-i18next";
 import { 
   LayoutDashboard, 
-  Users, 
   Megaphone, 
   MessageSquare, 
   BarChart3, 
@@ -18,7 +18,6 @@ import {
   Compass,
   Search,
   User,
-  Briefcase,
   Bookmark,
   Building2
 } from "lucide-react";
@@ -37,76 +36,56 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { Badge } from "./ui/badge";
-import { toast } from "sonner";
-
-// CREATOR NAVIGATION SPECIFICATION
-const CREATOR_OVERVIEW_LINKS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/opportunities", label: "Opportunities", icon: Compass },
-  { href: "/my-campaigns", label: "My Campaigns", icon: Megaphone },
-  { href: "/applications", label: "Applications", icon: FileCheck },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
-];
-
-const CREATOR_INSIGHTS_LINKS = [
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/ai-assistant", label: "AI Assistant", icon: Sparkles },
-];
-
-const CREATOR_PROFILE_LINKS = [
-  { href: "/profile", label: "My Profile", icon: User },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
-// BRAND ARCHITECTURE NAVIGATION SPECIFICATION
-const BRAND_GROUPS = [
-  {
-    header: "OVERVIEW",
-    links: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }]
-  },
-  {
-    header: "DISCOVER",
-    links: [
-      { href: "/find-creators", label: "Find Creators", icon: Search },
-      { href: "/saved-creators", label: "Shortlists", icon: Bookmark },
-    ]
-  },
-  {
-    header: "CAMPAIGNS",
-    links: [
-      { href: "/campaigns", label: "Campaigns", icon: Megaphone },
-    ]
-  },
-  {
-    header: "COMMUNICATION",
-    links: [
-      { href: "/messages", label: "Messages", icon: MessageSquare },
-    ]
-  },
-  {
-    header: "INSIGHTS",
-    links: [
-      { href: "/analytics", label: "Analytics", icon: BarChart3 },
-      { href: "/ai-assistant", label: "AI Assistant", icon: Sparkles },
-    ]
-  },
-  {
-    header: "BRAND",
-    links: [
-      { href: "/brand-profile", label: "Brand Profile", icon: Building2 },
-      { href: "/settings", label: "Settings", icon: Settings },
-    ]
-  }
-];
 
 // Memoized Role-Aware Sidebar Content Component
 const SidebarContent = memo(({ location, role, onItemClick }: { location: string; role?: string; onItemClick?: () => void }) => {
+  const { t } = useTranslation();
   const isCreator = role === "influencer";
 
   if (!isCreator) {
+    const brandGroups = [
+      {
+        header: "OVERVIEW",
+        links: [{ href: "/dashboard", label: t('navigation.dashboard'), icon: LayoutDashboard }]
+      },
+      {
+        header: "DISCOVER",
+        links: [
+          { href: "/find-creators", label: t('navigation.findCreators'), icon: Search },
+          { href: "/saved-creators", label: t('navigation.savedCreators'), icon: Bookmark },
+        ]
+      },
+      {
+        header: "CAMPAIGNS",
+        links: [
+          { href: "/campaigns", label: t('navigation.campaigns'), icon: Megaphone },
+        ]
+      },
+      {
+        header: "COMMUNICATION",
+        links: [
+          { href: "/messages", label: t('navigation.messages'), icon: MessageSquare },
+        ]
+      },
+      {
+        header: "INSIGHTS",
+        links: [
+          { href: "/analytics", label: t('navigation.analytics'), icon: BarChart3 },
+          { href: "/ai-assistant", label: t('navigation.aiAssistant'), icon: Sparkles },
+        ]
+      },
+      {
+        header: "BRAND",
+        links: [
+          { href: "/brand-profile", label: t('navigation.brandProfile'), icon: Building2 },
+          { href: "/settings", label: t('navigation.settings'), icon: Settings },
+        ]
+      }
+    ];
+
     return (
       <div className="flex flex-col h-full py-3.5 antialiased font-sans space-y-4">
-        {BRAND_GROUPS.map((group) => (
+        {brandGroups.map((group) => (
           <div key={group.header}>
             <div className="px-4 mb-1">
               <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500 font-mono">
@@ -138,7 +117,7 @@ const SidebarContent = memo(({ location, role, onItemClick }: { location: string
                           isActive ? "text-[#315CF5] dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
                         )}
                       />
-                      <span>{link.label}</span>
+                      <span className="truncate">{link.label}</span>
                     </div>
                   </Link>
                 );
@@ -150,6 +129,24 @@ const SidebarContent = memo(({ location, role, onItemClick }: { location: string
     );
   }
 
+  const creatorOverviewLinks = [
+    { href: "/dashboard", label: t('navigation.dashboard'), icon: LayoutDashboard },
+    { href: "/opportunities", label: t('navigation.opportunities'), icon: Compass },
+    { href: "/my-campaigns", label: t('navigation.myCampaigns'), icon: Megaphone },
+    { href: "/applications", label: t('navigation.applications'), icon: FileCheck },
+    { href: "/messages", label: t('navigation.messages'), icon: MessageSquare },
+  ];
+
+  const creatorInsightsLinks = [
+    { href: "/analytics", label: t('navigation.analytics'), icon: BarChart3 },
+    { href: "/ai-assistant", label: t('navigation.aiAssistant'), icon: Sparkles },
+  ];
+
+  const creatorProfileLinks = [
+    { href: "/profile", label: t('navigation.profile'), icon: User },
+    { href: "/settings", label: t('navigation.settings'), icon: Settings },
+  ];
+
   return (
     <div className="flex flex-col h-full py-3.5 antialiased font-sans space-y-4">
       {/* OVERVIEW GROUP */}
@@ -160,7 +157,7 @@ const SidebarContent = memo(({ location, role, onItemClick }: { location: string
           </span>
         </div>
         <nav className="space-y-0.5 px-3">
-          {CREATOR_OVERVIEW_LINKS.map((link) => {
+          {creatorOverviewLinks.map((link) => {
             const isActive =
               location === link.href ||
               (link.href === "/dashboard" &&
@@ -184,7 +181,7 @@ const SidebarContent = memo(({ location, role, onItemClick }: { location: string
                       isActive ? "text-[#315CF5] dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
                     )}
                   />
-                  <span>{link.label}</span>
+                  <span className="truncate">{link.label}</span>
                 </div>
               </Link>
             );
@@ -200,7 +197,7 @@ const SidebarContent = memo(({ location, role, onItemClick }: { location: string
           </span>
         </div>
         <nav className="space-y-0.5 px-3">
-          {CREATOR_INSIGHTS_LINKS.map((link) => {
+          {creatorInsightsLinks.map((link) => {
             const isActive = location === link.href;
             return (
               <Link key={link.href} href={link.href}>
@@ -219,7 +216,7 @@ const SidebarContent = memo(({ location, role, onItemClick }: { location: string
                       isActive ? "text-[#315CF5] dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
                     )}
                   />
-                  <span>{link.label}</span>
+                  <span className="truncate">{link.label}</span>
                 </div>
               </Link>
             );
@@ -235,7 +232,7 @@ const SidebarContent = memo(({ location, role, onItemClick }: { location: string
           </span>
         </div>
         <nav className="space-y-0.5 px-3">
-          {CREATOR_PROFILE_LINKS.map((link) => {
+          {creatorProfileLinks.map((link) => {
             const isActive = location === link.href;
             return (
               <Link key={link.href} href={link.href}>
@@ -254,7 +251,7 @@ const SidebarContent = memo(({ location, role, onItemClick }: { location: string
                       isActive ? "text-[#315CF5] dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
                     )}
                   />
-                  <span>{link.label}</span>
+                  <span className="truncate">{link.label}</span>
                 </div>
               </Link>
             );
@@ -270,6 +267,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { t } = useTranslation();
   
   const { data: notifications } = useListNotifications({
     query: {
@@ -286,21 +284,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const bottomNavLinks = useMemo(() => {
     if (isCreator) {
       return [
-        { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-        { href: "/opportunities", label: "Opportunities", icon: Compass },
-        { href: "/my-campaigns", label: "My Campaigns", icon: Megaphone },
-        { href: "/applications", label: "Applications", icon: FileCheck },
-        { href: "/messages", label: "Messages", icon: MessageSquare },
+        { href: "/dashboard", label: t('navigation.home'), icon: LayoutDashboard },
+        { href: "/opportunities", label: t('navigation.opportunities'), icon: Compass },
+        { href: "/my-campaigns", label: t('navigation.myCampaigns'), icon: Megaphone },
+        { href: "/applications", label: t('navigation.applications'), icon: FileCheck },
+        { href: "/messages", label: t('navigation.messages'), icon: MessageSquare },
       ];
     }
     return [
-      { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-      { href: "/find-creators", label: "Find Creators", icon: Search },
-      { href: "/campaigns", label: "Campaigns", icon: Megaphone },
-      { href: "/messages", label: "Messages", icon: MessageSquare },
-      { href: "/brand-profile", label: "Profile", icon: Building2 },
+      { href: "/dashboard", label: t('navigation.home'), icon: LayoutDashboard },
+      { href: "/find-creators", label: t('navigation.findCreators'), icon: Search },
+      { href: "/campaigns", label: t('navigation.campaigns'), icon: Megaphone },
+      { href: "/messages", label: t('navigation.messages'), icon: MessageSquare },
+      { href: "/brand-profile", label: t('navigation.brandProfile'), icon: Building2 },
     ];
-  }, [isCreator]);
+  }, [isCreator, t]);
 
   return (
     <div className="min-h-screen bg-[#F6F8FC] dark:bg-[#0B0F19] text-[#0F172A] dark:text-slate-100 flex flex-col font-sans selection:bg-[#315BEF] selection:text-white pb-16 md:pb-0 transition-colors antialiased">
@@ -351,7 +349,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Search className="w-3.5 h-3.5 text-[#94A3B8] dark:text-slate-500 absolute left-3" />
             <input
               type="text"
-              placeholder="Search creators, campaigns, or metrics..."
+              placeholder={t('campaigns.searchPlaceholder')}
               className="w-full h-8 pl-8 pr-3 bg-[#F6F8FC] dark:bg-slate-800/80 hover:bg-[#EEF3FF] dark:hover:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 focus:border-[#315BEF] dark:focus:border-blue-400 rounded-full text-xs text-[#0F172A] dark:text-slate-100 placeholder:text-[#94A3B8] outline-none transition-all"
             />
           </div>
@@ -361,7 +359,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               className="relative p-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Notifications"
+              title={t('notifications.title')}
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
@@ -372,7 +370,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               className="p-1.5 rounded-full text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer hidden sm:block"
-              title="Help & Support"
+              title={t('settings.help')}
             >
               <HelpCircle className="h-4 w-4" />
             </button>
@@ -412,26 +410,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link href="/profile">
                     <DropdownMenuItem className="rounded-xl text-xs font-medium cursor-pointer py-2 px-3">
                       <User className="mr-2 h-4 w-4 text-slate-400" />
-                      My Profile
+                      {t('navigation.profile')}
                     </DropdownMenuItem>
                   </Link>
                 ) : (
                   <Link href="/brand-profile">
                     <DropdownMenuItem className="rounded-xl text-xs font-medium cursor-pointer py-2 px-3">
                       <Building2 className="mr-2 h-4 w-4 text-slate-400" />
-                      Brand Profile
+                      {t('navigation.brandProfile')}
                     </DropdownMenuItem>
                   </Link>
                 )}
                 <Link href="/settings">
                   <DropdownMenuItem className="rounded-xl text-xs font-medium cursor-pointer py-2 px-3">
                     <Settings className="mr-2 h-4 w-4 text-slate-400" />
-                    Settings
+                    {t('navigation.settings')}
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem onClick={logout} className="rounded-xl text-xs font-medium text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer py-2 px-3">
                   <LogOut className="mr-2 h-4 w-4 text-red-500" />
-                  Log out
+                  {t('navigation.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -467,7 +465,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link key={link.href} href={link.href}>
               <div className="flex flex-col items-center gap-0.5 py-1 px-2 cursor-pointer">
                 <link.icon className={cn("h-4 w-4", isActive ? "text-[#315CF5] dark:text-blue-400 font-bold" : "text-slate-400 dark:text-slate-500")} />
-                <span className={cn("text-[10px]", isActive ? "font-bold text-[#315CF5] dark:text-blue-400" : "text-slate-500 dark:text-slate-400")}>
+                <span className={cn("text-[10px] truncate max-w-[64px]", isActive ? "font-bold text-[#315CF5] dark:text-blue-400" : "text-slate-500 dark:text-slate-400")}>
                   {link.label}
                 </span>
               </div>
