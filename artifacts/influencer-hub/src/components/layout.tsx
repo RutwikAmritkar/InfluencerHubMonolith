@@ -19,7 +19,8 @@ import {
   Search,
   User,
   Bookmark,
-  Building2
+  Building2,
+  Globe
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useListNotifications } from "@workspace/api-client-react";
@@ -267,7 +268,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   const { data: notifications } = useListNotifications({
     query: {
@@ -280,6 +281,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [notifications]);
 
   const isCreator = user?.role === "influencer";
+
+  const currentLangLabel = i18n.language === 'hi' ? 'हिन्दी' : i18n.language === 'mr' ? 'मराठी' : 'English';
 
   const bottomNavLinks = useMemo(() => {
     if (isCreator) {
@@ -374,6 +377,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               <HelpCircle className="h-4 w-4" />
             </button>
+
+            {/* Header Language Selector Dropdown (Accessible to both Brands and Creators) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#E2E8F0] dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-[#11172A] text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
+                  title={t('settings.appLanguage')}
+                >
+                  <Globe className="h-3.5 w-3.5 text-[#315BEF]" />
+                  <span className="hidden xs:inline">{currentLangLabel}</span>
+                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-36 rounded-2xl p-1.5 shadow-xl bg-white dark:bg-[#11172A] border-[#E2E8F0] dark:border-slate-800">
+                <DropdownMenuItem onClick={() => i18n.changeLanguage('en')} className="rounded-xl text-xs font-semibold cursor-pointer py-2 px-3 flex items-center justify-between">
+                  <span>English</span>
+                  {i18n.language === 'en' && <span className="text-[#315BEF] font-bold">✓</span>}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => i18n.changeLanguage('hi')} className="rounded-xl text-xs font-semibold cursor-pointer py-2 px-3 flex items-center justify-between">
+                  <span>हिन्दी</span>
+                  {i18n.language === 'hi' && <span className="text-[#315BEF] font-bold">✓</span>}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => i18n.changeLanguage('mr')} className="rounded-xl text-xs font-semibold cursor-pointer py-2 px-3 flex items-center justify-between">
+                  <span>मराठी</span>
+                  {i18n.language === 'mr' && <span className="text-[#315BEF] font-bold">✓</span>}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <div className="h-3.5 w-px bg-[#E2E8F0] dark:bg-slate-800 mx-0.5 hidden sm:block" />
 
