@@ -1,5 +1,5 @@
 [build]
-  command = "npm --prefix artifacts/influencer-hub install && npm --prefix artifacts/influencer-hub run build"
+  command = "npx -y pnpm@9.15.4 install --no-frozen-lockfile && npx -y pnpm@9.15.4 --filter influencer-hub-fe run build"
   publish = "artifacts/influencer-hub/dist/public"
 
 [build.environment]
