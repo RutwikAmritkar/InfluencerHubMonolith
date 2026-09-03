@@ -115,29 +115,26 @@ const defaultAccounts: SocialAccountData[] = [
   {
     platform: "instagram",
     name: "Instagram",
-    handle: "@alexrivera",
-    followers: "125.0K",
-    engagementRate: "4.8%",
-    status: "VERIFIED",
-    profileUrl: "https://instagram.com/alexrivera",
+    handle: "Unconnected",
+    followers: "-",
+    engagementRate: "-",
+    status: "UNCONNECTED",
   },
   {
     platform: "tiktok",
     name: "TikTok",
-    handle: "@alexrivera.official",
-    followers: "86.4K",
-    engagementRate: "6.2%",
-    status: "VERIFIED",
-    profileUrl: "https://tiktok.com/@alexrivera.official",
+    handle: "Unconnected",
+    followers: "-",
+    engagementRate: "-",
+    status: "UNCONNECTED",
   },
   {
     platform: "youtube",
     name: "YouTube",
-    handle: "@alexriveravlogs",
-    followers: "32.1K",
-    engagementRate: "8.5%",
-    status: "CONNECTED",
-    profileUrl: "https://youtube.com/c/alexriveravlogs",
+    handle: "Unconnected",
+    followers: "-",
+    engagementRate: "-",
+    status: "UNCONNECTED",
   },
   {
     platform: "facebook",
@@ -243,10 +240,10 @@ export const SocialPresenceSection = memo(({ accounts }: { accounts?: SocialAcco
                       "text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-2xs shrink-0",
                       acc.status === "VERIFIED"
                         ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/80"
-                        : theme.badgeColor
+                        : "bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/80"
                     )}
                   >
-                    {acc.status === "VERIFIED" ? "✓ Verified" : "✓ Connected"}
+                    {acc.status === "VERIFIED" ? "✓ Verified" : "Submitted"}
                   </Badge>
                 </div>
 

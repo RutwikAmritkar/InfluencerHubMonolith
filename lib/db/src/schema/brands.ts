@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -7,10 +7,20 @@ export const brandsTable = pgTable("brands", {
   userId: text("user_id").notNull(),
   name: text("name").notNull(),
   industry: text("industry").notNull().default("Technology"),
-  country: text("country").notNull().default("US"),
+  country: text("country").notNull().default("India"),
+  city: text("city"),
+  monthlyBudget: integer("monthly_budget").default(50000),
   description: text("description"),
   logoUrl: text("logo_url").notNull().default(""),
   website: text("website"),
+  categories: text("categories").array().notNull().default([]),
+  targetAudience: jsonb("target_audience"),
+  campaignGoals: text("campaign_goals").array().notNull().default([]),
+  campaignPreferences: jsonb("campaign_preferences"),
+  socialAccounts: jsonb("social_accounts").default([]),
+  onboardingStep: text("onboarding_step").default("B1"),
+  onboardingStatus: text("onboarding_status").default("pending"),
+  profileCompletion: integer("profile_completion").notNull().default(70),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -63,7 +63,7 @@ const ACTIVE_CAMPAIGNS_LIST = [
     title: "Summer Beauty Campaign",
     brand: "Glow Cosmetics",
     creatorsCount: 8,
-    budget: "$5,000",
+    budget: "₹50,000",
     status: "Active",
     engagement: "4.8%",
     category: "Beauty & Lifestyle",
@@ -73,7 +73,7 @@ const ACTIVE_CAMPAIGNS_LIST = [
     title: "Tech Launch 2026",
     brand: "NovaTech",
     creatorsCount: 12,
-    budget: "$12,500",
+    budget: "₹125,000",
     status: "Active",
     engagement: "6.2%",
     category: "Tech & Gadgets",
@@ -83,7 +83,7 @@ const ACTIVE_CAMPAIGNS_LIST = [
     title: "Fall Apparel Drop",
     brand: "UrbanFit",
     creatorsCount: 15,
-    budget: "$18,000",
+    budget: "₹180,000",
     status: "Active",
     engagement: "5.4%",
     category: "Fashion & Fitness",
@@ -93,7 +93,7 @@ const ACTIVE_CAMPAIGNS_LIST = [
     title: "Organic Snack Rollout",
     brand: "FreshBite",
     creatorsCount: 6,
-    budget: "$7,080",
+    budget: "₹70,000",
     status: "Active",
     engagement: "7.1%",
     category: "Food & Wellness",
@@ -175,8 +175,146 @@ export default function BrandDashboard() {
   const { t } = useTranslation();
   const [timeframe, setTimeframe] = useState<"7D" | "30D" | "90D" | "1Y">("30D");
 
+  // Determine if this is a newly registered brand account (no fake metrics) vs demo environment
+  const isNewBrandUser = (user as any)?.isNewUser || (!(user as any)?.isDemo && !user?.email?.includes("demo"));
+
   // MEMOIZED TIMEFRAME DATA LOOKUP
   const currentChartData = useMemo(() => PERFORMANCE_DATA[timeframe], [timeframe]);
+
+  if (isNewBrandUser) {
+    return (
+      <div className="space-y-6 w-full pb-10 font-sans">
+        {/* ─── 1. DASHBOARD HEADER FOR NEW BRAND ───────────────────────── */}
+        <div className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-slate-900 text-white p-6 sm:p-8 shadow-xl relative overflow-hidden">
+          <div className="relative z-10 space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-[11px] font-mono font-bold text-blue-200 border border-white/20">
+              <Sparkles className="w-3.5 h-3.5" /> Workspace Initialized
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              Welcome to InfluencerHub, {user?.name?.split(" ")[0] || "Brand"} 👋
+            </h1>
+            <p className="text-xs sm:text-sm text-blue-100/90 font-medium max-w-xl">
+              Let's get your brand ready to launch your first campaign and connect with top verified creators.
+            </p>
+          </div>
+        </div>
+
+        {/* ─── 2. PROFILE COMPLETION WIDGET ──────────────────────────────── */}
+        <div className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Profile Completion</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Complete your profile to unlock full campaign publishing capabilities.</p>
+            </div>
+            <span className="text-sm font-mono font-extrabold text-[#315BEF] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">
+              40%
+            </span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+            <div className="bg-[#315BEF] h-full rounded-full w-[40%] transition-all duration-500" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>Account Credentials</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>Brand Workspace</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500">
+              <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-700 shrink-0" />
+              <span>Campaign Brief & Verification</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── 3. RECOMMENDED NEXT STEPS ─────────────────────────────────── */}
+        <div className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Recommended Next Steps</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Step 1 */}
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-3">
+              <div>
+                <span className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950 text-[#315BEF] dark:text-blue-400 font-bold text-xs flex items-center justify-center mb-2 font-mono">1</span>
+                <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100">Complete Brand Profile</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Add your website, company logo, and industry details.</p>
+              </div>
+              <Link href="/onboarding">
+                <Button className="w-full h-8 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer">
+                  Complete Brand Profile →
+                </Button>
+              </Link>
+            </div>
+
+            {/* Step 2 */}
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-3">
+              <div>
+                <span className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950 text-[#315BEF] dark:text-blue-400 font-bold text-xs flex items-center justify-center mb-2 font-mono">2</span>
+                <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100">Explore Verified Creators</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Filter creators by niche, reach, engagement, and platform.</p>
+              </div>
+              <Link href="/find-creators">
+                <Button variant="outline" className="w-full h-8 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-xs rounded-lg cursor-pointer">
+                  Explore Creators
+                </Button>
+              </Link>
+            </div>
+
+            {/* Step 3 */}
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-3">
+              <div>
+                <span className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950 text-[#315BEF] dark:text-blue-400 font-bold text-xs flex items-center justify-center mb-2 font-mono">3</span>
+                <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100">Create First Campaign</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Set your deliverables, budget, and accept applications.</p>
+              </div>
+              <Link href="/campaigns/create">
+                <Button variant="secondary" className="w-full h-8 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-300 font-bold text-xs rounded-lg cursor-pointer">
+                  Create Campaign
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── 4. ZERO METRICS CLEAN CARDS ─────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <BrandKPICard
+            label="Active Campaigns"
+            value="0"
+            badgeText="No active campaigns"
+            icon={Megaphone}
+            iconStyle="bg-blue-50 dark:bg-blue-950/80 text-[#315BEF] dark:text-blue-400"
+          />
+          <BrandKPICard
+            label="Total Creators"
+            value="0"
+            badgeText="Roster empty"
+            icon={Users}
+            iconStyle="bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400"
+          />
+          <BrandKPICard
+            label="Campaign Spend"
+            value="$0"
+            badgeText="$0 total spent"
+            icon={DollarSign}
+            iconStyle="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400"
+          />
+          <BrandKPICard
+            label="Estimated ROI"
+            value="0.0x"
+            badgeText="Pending launch"
+            icon={TrendingUp}
+            iconStyle="bg-purple-50 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full pb-10">

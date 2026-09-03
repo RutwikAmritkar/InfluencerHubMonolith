@@ -11,10 +11,11 @@ import { Layout } from '@/components/layout';
 import NotFound from '@/pages/not-found';
 import Landing from '@/pages/landing';
 import Login from '@/pages/login';
+import ForgotPassword from '@/pages/forgot-password';
+import ResetPassword from '@/pages/reset-password';
 import DashboardRouter from '@/pages/dashboard/index';
 import BrandDashboard from '@/pages/dashboard/brand';
 import InfluencerDashboard from '@/pages/dashboard/influencer';
-import Influencers from '@/pages/influencers/index';
 import InfluencerDetail from '@/pages/influencers/detail';
 import Campaigns from '@/pages/campaigns/index';
 import CampaignCreate from '@/pages/campaigns/create';
@@ -76,34 +77,11 @@ class ErrorBoundary extends React.Component<
               <button
                 type="button"
                 onClick={() => {
-                  try {
-                    localStorage.clear();
-                  } catch (_e) {}
                   window.location.href = '/login';
                 }}
                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-full cursor-pointer transition-all shadow-md"
               >
-                Reset Session & Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    const mockUser = {
-                      id: 1,
-                      email: "maya.chen@influencerhub.com",
-                      role: "influencer",
-                      name: "Maya Chen",
-                      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
-                      profileId: 1,
-                    };
-                    localStorage.setItem("influencer_hub_user", JSON.stringify(mockUser));
-                  } catch (_e) {}
-                  window.location.href = '/dashboard/influencer';
-                }}
-                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-full cursor-pointer transition-all border border-slate-700"
-              >
-                Launch Demo Creator Dashboard
+                Return to Login
               </button>
             </div>
           </div>
@@ -154,9 +132,24 @@ function PublicOnlyRoute({ component: Component, ...rest }: any) {
 
   useEffect(() => {
     if (!isLoading && user) {
-      setLocation('/dashboard');
+      // If user is currently in the middle of step 4 email verification, allow remaining on sign up page
+      if ((user as any).emailVerified === false) {
+        return;
+      }
+
+      // If onboarding is incomplete, redirect to /onboarding
+      if ((user as any).onboardingStatus !== "completed") {
+        setLocation('/onboarding');
+      } else {
+        // If onboarding is completed, redirect to role dashboard
+        if (user.role === 'brand') {
+          setLocation('/dashboard/brand');
+        } else {
+          setLocation('/dashboard/influencer');
+        }
+      }
     }
-  }, [user, isLoading, setLocation]);
+  }, [user?.id, (user as any)?.emailVerified, (user as any)?.onboardingStatus, user?.role, isLoading, setLocation]);
 
   if (isLoading) {
     return (
@@ -166,7 +159,7 @@ function PublicOnlyRoute({ component: Component, ...rest }: any) {
     );
   }
 
-  if (user) {
+  if (user && (user as any).emailVerified !== false) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-[#0B0F19] text-white p-4">
         <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-3" />
@@ -183,10 +176,18 @@ function ProtectedStandaloneRoute({ component: Component, ...rest }: any) {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      setLocation('/login');
+    if (!isLoading) {
+      if (!user) {
+        setLocation('/login');
+      } else if ((user as any)?.onboardingStatus === "completed") {
+        if (user.role === 'brand') {
+          setLocation('/dashboard/brand');
+        } else {
+          setLocation('/dashboard/influencer');
+        }
+      }
     }
-  }, [user, isLoading, setLocation]);
+  }, [user?.id, (user as any)?.onboardingStatus, user?.role, isLoading, setLocation]);
 
   if (isLoading) {
     return (
@@ -196,16 +197,58 @@ function ProtectedStandaloneRoute({ component: Component, ...rest }: any) {
     );
   }
 
-  if (!user) {
+  if (!user || (user as any)?.onboardingStatus === "completed") {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-[#0B0F19] text-white p-4">
         <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-3" />
-        <p className="text-xs font-bold text-slate-400">Redirecting to Sign In...</p>
+        <p className="text-xs font-bold text-slate-400">Opening Workspace...</p>
       </div>
     );
   }
 
   return <Component {...rest} />;
+}
+
+function RoleProtectedRoute({ component: Component, allowedRole, ...rest }: any) {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        setLocation('/login');
+      } else if (allowedRole && user.role !== allowedRole) {
+        if (user.role === 'brand') {
+          setLocation('/dashboard/brand');
+        } else {
+          setLocation('/dashboard/influencer');
+        }
+      }
+    }
+  }, [user?.id, user?.role, isLoading, allowedRole, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#0B0F19]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!user || (allowedRole && user.role !== allowedRole)) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-[#0B0F19] text-white p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-3" />
+        <p className="text-xs font-bold text-slate-400">Opening Workspace...</p>
+      </div>
+    );
+  }
+
+  return (
+    <Layout>
+      <Component {...rest} />
+    </Layout>
+  );
 }
 
 function Router() {
@@ -219,6 +262,12 @@ function Router() {
       <Route path="/signup">
         <PublicOnlyRoute component={Login} />
       </Route>
+      <Route path="/forgot-password">
+        <PublicOnlyRoute component={ForgotPassword} />
+      </Route>
+      <Route path="/reset-password">
+        <PublicOnlyRoute component={ResetPassword} />
+      </Route>
 
       {/* Onboarding Flow */}
       <Route path="/onboarding">
@@ -227,10 +276,10 @@ function Router() {
 
       {/* Protected App Pages */}
       <Route path="/dashboard/brand">
-        <ProtectedRoute component={BrandDashboard} />
+        <RoleProtectedRoute component={BrandDashboard} allowedRole="brand" />
       </Route>
       <Route path="/dashboard/influencer">
-        <ProtectedRoute component={InfluencerDashboard} />
+        <RoleProtectedRoute component={InfluencerDashboard} allowedRole="influencer" />
       </Route>
       <Route path="/dashboard">
         <ProtectedRoute component={DashboardRouter} />

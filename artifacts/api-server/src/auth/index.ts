@@ -5,12 +5,15 @@ import { db } from "@workspace/db";
 import * as authSchema from "@workspace/db/schema";
 import { logAuditEvent } from "./audit";
 
+import { sendPasswordResetEmail, sendVerificationEmailService } from "../services/email.service";
+
 const baseURL = process.env.BETTER_AUTH_URL || process.env.SERVER_URL || "http://localhost:3000";
 const secret = process.env.BETTER_AUTH_SECRET || process.env.SESSION_SECRET || "influencer-hub-secret-key-production-32-chars";
 
 export const auth = betterAuth({
   baseURL,
   secret,
+  trustedOrigins: ["http://localhost:5000", "http://localhost:5001"],
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -25,6 +28,11 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     async sendResetPassword(data, request) {
       console.log(`[AUTH LOG] Password reset requested for ${data.user.email}. Token link: ${data.url}`);
+      await sendPasswordResetEmail({
+        email: data.user.email,
+        url: data.url,
+        token: data.token,
+      });
       // Audit log event
       await logAuditEvent({
         userId: data.user.id,
@@ -37,6 +45,11 @@ export const auth = betterAuth({
     sendOnSignUp: false,
     async sendVerificationEmail(data, request) {
       console.log(`[AUTH LOG] Verification email sent to ${data.user.email}. Verification link: ${data.url}`);
+      await sendVerificationEmailService({
+        email: data.user.email,
+        url: data.url,
+        token: data.token,
+      });
       await logAuditEvent({
         userId: data.user.id,
         action: "EMAIL_VERIFICATION_SENT",

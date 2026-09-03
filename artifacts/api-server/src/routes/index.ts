@@ -11,6 +11,7 @@ import dashboardRouter from "./dashboard";
 import analyticsRouter from "./analytics";
 import aiRouter from "./ai";
 import socialRouter from "./social";
+import uploadRouter from "./upload";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(dashboardRouter);
 router.use(analyticsRouter);
 router.use(aiRouter);
 router.use(socialRouter);
+router.use(uploadRouter);
 
 export default router;

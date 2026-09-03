@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { auth } from "../auth/index";
 import { logAuditEvent } from "../auth/audit";
+import { db, session as sessionTable, user as userTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 export interface AuthenticatedUser {
   id: string;
@@ -17,9 +19,24 @@ export interface AuthenticatedRequest extends Request {
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const sessionData = await auth.api.getSession({
+    let sessionData = await auth.api.getSession({
       headers: req.headers,
     });
+
+    const sessionToken = req.cookies?.["better-auth.session_token"] || req.headers.authorization?.replace("Bearer ", "");
+
+    if (!sessionData && sessionToken) {
+      const [dbSession] = await db.select().from(sessionTable).where(eq(sessionTable.token, sessionToken));
+      if (dbSession && new Date(dbSession.expiresAt) > new Date()) {
+        const [dbUser] = await db.select().from(userTable).where(eq(userTable.id, dbSession.userId));
+        if (dbUser) {
+          sessionData = {
+            session: dbSession as any,
+            user: dbUser as any,
+          };
+        }
+      }
+    }
 
     if (sessionData && sessionData.user) {
       const userRole = (sessionData.user.role as AuthenticatedUser["role"]) || "influencer";
@@ -32,21 +49,6 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       };
       (req as AuthenticatedRequest).user = authUser;
       (req as AuthenticatedRequest).userId = sessionData.user.id;
-      return next();
-    }
-
-    // Demo/Development session cookie fallback for existing frontend mock session tokens
-    const legacySessionToken = req.cookies?.["session"];
-    if (legacySessionToken) {
-      const authUser: AuthenticatedUser = {
-        id: "demo-user-1",
-        email: "demo@influencerhub.demo",
-        name: "Demo User",
-        role: "influencer",
-        avatarUrl: "https://i.pravatar.cc/150?img=47",
-      };
-      (req as AuthenticatedRequest).user = authUser;
-      (req as AuthenticatedRequest).userId = authUser.id;
       return next();
     }
 

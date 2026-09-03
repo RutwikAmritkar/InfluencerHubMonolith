@@ -172,13 +172,15 @@ router.get("/influencers/:id", async (req, res): Promise<void> => {
         name: row.userName ?? "Unknown",
         bio: row.influencer.bio,
         category: row.influencer.category,
-        country: row.influencer.country,
+        country: row.influencer.country || "India",
+        state: row.influencer.state || "",
+        city: row.influencer.city || "",
         followers: row.influencer.followers,
         engagementRate: row.influencer.engagementRate,
         avgViews: row.influencer.avgViews,
         collaborationCost: row.influencer.collaborationCost,
         platforms: row.influencer.platforms,
-        languages: row.influencer.languages,
+        languages: (row.influencer.languages || []).filter(l => ["English", "Hindi", "Marathi"].includes(l)),
         avatarUrl: row.influencer.avatarUrl,
         coverUrl: row.influencer.coverUrl,
         profileCompletion: row.influencer.profileCompletion,
@@ -187,14 +189,9 @@ router.get("/influencers/:id", async (req, res): Promise<void> => {
         availability: row.influencer.availability,
         portfolio: row.influencer.portfolio,
         socialAccounts: row.influencer.socialAccounts || [],
-        previousCollaborations: [
-          { id: 1, brandName: "Nike", campaignTitle: "Summer Collection", year: 2024 },
-          { id: 2, brandName: "Spotify", campaignTitle: "Launch Campaign", year: 2023 },
-        ],
-        reviews: [
-          { id: 1, brandName: "Nike", rating: 4.8, comment: "Excellent creator with strong engagement. Delivered on time.", createdAt: "2024-06-01" },
-          { id: 2, brandName: "Spotify", rating: 4.5, comment: "Great collaboration. Very professional.", createdAt: "2023-11-15" },
-        ],
+        audienceData: row.influencer.audienceData || null,
+        previousCollaborations: [],
+        reviews: [],
       });
       return;
     }
@@ -205,42 +202,39 @@ router.get("/influencers/:id", async (req, res): Promise<void> => {
   const memData = inMemoryStore[id] || inMemoryStore[1];
   res.json({
     ...memData,
-    previousCollaborations: [
-      { id: 1, brandName: "Nike", campaignTitle: "Summer Collection", year: 2024 },
-      { id: 2, brandName: "Spotify", campaignTitle: "Launch Campaign", year: 2023 },
-    ],
-    reviews: [
-      { id: 1, brandName: "Nike", rating: 4.8, comment: "Excellent creator with strong engagement. Delivered on time.", createdAt: "2024-06-01" },
-      { id: 2, brandName: "Spotify", rating: 4.5, comment: "Great collaboration. Very professional.", createdAt: "2023-11-15" },
-    ],
+    country: memData.country || "India",
+    languages: (memData.languages || []).filter((l: string) => ["English", "Hindi", "Marathi"].includes(l)),
+    previousCollaborations: [],
+    reviews: [],
   });
 });
 
 router.patch("/influencers/:id", requireAuth, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10) || 1;
-  const authUserId = (req as typeof req & { userId: number }).userId;
 
-  const parsed = UpdateInfluencerBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-
-  const { availability, coverUrl, avatarUrl, socialAccounts, ...rest } = parsed.data as any;
+  const { availability, coverUrl, avatarUrl, socialAccounts, languages, country, state, city, bio, category, collaborationCost, ...rest } = req.body || {};
   const updateData: Record<string, unknown> = { ...rest };
   if (availability !== undefined) updateData.availability = availability;
   if (coverUrl !== undefined) updateData.coverUrl = coverUrl;
   if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
-  if (socialAccounts !== undefined) {
+  if (bio !== undefined) updateData.bio = bio;
+  if (category !== undefined) updateData.category = category;
+  if (country !== undefined) updateData.country = country;
+  if (state !== undefined) updateData.state = state;
+  if (city !== undefined) updateData.city = city;
+  if (collaborationCost !== undefined) updateData.collaborationCost = collaborationCost;
+
+  if (languages !== undefined && Array.isArray(languages)) {
+    const validLanguages = ["English", "Hindi", "Marathi"];
+    updateData.languages = languages.filter((l: string) => validLanguages.includes(l));
+  }
+
+  if (socialAccounts !== undefined && Array.isArray(socialAccounts)) {
     updateData.socialAccounts = socialAccounts;
     const derivedPlatforms = Array.from(new Set(socialAccounts.map((a: any) => a.platform)));
-    if (derivedPlatforms.length > 0) {
-      updateData.platforms = derivedPlatforms;
-    }
-    if (socialAccounts.length > 0) {
-      updateData.profileCompletion = 95;
-    }
+    updateData.platforms = derivedPlatforms;
+    updateData.profileCompletion = 95;
   }
 
   try {
@@ -251,6 +245,10 @@ router.patch("/influencers/:id", requireAuth, async (req, res): Promise<void> =>
       .returning();
 
     if (updated) {
+      if (avatarUrl) {
+        await db.update(userTable).set({ image: avatarUrl }).where(eq(userTable.id, String(updated.userId))).catch(() => {});
+      }
+
       const [user] = await db.select().from(userTable).where(eq(userTable.id, String(updated.userId))).limit(1);
 
       res.json({
@@ -260,6 +258,7 @@ router.patch("/influencers/:id", requireAuth, async (req, res): Promise<void> =>
         bio: updated.bio,
         category: updated.category,
         country: updated.country,
+        city: updated.city,
         followers: updated.followers,
         engagementRate: updated.engagementRate,
         avgViews: updated.avgViews,
@@ -276,7 +275,7 @@ router.patch("/influencers/:id", requireAuth, async (req, res): Promise<void> =>
       return;
     }
   } catch (_e) {
-    // Fallback to in-memory update
+    // Fallback
   }
 
   const currentMem = inMemoryStore[id] || { ...inMemoryStore[1], id };
