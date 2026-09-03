@@ -50,7 +50,7 @@ export class InstagramProvider implements SocialPlatformProvider {
     }
 
     try {
-      const url = `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(this.redirectUri)}&client_secret=${this.clientSecret}&code=${code}`;
+      const url = `https://graph.facebook.com/v20.0/oauth/access_token?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(this.redirectUri)}&client_secret=${this.clientSecret}&code=${code}`;
       const res = await fetch(url);
       const data = (await res.json()) as any;
 
@@ -61,7 +61,7 @@ export class InstagramProvider implements SocialPlatformProvider {
       const shortLivedToken = data.access_token;
 
       // Exchange short-lived user token for 60-day long-lived token
-      const exchangeUrl = `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${this.clientId}&client_secret=${this.clientSecret}&fb_exchange_token=${shortLivedToken}`;
+      const exchangeUrl = `https://graph.facebook.com/v20.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${this.clientId}&client_secret=${this.clientSecret}&fb_exchange_token=${shortLivedToken}`;
       const exchangeRes = await fetch(exchangeUrl);
       const exchangeData = (await exchangeRes.json()) as any;
 
@@ -113,7 +113,7 @@ export class InstagramProvider implements SocialPlatformProvider {
     }
 
     try {
-      const url = `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`;
+      const url = `https://graph.facebook.com/v20.0/me/accounts?access_token=${accessToken}`;
       const res = await fetch(url);
       const data = (await res.json()) as any;
       const pageId = data.data?.[0]?.id;
@@ -122,7 +122,7 @@ export class InstagramProvider implements SocialPlatformProvider {
         throw new Error("No Facebook Page connected to this Instagram Business account");
       }
 
-      const pageRes = await fetch(`https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account&access_token=${accessToken}`);
+      const pageRes = await fetch(`https://graph.facebook.com/v20.0/${pageId}?fields=instagram_business_account&access_token=${accessToken}`);
       const pageData = (await pageRes.json()) as any;
       const igId = pageData.instagram_business_account?.id;
 
@@ -130,7 +130,7 @@ export class InstagramProvider implements SocialPlatformProvider {
         throw new Error("No Instagram Business account linked to Facebook Page");
       }
 
-      const igRes = await fetch(`https://graph.facebook.com/v19.0/${igId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count&access_token=${accessToken}`);
+      const igRes = await fetch(`https://graph.facebook.com/v20.0/${igId}?fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count&access_token=${accessToken}`);
       const igData = (await igRes.json()) as any;
 
       return {
@@ -191,7 +191,7 @@ export class InstagramProvider implements SocialPlatformProvider {
     }
 
     try {
-      const url = `https://graph.facebook.com/v19.0/${externalAccountId}/media?fields=id,caption,media_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count&limit=${limit}&access_token=${accessToken}`;
+      const url = `https://graph.facebook.com/v20.0/${externalAccountId}/media?fields=id,caption,media_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count&limit=${limit}&access_token=${accessToken}`;
       const res = await fetch(url);
       const data = (await res.json()) as any;
 

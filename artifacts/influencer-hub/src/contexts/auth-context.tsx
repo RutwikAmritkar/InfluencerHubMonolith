@@ -10,36 +10,13 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = "influencer_hub_user";
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUserState] = useState<User | null>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const setUser = (newUser: User | null) => {
-    setUserState(newUser);
-    try {
-      if (newUser) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-      } else {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    } catch (_err) {
-      // Ignore storage write errors
-    }
-  };
 
   const { data: meData, isLoading: meLoading, isError } = useGetMe({
     query: {
       retry: false,
-      // Don't throw on error — fail silently when backend is unavailable
       throwOnError: false,
     } as any
   });
@@ -48,17 +25,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!meLoading) {
-      try {
-        if (meData && typeof meData === "object" && "user" in (meData as any) && (meData as any).user) {
-          setUser((meData as any).user);
-        } else if (isError) {
-          // Backend unreachable — keep localStorage session if it exists
-          if (!localStorage.getItem(STORAGE_KEY)) {
-            setUserState(null);
-          }
-        }
-      } catch (_err) {
-        // Fail silently — keep existing user state
+      if (meData && typeof meData === "object" && "user" in (meData as any) && (meData as any).user) {
+        setUser((meData as any).user);
+      } else {
+        setUser(null);
       }
       setIsLoading(false);
     }

@@ -54,9 +54,11 @@ export type SocialAccountStatus = typeof SocialAccountStatus[keyof typeof Social
 
 export const SocialAccountStatus = {
   UNVERIFIED: 'UNVERIFIED',
+  SUBMITTED: 'SUBMITTED',
   VERIFYING: 'VERIFYING',
   VERIFIED: 'VERIFIED',
   FAILED: 'FAILED',
+  EXPIRED: 'EXPIRED',
 } as const;
 
 export type SocialAccountVerificationType = typeof SocialAccountVerificationType[keyof typeof SocialAccountVerificationType];

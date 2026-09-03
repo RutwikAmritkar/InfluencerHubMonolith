@@ -39,12 +39,20 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["brand", "influencer"]),
-});
+const registerSchema = z
+  .object({
+    name: z.string().min(2, "Full name must be at least 2 characters"),
+    email: z.string().email("Please enter a valid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(6, "Please confirm your password"),
+    role: z.enum(["brand", "influencer"]),
+    country: z.string().min(1, "Please select your country"),
+    language: z.string().min(1, "Please select your language"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 // 3 Synchronized Slide Configurations for Sign In
 const slides = [
@@ -73,7 +81,7 @@ const slides = [
 
 export default function Login() {
   const [location, setLocation] = useLocation();
-  const { setUser } = useAuth();
+  const { user, setUser } = useAuth();
   const queryClient = useQueryClient();
   const shouldReduceMotion = useReducedMotion();
 
@@ -83,12 +91,20 @@ export default function Login() {
     return "signin";
   });
 
-  // Signup Flow Steps: 1 (Consent Screen) | 2 (Account Creation & Role Selection)
-  const [signupStep, setSignupStep] = useState<1 | 2>(1);
+  // Signup Flow Steps: 1 (Consent Screen) | 2 (Account Type Selection) | 3 (Account Creation) | 4 (Email Verification)
+  const [signupStep, setSignupStep] = useState<1 | 2 | 3 | 4>(1);
 
   // Consent Checkboxes
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [marketingAgreed, setMarketingAgreed] = useState(false);
+
+  // Selected Role state for Step 2
+  const [selectedRole, setSelectedRole] = useState<"influencer" | "brand" | null>(null);
+
+  // Email Verification State for Step 4
+  const [verificationCode, setVerificationCode] = useState("123456");
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // Legal Document Overlay Modal State
   const [legalDoc, setLegalDoc] = useState<"terms" | "privacy" | null>(null);
@@ -100,6 +116,8 @@ export default function Login() {
   const [emailState, setEmailState] = useState<"input" | "sent" | "password">("input");
   const [sentEmail, setSentEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const loginMutation = useLogin();
   const registerMutation = useRegister();
@@ -150,7 +168,7 @@ export default function Login() {
 
   const registerForm = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema as any),
-    defaultValues: { name: "", email: "", password: "", role: "brand" },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "", role: "influencer", country: "India", language: "English" },
   });
 
   const currentEmail = loginForm.watch("email");
@@ -170,122 +188,114 @@ export default function Login() {
   };
 
   const onLoginSubmit = (values: z.infer<typeof loginSchema>) => {
-    // Attempt real API login. On any error (e.g. no backend on static hosts),
-    // fall through to demo mode so the app always works.
     loginMutation.mutate(
       { data: values as any },
       {
         onSuccess: (data) => {
-          try {
-            if (data?.user) {
-              setUser(data.user);
-              queryClient.setQueryData(getGetMeQueryKey(), data);
-              toast.success("Logged in successfully");
-              setLocation("/dashboard");
-              return;
-            }
-          } catch (_e) {}
-          // Fallback: treat as demo mode if response is malformed
-          const isBrand = values.email.toLowerCase().includes("brand") || values.email.toLowerCase().includes("nova");
-          const mockUser = {
-            id: 1,
-            email: values.email,
-            role: (isBrand ? "brand" : "influencer") as "brand" | "influencer",
-            name: isBrand ? "NovaTech Brand" : "Maya Chen",
-            avatarUrl: isBrand ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
-            profileId: 1,
-          };
-          setUser(mockUser);
-          toast.success("Logged in (Demo Mode)");
-          setLocation("/dashboard");
+          if (data?.user) {
+            setUser(data.user);
+            queryClient.setQueryData(getGetMeQueryKey(), data);
+            toast.success("Logged in successfully");
+            setLocation("/dashboard");
+            return;
+          }
+          toast.error("Unable to log in. Please check your credentials or try again.");
         },
-        onError: () => {
-          const isBrand = values.email.toLowerCase().includes("brand") || values.email.toLowerCase().includes("nova");
-          const mockUser = {
-            id: 1,
-            email: values.email,
-            role: (isBrand ? "brand" : "influencer") as "brand" | "influencer",
-            name: isBrand ? "NovaTech Brand" : "Maya Chen",
-            avatarUrl: isBrand ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
-            profileId: 1,
-          };
-          setUser(mockUser);
-          toast.success("Logged in (Demo Mode)");
-          setLocation("/dashboard");
+        onError: (err: any) => {
+          const errorMessage = err?.response?.data?.error || err?.message || "Invalid email or password. Please try again.";
+          toast.error(errorMessage);
         },
       }
     );
-  };
-
-  const handleDemoLogin = (role: "influencer" | "brand") => {
-    const demoEmail = role === "brand" ? "brand.demo@influencerhub.com" : "maya.chen@influencerhub.com";
-    const mockUser = {
-      id: role === "brand" ? 2 : 1,
-      email: demoEmail,
-      role,
-      name: role === "brand" ? "NovaTech Brand" : "Maya Chen",
-      avatarUrl: role === "brand" ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
-      profileId: 1,
-    };
-    setUser(mockUser);
-    toast.success(`Logged in as ${role === "brand" ? "Brand" : "Creator"} (Demo Mode)`);
-    setLocation("/dashboard");
   };
 
   const onRegisterSubmit = (values: z.infer<typeof registerSchema>) => {
+    if (!selectedRole) {
+      toast.error("Please select whether you are a Creator or a Brand.");
+      setSignupStep(2);
+      return;
+    }
+
+    const { confirmPassword, ...valuesWithoutConfirm } = values;
+
+    const payload = {
+      ...valuesWithoutConfirm,
+      role: selectedRole,
+    };
+
+    setRegisteredEmail(values.email);
+
     registerMutation.mutate(
-      { data: values as any },
+      { data: payload as any },
       {
         onSuccess: (data) => {
-          try {
-            if (data?.user) {
-              setUser(data.user);
-              queryClient.setQueryData(getGetMeQueryKey(), data);
-              toast.success("Account created successfully");
-              if (data.user.role === "influencer") {
-                setLocation("/onboarding");
-              } else {
-                setLocation("/dashboard");
-              }
-              return;
-            }
-          } catch (_e) {}
-          // Fallback demo mode if response is malformed
-          const mockUser = {
-            id: 1,
-            email: values.email,
-            role: values.role,
-            name: values.name,
-            avatarUrl: values.role === "brand" ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
-            profileId: 1,
-          };
-          setUser(mockUser);
-          toast.success("Account created (Demo Mode)");
-          if (values.role === "influencer") {
-            setLocation("/onboarding");
-          } else {
-            setLocation("/dashboard");
+          if (data?.user) {
+            setUser({ ...(data.user as any), emailVerified: false });
+            queryClient.setQueryData(getGetMeQueryKey(), data);
+            toast.success("Account created successfully. Verification code sent!");
+            setSignupStep(4);
+            return;
           }
+          toast.error("Unable to create your account right now. Please try again.");
         },
-        onError: () => {
-          const mockUser = {
-            id: 1,
-            email: values.email,
-            role: values.role,
-            name: values.name,
-            avatarUrl: values.role === "brand" ? "https://logo.clearbit.com/apple.com" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
-            profileId: 1,
-          };
-          setUser(mockUser);
-          toast.success("Account created (Demo Mode)");
-          if (values.role === "influencer") {
-            setLocation("/onboarding");
-          } else {
-            setLocation("/dashboard");
+        onError: (err: any) => {
+          const errorMessage = err?.response?.data?.error || err?.message || "";
+          if (
+            errorMessage.toLowerCase().includes("already exists") ||
+            errorMessage.toLowerCase().includes("user already")
+          ) {
+            toast.error("An account with this email address already exists.", {
+              action: {
+                label: "Log in",
+                onClick: () => {
+                  setAuthMode("signin");
+                  setLocation("/login");
+                },
+              },
+            });
+            return;
           }
+
+          toast.error("Unable to create your account right now. Please try again.");
         },
       }
     );
+  };
+
+  const handleVerifyEmail = async () => {
+    if (!verificationCode || verificationCode.length < 4) {
+      toast.error("Please enter a valid verification code or token.");
+      return;
+    }
+    setIsVerifying(true);
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: registeredEmail, token: verificationCode, code: verificationCode }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Verification failed. Token may be invalid or expired.");
+        return;
+      }
+
+      if (user) {
+        setUser({ ...(user as any), emailVerified: true });
+      }
+      toast.success("Email verified successfully! 🎉");
+      setLocation("/onboarding");
+    } catch (_err) {
+      toast.error("Network error during email verification.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleSelectRole = (role: "influencer" | "brand") => {
+    setSelectedRole(role);
+    registerForm.setValue("role", role, { shouldValidate: true });
   };
 
   const activeSlideData = slides[activeSlide];
@@ -430,10 +440,129 @@ export default function Login() {
                   </button>
                 </div>
               </motion.div>
-            ) : (
-              /* ─── STEP 2: ACCOUNT CREATION & ROLE SELECTION ─── */
+            ) : signupStep === 2 ? (
+              /* ─── STEP 2: CHOOSE ACCOUNT TYPE / ROLE SELECTION ─── */
               <motion.div
                 key="signup-step-2"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="w-full rounded-[24px] bg-[#141A2E]/90 border border-slate-800/80 p-7 sm:p-9 shadow-2xl backdrop-blur-xl text-left space-y-6"
+              >
+                <div className="text-center space-y-1.5">
+                  <h2 className="text-3xl font-extrabold text-white tracking-tight">What are you here as?</h2>
+                  <p className="text-xs text-slate-400 font-medium">Select your account type to continue.</p>
+                </div>
+
+                {/* Interactive Role Selection Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-1" role="radiogroup" aria-label="Account type selection">
+                  {/* CREATOR CARD */}
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedRole === "influencer"}
+                    tabIndex={0}
+                    onClick={() => handleSelectRole("influencer")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectRole("influencer");
+                      }
+                    }}
+                    className={`group relative flex flex-col justify-between p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
+                      selectedRole === "influencer"
+                        ? "border-blue-500 bg-blue-600/15 ring-2 ring-blue-500/30 text-white shadow-xl shadow-blue-600/20 scale-[1.02]"
+                        : "border-slate-800 bg-slate-950/80 hover:border-slate-700 hover:bg-slate-900/90 text-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between w-full mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl font-bold border border-blue-500/20 group-hover:scale-110 transition-transform">
+                        👤
+                      </div>
+                      {selectedRole === "influencer" && (
+                        <CheckCircle2 className="w-5 h-5 text-blue-400 fill-blue-500/20 shrink-0 animate-in fade-in zoom-in-75" />
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-extrabold text-sm text-white block tracking-wider mb-1">
+                        CREATOR
+                      </span>
+                      <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                        Find brands. Get paid.
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* BRAND CARD */}
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedRole === "brand"}
+                    tabIndex={0}
+                    onClick={() => handleSelectRole("brand")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectRole("brand");
+                      }
+                    }}
+                    className={`group relative flex flex-col justify-between p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
+                      selectedRole === "brand"
+                        ? "border-blue-500 bg-blue-600/15 ring-2 ring-blue-500/30 text-white shadow-xl shadow-blue-600/20 scale-[1.02]"
+                        : "border-slate-800 bg-slate-950/80 hover:border-slate-700 hover:bg-slate-900/90 text-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between w-full mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl font-bold border border-blue-500/20 group-hover:scale-110 transition-transform">
+                        🏢
+                      </div>
+                      {selectedRole === "brand" && (
+                        <CheckCircle2 className="w-5 h-5 text-blue-400 fill-blue-500/20 shrink-0 animate-in fade-in zoom-in-75" />
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-extrabold text-sm text-white block tracking-wider mb-1">
+                        BRAND
+                      </span>
+                      <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                        Discover creators. Run campaigns.
+                      </p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Continue CTA Button */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    disabled={!selectedRole}
+                    onClick={() => setSignupStep(3)}
+                    className={`w-full h-12 rounded-full text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
+                      selectedRole
+                        ? "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 hover:scale-[1.02] active:scale-95 cursor-pointer"
+                        : "bg-slate-800/80 text-slate-500 border border-slate-700/50 cursor-not-allowed"
+                    }`}
+                  >
+                    <span>Continue</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="text-xs text-slate-400 text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setSignupStep(1)}
+                    className="text-slate-400 hover:text-white font-medium cursor-pointer transition-colors"
+                  >
+                    ← Back to terms consent
+                  </button>
+                </div>
+              </motion.div>
+            ) : signupStep === 3 ? (
+              /* ─── STEP 3: CREATE ACCOUNT FORM ─── */
+              <motion.div
+                key="signup-step-3"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16 }}
@@ -441,8 +570,20 @@ export default function Login() {
                 className="w-full rounded-[24px] bg-[#141A2E]/90 border border-slate-800/80 p-7 sm:p-9 shadow-2xl backdrop-blur-xl text-left space-y-5"
               >
                 <div>
-                  <h2 className="text-3xl font-extrabold text-white tracking-tight">Create your account</h2>
-                  <p className="text-xs text-slate-400 mt-1">Select your profile type to continue.</p>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-3xl font-extrabold text-white tracking-tight">Create your account</h2>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                      <span>{selectedRole === "brand" ? "🏢 Brand" : "👤 Creator"}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSignupStep(2)}
+                        className="text-[10px] underline text-blue-300 hover:text-white ml-1 cursor-pointer font-normal"
+                      >
+                        Change
+                      </button>
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Enter your details to register your {selectedRole === "brand" ? "brand workspace" : "creator account"}.</p>
                 </div>
 
                 <Form {...registerForm}>
@@ -452,15 +593,17 @@ export default function Login() {
                       name="name"
                       render={({ field }) => (
                         <FormItem className="space-y-1">
-                          <FormLabel className="text-xs text-slate-300 font-medium">Full name</FormLabel>
+                          <FormLabel className="text-xs text-slate-300 font-medium">
+                            {selectedRole === "brand" ? "Company Name" : "Full Name"} <span className="text-blue-400">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Your full name"
-                              className="h-10 bg-slate-950/80 border-slate-800 text-white rounded-xl text-xs"
+                              placeholder={selectedRole === "brand" ? "e.g. NovaTech Global" : "Your full name"}
+                              className="h-10 bg-slate-950/80 border-slate-800 text-white rounded-xl text-xs focus-visible:ring-blue-500"
                               {...field}
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[11px] text-red-400" />
                         </FormItem>
                       )}
                     />
@@ -470,15 +613,16 @@ export default function Login() {
                       name="email"
                       render={({ field }) => (
                         <FormItem className="space-y-1">
-                          <FormLabel className="text-xs text-slate-300 font-medium">Email address</FormLabel>
+                          <FormLabel className="text-xs text-slate-300 font-medium">Email address <span className="text-blue-400">*</span></FormLabel>
                           <FormControl>
                             <Input
+                              type="email"
                               placeholder="you@example.com"
-                              className="h-10 bg-slate-950/80 border-slate-800 text-white rounded-xl text-xs"
+                              className="h-10 bg-slate-950/80 border-slate-800 text-white rounded-xl text-xs focus-visible:ring-blue-500"
                               {...field}
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[11px] text-red-400" />
                         </FormItem>
                       )}
                     />
@@ -488,58 +632,110 @@ export default function Login() {
                       name="password"
                       render={({ field }) => (
                         <FormItem className="space-y-1">
-                          <FormLabel className="text-xs text-slate-300 font-medium">Password</FormLabel>
+                          <FormLabel className="text-xs text-slate-300 font-medium">Password (min 6 chars) <span className="text-blue-400">*</span></FormLabel>
                           <FormControl>
-                            <Input
-                              type="password"
-                              placeholder="Create password"
-                              className="h-10 bg-slate-950/80 border-slate-800 text-white rounded-xl text-xs"
-                              {...field}
-                            />
+                            <div className="relative">
+                              <Input
+                                type={showRegisterPassword ? "text" : "password"}
+                                placeholder="Create password"
+                                className="h-10 bg-slate-950/80 border-slate-800 text-white rounded-xl text-xs pr-10 focus-visible:ring-blue-500"
+                                {...field}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                              >
+                                {showRegisterPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[11px] text-red-400" />
                         </FormItem>
                       )}
                     />
 
                     <FormField
                       control={registerForm.control}
-                      name="role"
+                      name="confirmPassword"
                       render={({ field }) => (
-                        <FormItem className="space-y-1.5 pt-1">
-                          <FormLabel className="text-xs text-slate-300 font-medium">I am a:</FormLabel>
+                        <FormItem className="space-y-1">
+                          <FormLabel className="text-xs text-slate-300 font-medium">Confirm password <span className="text-blue-400">*</span></FormLabel>
                           <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="grid grid-cols-2 gap-3"
-                            >
-                              <FormItem className="relative flex flex-col rounded-xl border border-slate-800 bg-slate-950/80 p-3 cursor-pointer data-[state=checked]:border-blue-500 data-[state=checked]:bg-blue-600/15">
-                                <FormControl>
-                                  <RadioGroupItem value="influencer" className="sr-only" />
-                                </FormControl>
-                                <span className="font-bold text-xs text-white cursor-pointer mb-0.5">CREATOR</span>
-                                <p className="text-[10px] text-slate-400">Find brands. Get paid.</p>
-                              </FormItem>
-
-                              <FormItem className="relative flex flex-col rounded-xl border border-slate-800 bg-slate-950/80 p-3 cursor-pointer data-[state=checked]:border-blue-500 data-[state=checked]:bg-blue-600/15">
-                                <FormControl>
-                                  <RadioGroupItem value="brand" className="sr-only" />
-                                </FormControl>
-                                <span className="font-bold text-xs text-white cursor-pointer mb-0.5">BRAND</span>
-                                <p className="text-[10px] text-slate-400">Discover creators.</p>
-                              </FormItem>
-                            </RadioGroup>
+                            <div className="relative">
+                              <Input
+                                type={showConfirmPassword ? "text" : "password"}
+                                placeholder="Re-enter your password"
+                                className="h-10 bg-slate-950/80 border-slate-800 text-white rounded-xl text-xs pr-10 focus-visible:ring-blue-500"
+                                {...field}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                              >
+                                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[11px] text-red-400" />
                         </FormItem>
                       )}
                     />
 
+                    {/* Country & Language Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <FormField
+                        control={registerForm.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel className="text-xs text-slate-300 font-medium">Country <span className="text-blue-400">*</span></FormLabel>
+                            <FormControl>
+                              <select
+                                className="w-full h-10 bg-slate-950/80 border border-slate-800 text-white rounded-xl text-xs px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer font-medium"
+                                {...field}
+                              >
+                                <option value="India">India</option>
+                                <option value="United States">United States</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="Canada">Canada</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Germany">Germany</option>
+                                <option value="France">France</option>
+                              </select>
+                            </FormControl>
+                            <FormMessage className="text-[11px] text-red-400" />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={registerForm.control}
+                        name="language"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel className="text-xs text-slate-300 font-medium">Language <span className="text-blue-400">*</span></FormLabel>
+                            <FormControl>
+                              <select
+                                className="w-full h-10 bg-slate-950/80 border border-slate-800 text-white rounded-xl text-xs px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer font-medium"
+                                {...field}
+                              >
+                                <option value="English">English</option>
+                                <option value="Hindi">Hindi</option>
+                                <option value="Marathi">Marathi</option>
+                              </select>
+                            </FormControl>
+                            <FormMessage className="text-[11px] text-red-400" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
                     <Button
                       type="submit"
                       disabled={registerMutation.isPending}
-                      className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full text-xs shadow-lg shadow-blue-600/30 cursor-pointer mt-1"
+                      className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full text-xs shadow-lg shadow-blue-600/30 cursor-pointer mt-2"
                     >
                       {registerMutation.isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin text-white" />
@@ -555,11 +751,78 @@ export default function Login() {
                 <div className="text-xs text-slate-400 text-center pt-2">
                   <button
                     type="button"
-                    onClick={() => setSignupStep(1)}
+                    onClick={() => setSignupStep(2)}
                     className="text-slate-400 hover:text-white font-medium cursor-pointer transition-colors"
                   >
-                    ← Back to terms consent
+                    ← Back to account type selection
                   </button>
+                </div>
+              </motion.div>
+            ) : (
+              /* ─── STEP 4: EMAIL VERIFICATION SCREEN ─── */
+              <motion.div
+                key="signup-step-4"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="w-full rounded-[24px] bg-[#141A2E]/90 border border-slate-800/80 p-7 sm:p-9 shadow-2xl backdrop-blur-xl text-left space-y-6"
+              >
+                <div className="text-center space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl mx-auto border border-blue-500/20 shadow-inner">
+                    ✉️
+                  </div>
+                  <h2 className="text-3xl font-extrabold text-white tracking-tight">Verify your email</h2>
+                  <p className="text-xs text-slate-300 font-medium">
+                    We sent a verification code to <span className="text-blue-400 font-bold">{registeredEmail || "your email"}</span>.
+                  </p>
+                </div>
+
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-300 font-medium block">6-Digit Verification Code</label>
+                    <Input
+                      type="text"
+                      maxLength={6}
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      placeholder="123456"
+                      className="h-12 bg-slate-950/80 border-slate-800 text-white rounded-xl text-center text-lg font-mono font-bold tracking-[0.3em] focus-visible:ring-blue-500"
+                    />
+                  </div>
+
+                  <Button
+                    type="button"
+                    disabled={isVerifying}
+                    onClick={handleVerifyEmail}
+                    className="w-full h-12 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full text-xs shadow-lg shadow-blue-600/30 cursor-pointer"
+                  >
+                    {isVerifying ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        Verify & Continue <ArrowRight className="w-4 h-4" />
+                      </span>
+                    )}
+                  </Button>
+
+                  <div className="flex items-center justify-between text-xs text-slate-400 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => toast.success(`Verification code resent to ${registeredEmail || "your email"}.`)}
+                      className="text-blue-400 hover:underline font-semibold cursor-pointer"
+                    >
+                      Resend code
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSignupStep(3)}
+                      className="text-slate-400 hover:text-white font-medium cursor-pointer"
+                    >
+                      Change email
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -947,13 +1210,19 @@ export default function Login() {
                       control={loginForm.control}
                       name="email"
                       render={({ field }) => (
-                        <FormItem className="space-y-0">
+                        <FormItem className="space-y-1 text-left">
                           <FormControl>
-                            <div className="relative flex items-center w-full rounded-full border border-white/20 bg-white/10 p-1.5 focus-within:border-blue-400 focus-within:bg-white/15 transition-all shadow-inner">
+                            <div
+                              className={`relative flex items-center w-full rounded-full border transition-all duration-200 p-1 shadow-inner ${
+                                loginForm.formState.errors.email
+                                  ? "border-red-500/80 bg-red-950/30 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-500/30"
+                                  : "border-white/20 bg-white/10 hover:border-white/30 focus-within:border-blue-400 focus-within:bg-white/15 focus-within:ring-2 focus-within:ring-blue-400/30"
+                              }`}
+                            >
                               <input
                                 type="email"
                                 placeholder="Type your email"
-                                className="w-full bg-transparent text-white placeholder:text-slate-400 text-sm px-4 py-2 outline-none border-none focus:ring-0"
+                                className="w-full bg-transparent text-white placeholder:text-slate-400 text-xs sm:text-sm px-4 py-2 outline-none border-none focus:outline-none focus:ring-0 dark-input"
                                 {...field}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") {
@@ -976,7 +1245,7 @@ export default function Login() {
                               </button>
                             </div>
                           </FormControl>
-                          <FormMessage className="pt-2 text-xs text-red-400 text-center" />
+                          <FormMessage className="text-[11px] text-red-400 px-3 pt-0.5" />
                         </FormItem>
                       )}
                     />
@@ -992,22 +1261,7 @@ export default function Login() {
                     Or sign in with password →
                   </button>
 
-                  <div className="pt-2 flex items-center justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleDemoLogin("influencer")}
-                      className="px-3 py-1.5 rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 text-[11px] font-bold transition-all cursor-pointer"
-                    >
-                      ⚡ Demo Creator
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDemoLogin("brand")}
-                      className="px-3 py-1.5 rounded-full bg-purple-600/20 border border-purple-500/30 text-purple-400 hover:bg-purple-600/30 text-[11px] font-bold transition-all cursor-pointer"
-                    >
-                      ⚡ Demo Brand
-                    </button>
-                  </div>
+
 
                   <button
                     type="button"
@@ -1088,51 +1342,74 @@ export default function Login() {
                 </div>
 
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4 pt-1">
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-3 pt-1">
+                    {/* EMAIL INPUT FIELD */}
                     <FormField
                       control={loginForm.control}
                       name="email"
                       render={({ field }) => (
-                        <FormItem className="space-y-0">
+                        <FormItem className="space-y-1 text-left">
                           <FormControl>
-                            <input
-                              type="email"
-                              placeholder="Email address"
-                              className="w-full bg-white/10 border border-white/20 text-white placeholder:text-slate-400 text-xs px-4 py-2.5 rounded-full outline-none"
-                              {...field}
-                            />
+                            <div
+                              className={`relative flex items-center w-full rounded-full border transition-all duration-200 shadow-inner ${
+                                loginForm.formState.errors.email
+                                  ? "border-red-500/80 bg-red-950/30 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-500/30"
+                                  : "border-white/20 bg-white/10 hover:border-white/30 focus-within:border-blue-400 focus-within:bg-white/15 focus-within:ring-2 focus-within:ring-blue-400/30"
+                              }`}
+                            >
+                              <input
+                                type="email"
+                                placeholder="Email address"
+                                className="w-full h-11 bg-transparent text-white placeholder:text-slate-400 text-xs px-5 outline-none border-none focus:outline-none focus:ring-0 rounded-full dark-input"
+                                {...field}
+                              />
+                            </div>
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[11px] text-red-400 px-3 pt-0.5" />
                         </FormItem>
                       )}
                     />
 
+                    {/* PASSWORD INPUT FIELD WITH INTEGRATED EYE ICON */}
                     <FormField
                       control={loginForm.control}
                       name="password"
                       render={({ field }) => (
-                        <FormItem className="space-y-0">
+                        <FormItem className="space-y-1 text-left">
                           <FormControl>
-                            <div className="relative flex items-center w-full rounded-full border border-white/20 bg-white/10 p-1.5 focus-within:border-blue-400 focus-within:bg-white/15 transition-all shadow-inner">
+                            <div
+                              className={`relative flex items-center w-full rounded-full border transition-all duration-200 shadow-inner ${
+                                loginForm.formState.errors.password
+                                  ? "border-red-500/80 bg-red-950/30 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-500/30"
+                                  : "border-white/20 bg-white/10 hover:border-white/30 focus-within:border-blue-400 focus-within:bg-white/15 focus-within:ring-2 focus-within:ring-blue-400/30"
+                              }`}
+                            >
                               <input
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Enter password"
-                                className="w-full bg-transparent text-white placeholder:text-slate-400 text-xs px-4 py-2 outline-none border-none focus:ring-0"
+                                className="w-full h-11 bg-transparent text-white placeholder:text-slate-400 text-xs pl-5 pr-11 outline-none border-none focus:outline-none focus:ring-0 rounded-full dark-input"
                                 {...field}
                               />
                               <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="text-slate-400 hover:text-slate-200 px-2 cursor-pointer"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer flex items-center justify-center shrink-0"
                               >
                                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                               </button>
                             </div>
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-[11px] text-red-400 px-3 pt-0.5" />
                         </FormItem>
                       )}
                     />
+
+                    <div className="text-right pt-0.5 pb-1">
+                      <Link href="/forgot-password" className="text-xs text-blue-400 hover:underline font-semibold cursor-pointer transition-colors">
+                        Forgot password?
+                      </Link>
+                    </div>
 
                     <Button
                       type="submit"

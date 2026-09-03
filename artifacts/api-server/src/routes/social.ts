@@ -6,34 +6,24 @@ import {
   socialTokensTable,
   socialMetricSnapshotsTable,
   socialContentTable,
+  oauthStatesTable,
 } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { requireAuth, requireRole, AuthenticatedRequest } from "../middlewares/auth";
-import { encryptSocialToken, decryptSocialToken } from "../integrations/social/token-crypto";
-import { calculateVerifiedAnalytics } from "../integrations/social/analytics-calculator";
+import { encryptSocialToken } from "../integrations/social/token-crypto";
 import { InstagramProvider } from "../integrations/social/instagram.provider";
+import { YouTubeProvider } from "../integrations/social/youtube.provider";
 import { SocialPlatformProvider } from "../integrations/social/base.provider";
+import { socialSyncService } from "../services/social-sync.service";
 import { logAuditEvent } from "../auth/audit";
 
 const router: IRouter = Router();
 
-// Platform provider registry
+// Register official social platform adapters (Instagram & YouTube)
 const providers: Record<string, SocialPlatformProvider> = {
   instagram: new InstagramProvider(),
+  youtube: new YouTubeProvider(),
 };
-
-// In-memory OAuth state storage (for CSRF state validation)
-const oauthStates = new Map<string, { userId: string; platform: string; createdAt: number }>();
-
-// Clean up stale OAuth states every 15 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [state, data] of oauthStates.entries()) {
-    if (now - data.createdAt > 15 * 60 * 1000) {
-      oauthStates.delete(state);
-    }
-  }
-}, 5 * 60 * 1000);
 
 // 1. POST /api/social/:platform/connect
 router.post("/social/:platform/connect", requireAuth, requireRole(["influencer"]), async (req: Request, res: Response): Promise<void> => {
@@ -43,17 +33,22 @@ router.post("/social/:platform/connect", requireAuth, requireRole(["influencer"]
   const provider = providers[platform];
 
   if (!provider) {
-    res.status(400).json({ error: `Platform '${platform}' is not supported yet.` });
+    res.status(400).json({ error: `Platform '${platform}' is not supported. Supported platforms: instagram, youtube.` });
     return;
   }
 
   const userId = authReq.userId!;
   const state = crypto.randomBytes(24).toString("hex");
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 15 * 60 * 1000); // Valid for 15 minutes
 
-  oauthStates.set(state, {
+  // Persist short-lived, single-use OAuth state record in PostgreSQL
+  await db.insert(oauthStatesTable).values({
+    state,
     userId,
-    platform,
-    createdAt: Date.now(),
+    provider: platform,
+    createdAt: now,
+    expiresAt,
   });
 
   const redirectUrl = await provider.getAuthorizationUrl(state);
@@ -78,26 +73,56 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
     return;
   }
 
-  // Validate state OR allow fallback demo state for sandbox testing
-  let stateData = state ? oauthStates.get(state) : undefined;
-  if (state) oauthStates.delete(state);
+  if (!state) {
+    res.status(400).json({ error: "Missing required OAuth state parameter." });
+    return;
+  }
 
-  const userId = stateData?.userId || "demo-user-1";
+  // Retrieve persistent OAuth state record from PostgreSQL
+  const [stateRecord] = await db
+    .select()
+    .from(oauthStatesTable)
+    .where(eq(oauthStatesTable.state, state))
+    .limit(1);
+
+  if (!stateRecord) {
+    res.status(400).json({ error: "Invalid or unrecognized OAuth state parameter." });
+    return;
+  }
+
+  if (new Date() > new Date(stateRecord.expiresAt)) {
+    res.status(400).json({ error: "OAuth state has expired. Please initiate authorization again." });
+    return;
+  }
+
+  if (stateRecord.usedAt !== null) {
+    res.status(400).json({ error: "OAuth state has already been consumed." });
+    return;
+  }
+
+  if (stateRecord.provider.toLowerCase() !== platform) {
+    res.status(400).json({ error: `OAuth state provider mismatch (expected '${stateRecord.provider}', got '${platform}').` });
+    return;
+  }
+
+  // Mark state consumed immediately
+  await db
+    .update(oauthStatesTable)
+    .set({ usedAt: new Date() })
+    .where(eq(oauthStatesTable.id, stateRecord.id));
+
+  const userId = stateRecord.userId;
 
   try {
-    // Exchange OAuth code for access tokens
+    // Exchange OAuth code for tokens
     const tokens = await provider.exchangeCodeForTokens(code || "mock_code_123");
     const profile = await provider.getProfile(tokens.accessToken);
-    const contentList = await provider.getContent(tokens.accessToken, profile.externalAccountId, 10);
-
-    // Calculate verified analytics
-    const analytics = calculateVerifiedAnalytics(profile, contentList);
 
     // Encrypt access and refresh tokens using AES-256-GCM
     const encryptedAccess = encryptSocialToken(tokens.accessToken);
     const encryptedRefresh = tokens.refreshToken ? encryptSocialToken(tokens.refreshToken) : null;
 
-    // Check if account is already connected
+    // Upsert social account record for user in PostgreSQL
     const existingAccounts = await db
       .select()
       .from(socialAccountsTable)
@@ -122,7 +147,6 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
         })
         .where(eq(socialAccountsTable.id, socialAccountId));
 
-      // Update tokens
       await db
         .update(socialTokensTable)
         .set({
@@ -165,65 +189,25 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
       });
     }
 
-    // Insert historical snapshot in social_metric_snapshots
-    await db.insert(socialMetricSnapshotsTable).values({
-      socialAccountId,
-      platform,
-      followers: profile.followers,
-      following: profile.following ?? null,
-      totalContent: profile.totalContent,
-      totalViews: String(profile.totalViews || 0),
-      totalLikes: String(profile.totalLikes || 0),
-      avgViews: analytics.avgViews,
-      avgLikes: analytics.avgLikes,
-      avgComments: analytics.avgComments,
-      engagementRate: analytics.engagementRate,
-    });
+    // Initial data synchronization
+    await socialSyncService.syncSocialAccount(socialAccountId);
 
-    // Save recent content items to social_content
-    for (const item of contentList) {
-      const existingContent = await db
-        .select()
-        .from(socialContentTable)
-        .where(and(eq(socialContentTable.socialAccountId, socialAccountId), eq(socialContentTable.externalContentId, item.externalContentId)))
-        .limit(1);
-
-      if (existingContent.length === 0) {
-        await db.insert(socialContentTable).values({
-          socialAccountId,
-          platform,
-          externalContentId: item.externalContentId,
-          contentType: item.contentType,
-          title: item.title || null,
-          caption: item.caption || null,
-          permalink: item.permalink || null,
-          thumbnailUrl: item.thumbnailUrl || null,
-          publishedAt: item.publishedAt || null,
-          views: item.views,
-          likes: item.likes,
-          comments: item.comments,
-          shares: item.shares,
-        });
-      }
-    }
-
-    // Log security audit event
+    // Log audit event
     await logAuditEvent({
       userId,
       action: "OAUTH_ACCOUNT_CONNECTED",
       details: JSON.stringify({ platform, username: profile.username, externalAccountId: profile.externalAccountId }),
     });
 
-    // Redirect back to frontend profile dashboard
-    const clientUrl = process.env.CLIENT_URL || "http://localhost:5000";
-    res.redirect(`${clientUrl}/profile?connected=true&platform=${platform}`);
+    const clientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || "http://localhost:5000";
+    res.redirect(`${clientUrl}/dashboard/influencer?connected=true&platform=${platform}`);
   } catch (error: any) {
     console.error("[SOCIAL CALLBACK ERROR]", error);
     res.status(500).json({ error: "Failed to verify social account via OAuth." });
   }
 });
 
-// 3. GET /api/social/accounts
+// 3. GET /api/social/accounts (Authenticated creator's connected accounts)
 router.get("/social/accounts", requireAuth, async (req: Request, res: Response): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
   const userId = authReq.userId!;
@@ -274,7 +258,7 @@ router.get("/social/accounts", requireAuth, async (req: Request, res: Response):
   }
 });
 
-// 4. GET /api/social/accounts/:id/analytics (Social Blade-Style Verified Intelligence)
+// 4. GET /api/social/accounts/:id/analytics (Telemetry & Content List)
 router.get("/social/accounts/:id/analytics", requireAuth, async (req: Request, res: Response): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const accountId = parseInt(rawId, 10);
@@ -291,7 +275,6 @@ router.get("/social/accounts/:id/analytics", requireAuth, async (req: Request, r
       return;
     }
 
-    // Historical growth snapshots for Social Blade-style charts
     const snapshots = await db
       .select()
       .from(socialMetricSnapshotsTable)
@@ -299,7 +282,6 @@ router.get("/social/accounts/:id/analytics", requireAuth, async (req: Request, r
       .orderBy(socialMetricSnapshotsTable.snapshotDate)
       .limit(90);
 
-    // Verified content items
     const content = await db
       .select()
       .from(socialContentTable)
@@ -358,7 +340,7 @@ router.get("/social/accounts/:id/analytics", requireAuth, async (req: Request, r
   }
 });
 
-// 5. DELETE /api/social/:platform/disconnect
+// 5. DELETE /api/social/:platform/disconnect (Deliberate Disconnect & Credential Erasure)
 router.delete("/social/:platform/disconnect", requireAuth, requireRole(["influencer"]), async (req: Request, res: Response): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
   const userId = authReq.userId!;
@@ -377,16 +359,27 @@ router.delete("/social/:platform/disconnect", requireAuth, requireRole(["influen
       return;
     }
 
-    // Delete social account record (Cascades to tokens, snapshots, and content)
-    await db.delete(socialAccountsTable).where(eq(socialAccountsTable.id, account.id));
+    // 1. Permanently delete encrypted tokens (credential destruction)
+    await db.delete(socialTokensTable).where(eq(socialTokensTable.socialAccountId, account.id));
+
+    // 2. Mark account status as DISCONNECTED (retaining account record for historical analytics & attribution)
+    await db
+      .update(socialAccountsTable)
+      .set({
+        verificationStatus: "DISCONNECTED",
+        updatedAt: new Date(),
+      })
+      .where(eq(socialAccountsTable.id, account.id));
+
+    // Historical media (social_content) and metric snapshots (social_metric_snapshots) are deliberately RETAINED
 
     await logAuditEvent({
       userId,
       action: "OAUTH_ACCOUNT_DISCONNECTED",
-      details: JSON.stringify({ platform, username: account.username }),
+      details: JSON.stringify({ platform, username: account.username, credentialErased: true }),
     });
 
-    res.json({ success: true, message: `Successfully disconnected ${platform} account @${account.username}.` });
+    res.json({ success: true, message: `Successfully disconnected ${platform} account @${account.username}. OAuth credentials erased; historical metrics retained.` });
   } catch (error) {
     console.error("[DISCONNECT SOCIAL ERROR]", error);
     res.status(500).json({ error: "Failed to disconnect social account." });
@@ -399,12 +392,6 @@ router.post("/social/:platform/sync", requireAuth, requireRole(["influencer"]), 
   const userId = authReq.userId!;
   const platformRaw = req.params.platform;
   const platform = (Array.isArray(platformRaw) ? platformRaw[0] : platformRaw).toLowerCase();
-  const provider = providers[platform];
-
-  if (!provider) {
-    res.status(400).json({ error: `Platform '${platform}' is not supported.` });
-    return;
-  }
 
   try {
     const [account] = await db
@@ -418,59 +405,45 @@ router.post("/social/:platform/sync", requireAuth, requireRole(["influencer"]), 
       return;
     }
 
-    const [tokenRecord] = await db.select().from(socialTokensTable).where(eq(socialTokensTable.socialAccountId, account.id)).limit(1);
-
-    let accessToken = "ig_long_lived_token_demo";
-    if (tokenRecord) {
-      try {
-        accessToken = decryptSocialToken(tokenRecord.accessTokenEncrypted, tokenRecord.tokenIv, tokenRecord.tokenAuthTag);
-      } catch (_e) {
-        console.warn("[TOKEN DECRYPT WARNING] Using fallback demo access token for sync.");
-      }
+    if (account.verificationStatus === "DISCONNECTED") {
+      res.status(400).json({ error: `Cannot sync disconnected ${platform} account @${account.username}. Re-authorization required.` });
+      return;
     }
 
-    const profile = await provider.getProfile(accessToken);
-    const contentList = await provider.getContent(accessToken, profile.externalAccountId, 10);
-    const analytics = calculateVerifiedAnalytics(profile, contentList);
-
-    await db
-      .update(socialAccountsTable)
-      .set({
-        username: profile.username,
-        displayName: profile.displayName || account.displayName,
-        avatarUrl: profile.avatarUrl || account.avatarUrl,
-        verificationStatus: "VERIFIED",
-        lastSyncedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(socialAccountsTable.id, account.id));
-
-    await db.insert(socialMetricSnapshotsTable).values({
-      socialAccountId: account.id,
-      platform,
-      followers: profile.followers,
-      following: profile.following ?? null,
-      totalContent: profile.totalContent,
-      totalViews: String(profile.totalViews || 0),
-      totalLikes: String(profile.totalLikes || 0),
-      avgViews: analytics.avgViews,
-      avgLikes: analytics.avgLikes,
-      avgComments: analytics.avgComments,
-      engagementRate: analytics.engagementRate,
-    });
-
-    res.json({
-      success: true,
-      lastSyncedAt: new Date().toISOString(),
-      metrics: {
-        followers: profile.followers,
-        avgViews: analytics.avgViews,
-        engagementRate: analytics.engagementRate,
-      },
-    });
-  } catch (error) {
+    const result = await socialSyncService.syncSocialAccount(account.id);
+    res.json(result);
+  } catch (error: any) {
     console.error("[SYNC SOCIAL ERROR]", error);
-    res.status(500).json({ error: "Failed to synchronize social account data." });
+    res.status(500).json({ error: error.message || "Failed to synchronize social account data." });
+  }
+});
+
+// 7. POST /api/social/privacy/gdpr-delete-user-data (Full Right-To-Be-Forgotten Privacy Erasure)
+router.post("/social/privacy/gdpr-delete-user-data", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const userId = authReq.userId!;
+
+  try {
+    const userAccounts = await db
+      .select()
+      .from(socialAccountsTable)
+      .where(eq(socialAccountsTable.userId, userId));
+
+    for (const acc of userAccounts) {
+      // Full cascading hard deletion of account, tokens, snapshots, and media content for privacy compliance
+      await db.delete(socialAccountsTable).where(eq(socialAccountsTable.id, acc.id));
+    }
+
+    await logAuditEvent({
+      userId,
+      action: "PRIVACY_DATA_ERASURE",
+      details: JSON.stringify({ count: userAccounts.length }),
+    });
+
+    res.json({ success: true, message: `Successfully deleted all social account data and history for user.` });
+  } catch (error) {
+    console.error("[GDPR DELETE ERROR]", error);
+    res.status(500).json({ error: "Failed to process privacy data erasure." });
   }
 });
 

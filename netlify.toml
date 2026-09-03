@@ -1,11 +1,13 @@
+# ==============================================================================
+# Netlify Configuration File for InfluencerHub Frontend Deployment
+# ==============================================================================
+
 [build]
-  command = "npx -y pnpm@9.15.4 install --no-frozen-lockfile && npx -y pnpm@9.15.4 --filter influencer-hub-fe run build"
-  publish = "artifacts/influencer-hub/dist/public"
+  base = "artifacts/influencer-hub"
+  publish = "dist/public"
+  command = "npm run build"
 
-[build.environment]
-  NODE_VERSION = "20"
-
-# SPA client-side routing for React/Wouter router
+# SPA Fallback Redirect for Wouter client-side routing (/login, /signup, /onboarding, etc.)
 [[redirects]]
   from = "/*"
   to = "/index.html"

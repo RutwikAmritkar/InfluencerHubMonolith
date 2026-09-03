@@ -4,7 +4,9 @@
   "license": "MIT",
   "scripts": {
     "build": "npm --prefix artifacts/influencer-hub run build",
-    "typecheck": "npm --prefix artifacts/influencer-hub run typecheck"
+    "typecheck": "npm --prefix artifacts/influencer-hub run typecheck",
+    "db:generate": "npm --prefix lib/db run push",
+    "db:migrate": "npm --prefix lib/db run push"
   },
   "private": true,
   "dependencies": {

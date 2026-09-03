@@ -1,7 +1,7 @@
 import { SocialAccount } from "@workspace/db";
 
 export interface VerificationResult {
-  status: "VERIFIED" | "FAILED";
+  status: "SUBMITTED" | "VERIFIED" | "FAILED";
   verificationType?: "PROFILE_EXISTS";
   verifiedAt?: string;
   errorMessage?: string;
@@ -39,7 +39,7 @@ export class InstagramVerificationProvider implements ISocialVerificationProvide
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };
@@ -71,7 +71,7 @@ export class YouTubeVerificationProvider implements ISocialVerificationProvider 
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };
@@ -103,7 +103,7 @@ export class TikTokVerificationProvider implements ISocialVerificationProvider {
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };
@@ -135,7 +135,7 @@ export class FacebookVerificationProvider implements ISocialVerificationProvider
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };
@@ -167,7 +167,7 @@ export class XVerificationProvider implements ISocialVerificationProvider {
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };
@@ -199,7 +199,7 @@ export class TwitchVerificationProvider implements ISocialVerificationProvider {
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };
@@ -231,7 +231,7 @@ export class LinkedInVerificationProvider implements ISocialVerificationProvider
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };
@@ -263,7 +263,7 @@ export class PinterestVerificationProvider implements ISocialVerificationProvide
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };
@@ -295,7 +295,7 @@ export class SnapchatVerificationProvider implements ISocialVerificationProvider
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };
@@ -318,7 +318,7 @@ export class FallbackVerificationProvider implements ISocialVerificationProvider
     }
 
     return {
-      status: "VERIFIED",
+      status: "SUBMITTED",
       verificationType: "PROFILE_EXISTS",
       verifiedAt: new Date().toISOString(),
     };

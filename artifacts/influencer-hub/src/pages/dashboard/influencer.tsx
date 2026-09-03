@@ -110,11 +110,11 @@ export default function InfluencerDashboard() {
 
   // MEMOIZED API DATA DERIVATIONS (prevents recalculation on tab changes)
   const { profileCompletion, followersCount, monthlyEarnings, profileViews, campaignInvites, viewsThisWeek } = useMemo(() => ({
-    profileCompletion: typeof data?.profileCompletion === "number" ? data.profileCompletion : 90,
-    followersCount: (typeof data?.followers === "number" && !isNaN(data.followers)) ? `${(data.followers / 1000).toFixed(0)}K` : "125K",
-    monthlyEarnings: (typeof data?.monthlyEarnings === "number" && !isNaN(data.monthlyEarnings)) ? `$${data.monthlyEarnings.toLocaleString()}` : "$8,500",
-    profileViews: (typeof data?.profileViews === "number" && !isNaN(data.profileViews)) ? data.profileViews.toLocaleString() : "847",
-    campaignInvites: typeof data?.campaignInvites === "number" ? data.campaignInvites : 3,
+    profileCompletion: typeof data?.profileCompletion === "number" ? data.profileCompletion : 40,
+    followersCount: (typeof data?.followers === "number" && !isNaN(data.followers) && data.followers > 0) ? `${(data.followers / 1000).toFixed(0)}K` : "0",
+    monthlyEarnings: (typeof data?.monthlyEarnings === "number" && !isNaN(data.monthlyEarnings) && data.monthlyEarnings > 0) ? `₹${data.monthlyEarnings.toLocaleString()}` : "₹0",
+    profileViews: (typeof data?.profileViews === "number" && !isNaN(data.profileViews)) ? data.profileViews.toLocaleString() : "0",
+    campaignInvites: typeof data?.campaignInvites === "number" ? data.campaignInvites : 0,
     viewsThisWeek: (Array.isArray(data?.viewsThisWeek) && data.viewsThisWeek.length > 0) ? data.viewsThisWeek : defaultViewsData,
   }), [data]);
 
@@ -159,7 +159,7 @@ export default function InfluencerDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-4">
               <Avatar className="h-13 w-13 sm:h-14 sm:w-14 border-2 border-white dark:border-slate-800 shadow-md shadow-blue-500/10 ring-2 ring-blue-500/20 shrink-0">
-                <AvatarImage src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop"} />
+                <AvatarImage src={user?.avatarUrl || ""} />
                 <AvatarFallback className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-extrabold text-base">
                   {user?.name?.charAt(0) || "C"}
                 </AvatarFallback>
@@ -170,23 +170,25 @@ export default function InfluencerDashboard() {
                   <h3 className="text-lg sm:text-xl font-extrabold text-[#11182F] dark:text-slate-100 tracking-tight leading-none">
                     {user?.name || "Creator"}
                   </h3>
-                  <CheckCircle2 className="w-4.5 h-4.5 text-[#315BEF] dark:text-blue-400 fill-blue-600/20 dark:fill-blue-400/20 shrink-0" aria-label="Verified Creator" />
+                  {(data as any)?.isVerified && (
+                    <CheckCircle2 className="w-4.5 h-4.5 text-[#315BEF] dark:text-blue-400 fill-blue-600/20 dark:fill-blue-400/20 shrink-0" aria-label="Verified Creator" />
+                  )}
                 </div>
                 <span className="text-xs font-mono font-semibold text-[#315BEF] dark:text-blue-400 block">
-                  @alexrivera
+                  @{user?.email?.split("@")[0] || "creator"}
                 </span>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-normal">
-                  Lifestyle & Fashion Creator · <span className="text-slate-700 dark:text-slate-300 font-semibold">Verified Roster</span>
+                  {(data as any)?.category || "Creator"} · <span className="text-slate-700 dark:text-slate-300 font-semibold">{(data as any)?.isVerified ? "Verified Roster" : "Pending Verification"}</span>
                 </p>
               </div>
             </div>
 
             <Badge variant="secondary" className="self-start sm:self-center bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full shadow-2xs shrink-0">
-              ✓ Profile Verified
+              {(data as any)?.isVerified ? "✓ Profile Verified" : "Verification Pending"}
             </Badge>
           </div>
 
-          {/* Social Platform & Engagement Summary Cards Grid (Matching Social Presence system) */}
+          {/* Social Platform & Engagement Summary Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
             
             {/* Instagram Summary Card */}
@@ -198,10 +200,10 @@ export default function InfluencerDashboard() {
                   </div>
                   <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">INSTAGRAM</span>
                 </div>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-pink-50 dark:bg-pink-950/80 text-pink-700 dark:text-pink-300 border border-pink-200/80 dark:border-pink-800/80">● Connected</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Not Connected</span>
               </div>
               <div>
-                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">{followersCount}</span>
+                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">0</span>
                 <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">Followers</span>
               </div>
             </div>
@@ -215,10 +217,10 @@ export default function InfluencerDashboard() {
                   </div>
                   <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">TIKTOK</span>
                 </div>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-200/80 dark:border-cyan-800/80">● Connected</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Not Connected</span>
               </div>
               <div>
-                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">86K</span>
+                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">0</span>
                 <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">Followers</span>
               </div>
             </div>
@@ -232,10 +234,10 @@ export default function InfluencerDashboard() {
                   </div>
                   <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">AVG. ENG.</span>
                 </div>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80">● Strong</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">0.0%</span>
               </div>
               <div>
-                <span className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 block font-mono leading-none">4.8%</span>
+                <span className="text-base sm:text-lg font-black text-slate-700 dark:text-slate-300 block font-mono leading-none">0.0%</span>
                 <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">Engagement rate</span>
               </div>
             </div>
@@ -381,18 +383,22 @@ export default function InfluencerDashboard() {
             </div>
 
             <div className="space-y-2.5 pt-3">
-              <OpportunityRow
-                title="Summer Beauty Campaign"
-                details="Glow Cosmetics • Instagram Reel • <strong class='text-slate-900 dark:text-slate-200'>$5,000</strong>"
-                status="Accepted"
-                badgeStyle="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/80"
-              />
-              <OpportunityRow
-                title="Tech Launch 2026"
-                details="NovaTech • YouTube + Instagram • <strong class='text-slate-900 dark:text-slate-200'>$12,500</strong>"
-                status="Under Review"
-                badgeStyle="bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/80"
-              />
+              {Array.isArray(data?.recentApplications) && data.recentApplications.length > 0 ? (
+                data.recentApplications.map((app: any) => (
+                  <OpportunityRow
+                    key={app.id}
+                    title={app.campaignTitle || "Campaign Application"}
+                    details={`Status: ${app.status} • Submitted ${new Date(app.createdAt).toLocaleDateString()}`}
+                    status={app.status || "Pending"}
+                    badgeStyle="bg-[#315BEF]/10 text-[#315BEF] border-[#315BEF]/20"
+                  />
+                ))
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 text-center space-y-1">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">No active opportunities yet</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Explore open marketplace campaigns to submit your first pitch.</p>
+                </div>
+              )}
             </div>
           </div>
 

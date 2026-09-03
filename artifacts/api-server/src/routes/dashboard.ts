@@ -14,6 +14,7 @@ router.get("/dashboard/brand", requireAuth, async (req, res): Promise<void> => {
     if (brand) {
       const [{ total }] = await db.select({ total: count() }).from(campaignsTable).where(eq(campaignsTable.brandId, brand.id));
       const [{ active }] = await db.select({ active: count() }).from(campaignsTable).where(and(eq(campaignsTable.brandId, brand.id), eq(campaignsTable.status, "active")));
+      const [{ totalApps }] = await db.select({ totalApps: count() }).from(applicationsTable);
 
       const recentCampaigns = await db.select().from(campaignsTable).where(eq(campaignsTable.brandId, brand.id)).orderBy(desc(campaignsTable.createdAt)).limit(5);
       const campaignsFormatted = await Promise.all(recentCampaigns.map(async c => {
@@ -29,41 +30,24 @@ router.get("/dashboard/brand", requireAuth, async (req, res): Promise<void> => {
       res.json({
         totalCampaigns: Number(total),
         activeCampaigns: Number(active),
-        totalApplications: 5,
-        savedInfluencers: 12,
+        totalApplications: Number(totalApps),
+        savedInfluencers: 0,
         recentCampaigns: campaignsFormatted,
         topInfluencers: [],
       });
       return;
     }
   } catch (_e) {
-    // Fallback
+    // Return clean empty state
   }
 
-  // Demo fallback
   res.json({
-    totalCampaigns: 4,
-    activeCampaigns: 2,
-    totalApplications: 18,
-    savedInfluencers: 12,
-    recentCampaigns: [
-      {
-        id: 1, brandId: 1, brandName: "Nike", brandLogoUrl: null,
-        title: "Summer Fitness Campaign", description: "Promoting summer athletic wear", budget: 5000, platform: "instagram", status: "active",
-        deliverables: ["1 Instagram Reel"], targetAudience: "Fitness enthusiasts", timeline: "3 weeks", deadline: "2026-09-01",
-        applicationsCount: 8, createdAt: new Date().toISOString(),
-      }
-    ],
-    topInfluencers: [
-      {
-        id: 1, userId: 1, name: "Alex Rivera",
-        bio: "Digital creator", category: "Lifestyle", country: "US",
-        followers: 125000, engagementRate: 4.2, avgViews: 45000, collaborationCost: 1500,
-        platforms: ["instagram", "youtube", "tiktok", "facebook"], languages: ["English"],
-        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400", coverUrl: "",
-        profileCompletion: 90, monthlyEarnings: 8500, isVerified: true,
-      }
-    ],
+    totalCampaigns: 0,
+    activeCampaigns: 0,
+    totalApplications: 0,
+    savedInfluencers: 0,
+    recentCampaigns: [],
+    topInfluencers: [],
   });
 });
 
@@ -80,36 +64,42 @@ router.get("/dashboard/influencer", requireAuth, async (req, res): Promise<void>
       }));
 
       res.json({
-        profileCompletion: influencer.profileCompletion,
-        followers: influencer.followers,
-        monthlyEarnings: influencer.monthlyEarnings,
-        campaignInvites: 3,
+        profileCompletion: influencer.profileCompletion ?? 40,
+        followers: influencer.followers ?? 0,
+        monthlyEarnings: influencer.monthlyEarnings ?? 0,
+        campaignInvites: apps.length,
         recentApplications: formatted,
-        profileViews: 847,
+        profileViews: influencer.avgViews ?? 0,
         viewsThisWeek: [
-          { day: "Mon", views: 120 }, { day: "Tue", views: 145 }, { day: "Wed", views: 98 },
-          { day: "Thu", views: 167 }, { day: "Fri", views: 201 }, { day: "Sat", views: 89 }, { day: "Sun", views: 134 },
+          { day: "Mon", views: 0 }, { day: "Tue", views: 0 }, { day: "Wed", views: 0 },
+          { day: "Thu", views: 0 }, { day: "Fri", views: 0 }, { day: "Sat", views: 0 }, { day: "Sun", views: 0 },
         ],
+        category: influencer.category,
+        country: influencer.country,
+        isVerified: influencer.isVerified,
+        socialAccounts: influencer.socialAccounts || [],
       });
       return;
     }
   } catch (_e) {
-    // Fallback
+    // Return clean empty state
   }
 
   res.json({
-    profileCompletion: 90,
-    followers: 125000,
-    monthlyEarnings: 8500,
-    campaignInvites: 3,
-    recentApplications: [
-      { id: 1, campaignId: 1, campaignTitle: "Nike Summer Collection", influencerId: 1, influencerName: "Alex Rivera", influencerAvatarUrl: null, status: "accepted", message: "Excited to collaborate!", createdAt: new Date().toISOString() }
-    ],
-    profileViews: 847,
+    profileCompletion: 40,
+    followers: 0,
+    monthlyEarnings: 0,
+    campaignInvites: 0,
+    recentApplications: [],
+    profileViews: 0,
     viewsThisWeek: [
-      { day: "Mon", views: 120 }, { day: "Tue", views: 145 }, { day: "Wed", views: 98 },
-      { day: "Thu", views: 167 }, { day: "Fri", views: 201 }, { day: "Sat", views: 89 }, { day: "Sun", views: 134 },
+      { day: "Mon", views: 0 }, { day: "Tue", views: 0 }, { day: "Wed", views: 0 },
+      { day: "Thu", views: 0 }, { day: "Fri", views: 0 }, { day: "Sat", views: 0 }, { day: "Sun", views: 0 },
     ],
+    category: "Lifestyle",
+    country: "United States",
+    isVerified: false,
+    socialAccounts: [],
   });
 });
 
