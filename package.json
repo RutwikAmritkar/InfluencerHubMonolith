@@ -3,10 +3,13 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "npm --prefix artifacts/influencer-hub run build",
-    "typecheck": "npm --prefix artifacts/influencer-hub run typecheck",
-    "db:generate": "npm --prefix lib/db run push",
-    "db:migrate": "npm --prefix lib/db run push"
+    "dev": "powershell -File ./start-local.ps1",
+    "build": "pnpm --filter @workspace/db run build && pnpm --filter @workspace/api-zod run build && pnpm --filter @workspace/frontend run build && pnpm --filter @workspace/api-server run build",
+    "typecheck": "pnpm --filter @workspace/db run build && pnpm --filter @workspace/api-zod run build && pnpm --filter @workspace/frontend run typecheck && pnpm --filter @workspace/api-server run typecheck",
+    "test": "pnpm --filter @workspace/api-server run test",
+    "db:push": "pnpm --filter @workspace/db run push",
+    "db:push-force": "pnpm --filter @workspace/db run push-force",
+    "db:seed": "pnpm --filter database exec tsx ./seeds/seed.ts"
   },
   "private": true,
   "dependencies": {

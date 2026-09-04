@@ -28,7 +28,7 @@ $backendListen = Get-NetTCPConnection -LocalPort 5001 -State Listen -ErrorAction
 
 if ($null -eq $backendListen) {
     Write-Host '[+] Launching Express Backend Server on port 5001 in a new window...' -ForegroundColor Cyan
-    $backendCmd = "Set-Location '$ProjectRoot'; node --env-file=artifacts/api-server/.env artifacts/api-server/dist/index.mjs"
+    $backendCmd = "Set-Location '$ProjectRoot'; node --env-file=backend/.env backend/dist/index.mjs"
     Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
 } else {
     Write-Host '[✓] Backend server already running on port 5001.' -ForegroundColor Green
@@ -39,7 +39,7 @@ $frontendListen = Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorActio
 
 if ($null -eq $frontendListen) {
     Write-Host '[+] Launching Vite Frontend App on port 5000 in a new window...' -ForegroundColor Cyan
-    $frontendCmd = "Set-Location '$ProjectRoot'; npm.cmd --prefix artifacts/influencer-hub run dev"
+    $frontendCmd = "Set-Location '$ProjectRoot'; pnpm.cmd --prefix frontend run dev"
     Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd
 } else {
     Write-Host '[✓] Frontend server already running on port 5000.' -ForegroundColor Green
