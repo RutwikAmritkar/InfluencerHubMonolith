@@ -3,9 +3,9 @@
 # ==============================================================================
 
 [build]
-  base = "artifacts/influencer-hub"
+  base = "frontend"
   publish = "dist/public"
-  command = "npm run build"
+  command = "pnpm --filter @workspace/frontend run build"
 
 # SPA Fallback Redirect for Wouter client-side routing (/login, /signup, /onboarding, etc.)
 [[redirects]]
