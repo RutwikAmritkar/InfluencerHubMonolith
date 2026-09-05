@@ -269,9 +269,11 @@ export default function Login() {
     }
     setIsVerifying(true);
     try {
-      const res = await fetch("/api/auth/verify-email", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiUrl}/api/auth/verify-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email: registeredEmail, token: verificationCode, code: verificationCode }),
       });
 

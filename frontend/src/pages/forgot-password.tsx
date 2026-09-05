@@ -28,9 +28,11 @@ export default function ForgotPassword() {
     setSubmittedEmail(values.email);
 
     try {
-      const res = await fetch("/api/auth/forget-password", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiUrl}/api/auth/forget-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email: values.email }),
       });
 

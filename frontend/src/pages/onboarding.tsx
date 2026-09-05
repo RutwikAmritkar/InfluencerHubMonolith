@@ -133,9 +133,11 @@ export default function OnboardingPage() {
     const nextStepLabel = isFinal ? "COMPLETED" : isBrand ? `B${nextStepNum}` : `C${nextStepNum}`;
 
     try {
-      const response = await fetch("/api/auth/onboarding/step", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(`${apiUrl}/api/auth/onboarding/step`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           userId: user?.id,
           role: isBrand ? "brand" : "influencer",

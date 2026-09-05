@@ -558,7 +558,8 @@ export function SocialAccountsForm({
                 size="sm"
                 onClick={async () => {
                   try {
-                    const res = await fetch("/api/social/instagram/connect", { method: "POST" });
+                    const apiUrl = import.meta.env.VITE_API_URL || "";
+                    const res = await fetch(`${apiUrl}/api/social/instagram/connect`, { method: "POST", credentials: "include" });
                     const data = await res.json();
                     if (data.redirectUrl) {
                       window.location.href = data.redirectUrl;
@@ -581,7 +582,8 @@ export function SocialAccountsForm({
                 size="sm"
                 onClick={async () => {
                   try {
-                    const res = await fetch("/api/social/youtube/connect", { method: "POST" });
+                    const apiUrl = import.meta.env.VITE_API_URL || "";
+                    const res = await fetch(`${apiUrl}/api/social/youtube/connect`, { method: "POST", credentials: "include" });
                     const data = await res.json();
                     if (data.redirectUrl) {
                       window.location.href = data.redirectUrl;

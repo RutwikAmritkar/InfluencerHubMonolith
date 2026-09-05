@@ -188,11 +188,13 @@ export default function AiAssistant() {
     setIsGenerating(true);
 
     try {
-      const response = await fetch("/api/ai/generate", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(`${apiUrl}/api/ai/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           prompt: textToSubmit.trim(),
           language: i18n.language || 'en',

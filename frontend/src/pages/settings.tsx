@@ -152,9 +152,11 @@ function ImageUploadField({
     reader.onload = async () => {
       try {
         const base64Data = reader.result as string;
-        const res = await fetch("/api/upload/image", {
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const res = await fetch(`${apiUrl}/api/upload/image`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ image: base64Data, name: file.name }),
         });
 
