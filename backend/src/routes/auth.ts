@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { toNodeHandler } from "better-auth/node";
-import { auth } from "../auth/index";
+import { auth, isEmailVerificationRequired } from "../auth/index";
 import { db, influencersTable, brandsTable, user as userTable, session as sessionTable, verification as verificationTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logAuditEvent } from "../auth/audit";
@@ -97,17 +97,20 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       profileId = influencer.id;
     }
 
-    // 3. Trigger verification token creation and email sending via Better Auth
-    const callbackURL = `${process.env.CLIENT_URL || "http://localhost:5000"}/login?verified=true`;
-    await auth.api.sendVerificationEmail({
-      body: {
-        email,
-        callbackURL,
-      },
-      headers: req.headers,
-    }).catch((err) => {
-      console.warn("[SEND VERIFICATION ON SIGNUP ERROR]", err);
-    });
+    // 3. Trigger verification token creation and email sending via Better Auth if required
+    const emailVerificationRequired = isEmailVerificationRequired();
+    if (emailVerificationRequired) {
+      const callbackURL = `${process.env.CLIENT_URL || process.env.FRONTEND_URL || "http://localhost:5000"}/login?verified=true`;
+      await auth.api.sendVerificationEmail({
+        body: {
+          email,
+          callbackURL,
+        },
+        headers: req.headers,
+      }).catch((err) => {
+        console.warn("[SEND VERIFICATION ON SIGNUP ERROR]", err);
+      });
+    }
 
     // 4. Log security audit event
     await logAuditEvent({
@@ -126,10 +129,12 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         role: assignedRole,
         country,
         language,
-        emailVerified: false,
+        emailVerified: !emailVerificationRequired,
         avatarUrl: authResult.user.image || null,
         profileId,
       },
+      requiresEmailVerification: emailVerificationRequired,
+      emailVerificationRequired,
     });
   } catch (error: any) {
     console.error("[REGISTER ERROR]", error);
