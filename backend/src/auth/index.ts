@@ -10,6 +10,12 @@ import { sendPasswordResetEmail, sendVerificationEmailService } from "../service
 const baseURL = process.env.BETTER_AUTH_URL || process.env.SERVER_URL || "http://localhost:3000";
 const secret = process.env.BETTER_AUTH_SECRET || process.env.SESSION_SECRET || "influencer-hub-secret-key-production-32-chars";
 
+export function isEmailVerificationRequired(): boolean {
+  const val = process.env.EMAIL_VERIFICATION_REQUIRED;
+  if (!val) return false;
+  return val.trim().toLowerCase() === "true";
+}
+
 export const auth = betterAuth({
   baseURL,
   secret,
@@ -25,7 +31,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false,
+    requireEmailVerification: isEmailVerificationRequired(),
     async sendResetPassword(data, request) {
       console.log(`[AUTH LOG] Password reset requested for ${data.user.email}. Token link: ${data.url}`);
       await sendPasswordResetEmail({

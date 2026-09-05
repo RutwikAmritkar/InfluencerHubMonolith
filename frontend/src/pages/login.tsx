@@ -113,7 +113,7 @@ export default function Login() {
   const [activeSlide, setActiveSlide] = useState(0);
 
   // Sign In Email Interaction State: 'input' | 'sent' | 'password'
-  const [emailState, setEmailState] = useState<"input" | "sent" | "password">("input");
+  const [emailState, setEmailState] = useState<"input" | "sent" | "password">("password");
   const [sentEmail, setSentEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
@@ -122,11 +122,43 @@ export default function Login() {
   const loginMutation = useLogin();
   const registerMutation = useRegister();
 
-  // Keep route synced with authMode
+  // Keep route synced with authMode & handle email verification query parameters
   useEffect(() => {
     if (location === "/signup" && authMode !== "signup") {
       setAuthMode("signup");
       setSignupStep(1);
+    }
+    const searchParams = new URLSearchParams(window.location.search);
+    const tokenParam = searchParams.get("token");
+    const verifiedParam = searchParams.get("verified");
+    if (tokenParam) {
+      setVerificationCode(tokenParam);
+      const verifyToken = async () => {
+        setIsVerifying(true);
+        try {
+          const apiUrl = import.meta.env.VITE_API_URL || "";
+          const res = await fetch(`${apiUrl}/api/auth/verify-email`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ token: tokenParam }),
+          });
+          const data = await res.json();
+          if (res.ok && data.ok) {
+            toast.success("Email verified successfully! 🎉");
+            setLocation("/onboarding");
+          } else {
+            toast.error(data.error || "Verification failed. Token may be invalid or expired.");
+          }
+        } catch (_e) {
+          toast.error("Network error during email verification.");
+        } finally {
+          setIsVerifying(false);
+        }
+      };
+      verifyToken();
+    } else if (verifiedParam === "true") {
+      toast.success("Email verified successfully! Please log in.");
     }
   }, [location]);
 
@@ -228,12 +260,19 @@ export default function Login() {
     registerMutation.mutate(
       { data: payload as any },
       {
-        onSuccess: (data) => {
+        onSuccess: (data: any) => {
           if (data?.user) {
-            setUser({ ...(data.user as any), emailVerified: false });
+            const isVerificationRequired = Boolean(data.emailVerificationRequired || data.requiresEmailVerification);
+            setUser({ ...(data.user as any), emailVerified: !isVerificationRequired });
             queryClient.setQueryData(getGetMeQueryKey(), data);
-            toast.success("Account created successfully. Verification code sent!");
-            setSignupStep(4);
+
+            if (isVerificationRequired) {
+              toast.success("Account created! Verification email sent.");
+              setSignupStep(4);
+            } else {
+              toast.success("Account created successfully! Welcome to InfluencerHub.");
+              setLocation("/onboarding");
+            }
             return;
           }
           toast.error("Unable to create your account right now. Please try again.");
