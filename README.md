@@ -142,5 +142,15 @@ For in-depth guides, please visit the [`docs/`](file:///c:/Project/InfluencerHub
 
 ---
 
+## 🛠️ Development & Change Tracking
+
+- **Pull Requests**: Every PR must use the standard template at [`.github/pull_request_template.md`](file:///.github/pull_request_template.md).
+- **Layer & Module Classification**: Every PR explicitly records affected architectural layers (Frontend, Backend, Database, Shared, Infrastructure, CI/CD) and impacted modules.
+- **Target Versioning**: PRs specify an intended **Target Version** (`MAJOR.MINOR.PATCH`).
+- **Semantic Versioning & Releases**: Official product releases follow Semantic Versioning (`MAJOR.MINOR.PATCH`) and receive annotated Git tags (`vX.Y.Z`).
+- **Historical Change Register**: Detailed change history and verified commit ledgers are maintained in [`docs/development/change-register.md`](file:///docs/development/change-register.md).
+
+---
+
 ## 📄 License
 This project is licensed under the MIT License.
