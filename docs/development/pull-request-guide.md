@@ -61,7 +61,9 @@ Draft / Open PR
     ↓ (CI Validation: Typecheck, Build, Tests)
 Code Review & Approval
     ↓
-Merged to Target Branch (main / qa / uat)
+Merged to Target Branch (main)
+    ↓
+Deployed to Environment (QA / UAT / Production GitHub Environments)
     ↓
 Entry Logged in Change Register (docs/development/change-register.md)
     ↓
