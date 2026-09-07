@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { formatCurrency } from "@/lib/formatters";
 import { useListApplications, getListApplicationsQueryKey, useUpdateApplication } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { 
@@ -264,7 +265,7 @@ export default function Applications() {
                       <div className="flex items-center gap-1.5">
                         <Briefcase className="h-3.5 w-3.5 text-slate-400" />
                         <span className="font-bold text-[#11182F] dark:text-slate-100">
-                          ${app.budget.toLocaleString()}
+                          {formatCurrency(app.budget)}
                         </span>
                       </div>
                     )}

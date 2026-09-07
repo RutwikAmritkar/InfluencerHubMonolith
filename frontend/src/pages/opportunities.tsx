@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { useState, useMemo } from "react";
+import { formatCurrency } from "@/lib/formatters";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Realistic Fallback Opportunities List for Creators
@@ -185,7 +186,7 @@ export default function Opportunities() {
                       <div className="flex flex-wrap gap-4 sm:gap-6 text-xs pt-1">
                         <div className="flex items-center gap-1.5">
                           <Briefcase className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                          <span className="font-bold text-[#11182F] dark:text-slate-100">${item.budget.toLocaleString()}</span>
+                          <span className="font-bold text-[#11182F] dark:text-slate-100">{formatCurrency(item.budget)}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Users className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
@@ -200,7 +201,7 @@ export default function Opportunities() {
 
                     <div className="bg-[#F8FAFF] dark:bg-slate-800/40 p-5 sm:w-48 flex sm:flex-col justify-between items-center sm:items-end border-t sm:border-t-0 sm:border-l border-[#E2E8F3] dark:border-slate-800">
                       <div className="text-left sm:text-right">
-                        <div className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-slate-100">${item.budget.toLocaleString()}</div>
+                        <div className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-slate-100">{formatCurrency(item.budget)}</div>
                         <div className="text-[10px] font-bold text-[#64748B] dark:text-slate-500 uppercase tracking-wider font-mono mt-0.5">ESTIMATED PAYOUT</div>
                       </div>
                       <Button size="sm" className="h-8 px-4.5 rounded-xl bg-[#315CF5] hover:bg-blue-600 text-white font-bold text-xs shadow-2xs group-hover:translate-x-0.5 transition-transform cursor-pointer">

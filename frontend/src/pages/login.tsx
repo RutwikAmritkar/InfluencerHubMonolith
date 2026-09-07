@@ -1068,7 +1068,7 @@ export default function Login() {
                       </div>
                       <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
                         <span className="text-slate-500 font-medium">Budget:</span>
-                        <span className="font-extrabold text-slate-900">$5,000 USD</span>
+                        <span className="font-extrabold text-slate-900">₹5,000 INR</span>
                       </div>
                       <div className="flex items-center justify-between text-xs pt-1">
                         <span className="text-slate-500 font-medium">Est. ROI:</span>
@@ -1111,7 +1111,7 @@ export default function Login() {
                         </div>
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-red-500 shrink-0" />
-                          <span>Approve escrow payout ($15k)</span>
+                          <span>Approve escrow payout (₹15k)</span>
                         </div>
                       </div>
                     </motion.div>

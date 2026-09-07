@@ -39,7 +39,7 @@ const DEFAULT_CONVERSATIONS = [
     unreadCount: 2,
     campaignTitle: "Summer Skincare Launch",
     campaignType: "Instagram Reel",
-    campaignBudget: "$4,500",
+    campaignBudget: "₹4,500",
     campaignStatus: "Active",
     campaignId: "1",
   },
@@ -53,7 +53,7 @@ const DEFAULT_CONVERSATIONS = [
     unreadCount: 0,
     campaignTitle: "Tech Review 2026",
     campaignType: "YouTube Unboxing",
-    campaignBudget: "$12,500",
+    campaignBudget: "₹12,500",
     campaignStatus: "Active",
     campaignId: "2",
   },
@@ -62,12 +62,12 @@ const DEFAULT_CONVERSATIONS = [
     participantId: 103,
     participantName: "UrbanFit Apparel",
     participantAvatarUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=150&auto=format&fit=crop",
-    lastMessage: "The contract details have been updated with the $4,500 budget increase.",
+    lastMessage: "The contract details have been updated with the ₹4,500 budget increase.",
     lastMessageAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     unreadCount: 0,
     campaignTitle: "Fall Fitness Drop",
     campaignType: "TikTok & Stories",
-    campaignBudget: "$8,000",
+    campaignBudget: "₹8,000",
     campaignStatus: "Active",
     campaignId: "3",
   },
@@ -81,7 +81,7 @@ const DEFAULT_CONVERSATIONS = [
     unreadCount: 0,
     campaignTitle: "Organic Snack Rollout",
     campaignType: "Instagram Feed",
-    campaignBudget: "$3,200",
+    campaignBudget: "₹3,200",
     campaignStatus: "Active",
     campaignId: "4",
   },
@@ -154,7 +154,7 @@ const DEFAULT_MESSAGES_MAP: Record<number, any[]> = {
       senderId: 103,
       senderName: "UrbanFit Apparel",
       senderAvatarUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=150&auto=format&fit=crop",
-      content: "The contract details have been updated with the $4,500 budget increase.",
+      content: "The contract details have been updated with the ₹4,500 budget increase.",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     },
   ],
@@ -417,7 +417,7 @@ export default function Messages() {
               <Briefcase className="w-3.5 h-3.5 text-[#315BEF] dark:text-blue-400 shrink-0" />
               <span className="font-bold text-slate-900 dark:text-slate-100 truncate">{activeConv.campaignTitle || "Summer Skincare Launch"}</span>
               <span className="text-slate-400 dark:text-slate-500 hidden sm:inline">•</span>
-              <span className="text-slate-600 dark:text-slate-300 font-mono text-[11px] hidden sm:inline">{activeConv.campaignType || "Instagram Reel"} · {activeConv.campaignBudget || "$4,500"}</span>
+              <span className="text-slate-600 dark:text-slate-300 font-mono text-[11px] hidden sm:inline">{activeConv.campaignType || "Instagram Reel"} · {activeConv.campaignBudget || "₹4,500"}</span>
               <Badge className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 text-[9px] font-bold px-1.5 py-0 shrink-0">
                 Active
               </Badge>

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { formatCurrency } from "@/lib/formatters";
 import { DEFAULT_BRAND_PROFILE, calculateCreatorMatch, calculatePricingIntelligence } from "@/services/brand-service";
 import { 
   Search, 
@@ -267,10 +268,10 @@ export default function FindCreatorsPage() {
                         ESTIMATED RATE RANGE:
                       </span>
                       <p className="text-base font-black text-[#101828] dark:text-slate-100 mt-0.5">
-                        ${pricing.comparableMarketRange.min.toLocaleString()} – ${pricing.comparableMarketRange.max.toLocaleString()}
+                        {formatCurrency(pricing.comparableMarketRange.min)} – {formatCurrency(pricing.comparableMarketRange.max)}
                       </p>
                       <span className="text-[10px] text-[#667085] dark:text-slate-400 font-mono block">
-                        Est. CPV: ${pricing.costPerViewEstimated} · Confidence: {pricing.pricingConfidence}
+                        Est. CPV: {formatCurrency(pricing.costPerViewEstimated)} · Confidence: {pricing.pricingConfidence}
                       </span>
                     </div>
 

@@ -184,7 +184,7 @@ export default function Campaigns() {
                       <div className="flex flex-wrap gap-4 sm:gap-6 text-xs pt-1">
                         <div className="flex items-center gap-1.5">
                           <Briefcase className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                          <span className="font-bold text-[#11182F] dark:text-slate-100">${campaign.budget.toLocaleString()}</span>
+                          <span className="font-bold text-[#11182F] dark:text-slate-100">{formatCurrency(campaign.budget)}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Users className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
