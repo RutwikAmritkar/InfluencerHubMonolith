@@ -11,6 +11,26 @@ jobs:
     name: Build & Test Monorepo
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_ci_password
+          POSTGRES_DB: influencer_hub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres_ci_password@localhost:5432/influencer_hub
+      APP_ENV: local
+      NODE_ENV: test
+
     strategy:
       matrix:
         node-version: [24.x]
@@ -35,6 +55,9 @@ jobs:
 
       - name: Run Workspace Typecheck
         run: pnpm run typecheck
+
+      - name: Push Database Schema to CI Postgres
+        run: pnpm run db:push
 
       - name: Run Backend Test Suites
         run: pnpm --filter @workspace/api-server run test
