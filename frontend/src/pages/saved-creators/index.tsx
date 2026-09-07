@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DEFAULT_CAMPAIGN_SHORTLISTS } from "@/services/brand-service";
+import { formatCurrency } from "@/lib/formatters";
 import { CampaignShortlist } from "@/types/creator-discovery";
 import { 
   Bookmark, 
@@ -104,7 +105,7 @@ export default function SavedCreatorsPage() {
                         CREATOR ASKING RATE / RECOMMENDED RANGE:
                       </span>
                       <p className="text-base font-black text-[#101828] dark:text-slate-100 mt-0.5">
-                        ${item.pricing.creatorAskingRate?.toLocaleString()} (${item.pricing.comparableMarketRange.min.toLocaleString()} – ${item.pricing.comparableMarketRange.max.toLocaleString()})
+                        {item.pricing.creatorAskingRate != null ? formatCurrency(item.pricing.creatorAskingRate) : ''} ({formatCurrency(item.pricing.comparableMarketRange.min)} – {formatCurrency(item.pricing.comparableMarketRange.max)})
                       </p>
                     </div>
 

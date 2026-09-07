@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import { formatCurrency } from "@/lib/formatters";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -280,7 +281,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-[#98A2B3] dark:text-slate-500 uppercase tracking-wider font-mono">Budget</p>
-                      <p className="font-black text-base text-[#101828] dark:text-slate-100">${campaign.budget.toLocaleString()}</p>
+                      <p className="font-black text-base text-[#101828] dark:text-slate-100">{formatCurrency(campaign.budget)}</p>
                     </div>
                   </div>
 

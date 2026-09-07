@@ -103,7 +103,7 @@ const DISCOVERY_CREATORS = [
     audienceGender: "72% Female",
     audienceAge: "18–34",
     topLocation: "64% US",
-    estRate: "$4,500",
+    estRate: "₹4,500",
     matchScore: 98,
     platformColor: "from-amber-500 via-pink-600 to-purple-600",
   },
@@ -119,7 +119,7 @@ const DISCOVERY_CREATORS = [
     audienceGender: "58% Male",
     audienceAge: "18–24",
     topLocation: "78% US",
-    estRate: "$7,200",
+    estRate: "₹7,200",
     matchScore: 95,
     platformColor: "from-cyan-400 to-pink-500",
   },
@@ -135,7 +135,7 @@ const DISCOVERY_CREATORS = [
     audienceGender: "64% Female",
     audienceAge: "25–44",
     topLocation: "52% UK",
-    estRate: "$3,800",
+    estRate: "₹3,800",
     matchScore: 92,
     platformColor: "from-red-600 to-rose-700",
   },
@@ -461,7 +461,7 @@ export default function Landing() {
                         Summer Skincare Launch Campaign
                       </h2>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Active Roster: <span className="text-white font-bold">8 Creators</span> · Total Payout: <span className="text-emerald-400 font-bold">$42,500</span>
+                        Active Roster: <span className="text-white font-bold">8 Creators</span> · Total Payout: <span className="text-emerald-400 font-bold">₹42,500</span>
                       </p>
                     </div>
                     <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold">
@@ -770,7 +770,7 @@ export default function Landing() {
                 <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
                   <span className="text-[10px] text-slate-500 uppercase font-mono font-bold">ESTIMATED SPEND</span>
                   <div className="text-2xl sm:text-3xl text-white">
-                    <AnimatedCounter to={42580} prefix="$" />
+                    <AnimatedCounter to={42580} prefix="₹" />
                   </div>
                 </div>
 

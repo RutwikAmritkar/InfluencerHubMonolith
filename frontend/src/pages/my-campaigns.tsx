@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { formatCurrency } from "@/lib/formatters";
 import { useListApplications, useListCampaigns } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { 
@@ -67,7 +68,7 @@ const defaultAcceptedCampaigns = [
     startDate: "2026-05-10",
     deadline: "2026-06-15",
     deliverablesStatus: "All Deliverables Approved",
-    nextMilestone: "Payout Released ($4,200)",
+    nextMilestone: "Payout Released (₹4,200)",
   },
 ];
 
@@ -258,7 +259,7 @@ export default function MyCampaigns() {
                       <div className="flex items-center gap-1.5">
                         <Briefcase className="h-3.5 w-3.5 text-slate-400" />
                         <span className="font-bold text-[#11182F] dark:text-slate-100">
-                          ${c.budget.toLocaleString()}
+                          {formatCurrency(c.budget)}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 capitalize font-bold text-slate-700 dark:text-slate-300">

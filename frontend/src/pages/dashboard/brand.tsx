@@ -143,7 +143,7 @@ const TOP_CREATORS_LIST = [
 // Recent Activity Log
 const RECENT_ACTIVITY_LOG = [
   { id: 1, text: "Alex Rivera accepted Summer Beauty campaign", time: "2 min ago" },
-  { id: 2, text: "Campaign budget updated to $8,000", time: "18 min ago" },
+  { id: 2, text: "Campaign budget updated to ₹8,000", time: "18 min ago" },
   { id: 3, text: "New creator application received from Maya Chen", time: "45 min ago" },
   { id: 4, text: "Summer Beauty deliverable approved", time: "1 hr ago" },
 ];
@@ -299,8 +299,8 @@ export default function BrandDashboard() {
           />
           <BrandKPICard
             label="Campaign Spend"
-            value="$0"
-            badgeText="$0 total spent"
+            value="₹0"
+            badgeText="₹0 total spent"
             icon={DollarSign}
             iconStyle="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400"
           />
@@ -356,7 +356,7 @@ export default function BrandDashboard() {
         />
         <BrandKPICard
           label="Campaign Spend"
-          value="$42,580"
+          value="₹42,580"
           badgeText="+12.4%"
           icon={DollarSign}
           iconStyle="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400"
