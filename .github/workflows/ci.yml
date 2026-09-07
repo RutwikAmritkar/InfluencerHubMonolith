@@ -2,9 +2,9 @@ name: InfluencerHub CI Workflow
 
 on:
   push:
-    branches: [ main, uat, qa ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, uat, qa ]
+    branches: [ main ]
 
 jobs:
   verify:
