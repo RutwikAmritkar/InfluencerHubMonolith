@@ -6,7 +6,7 @@ This document defines the official release workflow and Semantic Versioning poli
 
 ## 📌 Core Versioning Concepts
 
-- **PR ≠ Release**: Merging a Pull Request integrates code into a target branch (`main`, `qa`, `uat`), but does not constitute a product release.
+- **PR ≠ Release**: Merging a Pull Request integrates code into the `main` application branch, but does not constitute a product release.
 - **Commit ≠ Release**: Commits track granular code evolution. Individual commits are assigned a **Target Version**.
 - **Version = Product Release**: A product release represents a tested, approved, and deployed milestone of the monolith.
 - **Git Tag = Permanent Release Marker**: An annotated Git tag (e.g. `v0.1.0`) is created **only** when an official product release is published.
