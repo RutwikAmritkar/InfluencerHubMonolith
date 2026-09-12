@@ -49,6 +49,7 @@ const getHealthStatus = async () => {
     await db.execute(sql`ALTER TABLE "brands" ADD COLUMN IF NOT EXISTS "country" text DEFAULT 'India';`);
     await db.execute(sql`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "country" text DEFAULT 'India';`);
     await db.execute(sql`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "language" text DEFAULT 'en';`);
+    await db.execute(sql`ALTER TABLE "social_metric_snapshots" ADD COLUMN IF NOT EXISTS "reach" integer DEFAULT 0;`);
     await db.execute(sql`
       UPDATE "influencers"
       SET "audience_data" = jsonb_set(

@@ -66,10 +66,20 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
   const platformRaw = req.params.platform;
   const platform = (Array.isArray(platformRaw) ? platformRaw[0] : platformRaw).toLowerCase();
   const provider = providers[platform];
-  const { code, state } = req.query as Record<string, string>;
+  const { code, state, error, error_reason, error_description } = req.query as Record<string, string>;
 
   if (!provider) {
     res.status(400).json({ error: `Platform '${platform}' is not supported.` });
+    return;
+  }
+
+  if (error || error_reason || error_description) {
+    res.status(400).json({ error: `OAuth authorization failed or was canceled: ${error_description || error_reason || error}` });
+    return;
+  }
+
+  if (!code || typeof code !== "string" || code.trim() === "") {
+    res.status(400).json({ error: "Missing required OAuth authorization code parameter." });
     return;
   }
 
@@ -115,7 +125,7 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
 
   try {
     // Exchange OAuth code for tokens
-    const tokens = await provider.exchangeCodeForTokens(code || "mock_code_123");
+    const tokens = await provider.exchangeCodeForTokens(code);
     const profile = await provider.getProfile(tokens.accessToken);
 
     // Encrypt access and refresh tokens using AES-256-GCM
