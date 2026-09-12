@@ -15,6 +15,7 @@ export const socialMetricSnapshotsTable = pgTable("social_metric_snapshots", {
   avgLikes: integer("avg_likes").notNull().default(0),
   avgComments: integer("avg_comments").notNull().default(0),
   engagementRate: text("engagement_rate").notNull().default("0.00"),
+  reach: integer("reach").default(0),
   followerGrowth24h: integer("follower_growth_24h").default(0),
   followerGrowth7d: integer("follower_growth_7d").default(0),
   followerGrowth30d: integer("follower_growth_30d").default(0),

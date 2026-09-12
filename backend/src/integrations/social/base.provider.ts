@@ -53,5 +53,6 @@ export interface SocialPlatformProvider {
   }>;
   getProfile(accessToken: string): Promise<NormalizedSocialProfile>;
   getContent(accessToken: string, externalAccountId: string, limit?: number): Promise<NormalizedSocialContent[]>;
+  getInsights?(accessToken: string, externalAccountId: string): Promise<{ reach: number | null }>;
   disconnect(accessToken: string): Promise<void>;
 }

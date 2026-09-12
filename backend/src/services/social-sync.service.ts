@@ -135,15 +135,25 @@ export class SocialSyncService {
       // 1. Fetch normalized profile
       const profile = await provider.getProfile(accessToken);
 
-      // 2. Fetch recent content
+      // 2. Fetch insights metric if supported by provider
+      let insights: { reach?: number | null } | undefined;
+      if (typeof provider.getInsights === "function") {
+        try {
+          insights = await provider.getInsights(accessToken, profile.externalAccountId);
+        } catch (_insightsErr) {
+          insights = { reach: null };
+        }
+      }
+
+      // 3. Fetch recent content
       const contentList = await provider.getContent(accessToken, profile.externalAccountId, 10);
 
-      // 3. Calculate verified telemetry analytics
+      // 4. Calculate verified telemetry analytics
       const analytics = calculateVerifiedAnalytics(profile, contentList);
 
       const now = new Date();
 
-      // 4. Update account metadata
+      // 5. Update account metadata
       await db
         .update(socialAccountsTable)
         .set({
@@ -158,7 +168,7 @@ export class SocialSyncService {
         })
         .where(eq(socialAccountsTable.id, socialAccountId));
 
-      // 5. Append historical snapshot in social_metric_snapshots
+      // 6. Append historical snapshot in social_metric_snapshots
       await db.insert(socialMetricSnapshotsTable).values({
         socialAccountId,
         platform: account.platform,
@@ -171,6 +181,7 @@ export class SocialSyncService {
         avgLikes: analytics.avgLikes,
         avgComments: analytics.avgComments,
         engagementRate: analytics.engagementRate,
+        reach: insights?.reach !== undefined ? insights.reach : null,
         snapshotDate: now,
       });
 
