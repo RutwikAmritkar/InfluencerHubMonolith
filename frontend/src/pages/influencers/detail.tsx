@@ -25,11 +25,7 @@ const defaultInfluencerDetail = {
   coverUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop",
   platforms: ["instagram", "tiktok", "youtube"],
   languages: ["English", "Spanish"],
-  socialAccounts: [
-    { platform: "instagram", username: "alexrivera", profileUrl: "https://instagram.com/alexrivera", status: "VERIFIED" },
-    { platform: "tiktok", username: "alexrivera.official", profileUrl: "https://tiktok.com/@alexrivera.official", status: "VERIFIED" },
-    { platform: "youtube", username: "alexriveravlogs", profileUrl: "https://youtube.com/c/alexriveravlogs", status: "CONNECTED" },
-  ],
+  socialAccounts: [],
   portfolio: [
     "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=600&auto=format&fit=crop",

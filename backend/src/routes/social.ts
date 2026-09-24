@@ -15,6 +15,7 @@ import { InstagramProvider } from "../integrations/social/instagram.provider";
 import { YouTubeProvider } from "../integrations/social/youtube.provider";
 import { SocialPlatformProvider } from "../integrations/social/base.provider";
 import { socialSyncService } from "../services/social-sync.service";
+import { instagramDataPipelineService } from "../services/instagram-data-pipeline.service";
 import { logAuditEvent } from "../auth/audit";
 
 const router: IRouter = Router();
@@ -210,10 +211,14 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
     });
 
     const clientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || "http://localhost:5000";
-    res.redirect(`${clientUrl}/dashboard/influencer?connected=true&platform=${platform}`);
+    res.redirect(`${clientUrl}/settings?connected=true&platform=${platform}`);
   } catch (error: any) {
     console.error("[SOCIAL CALLBACK ERROR]", error);
-    res.status(500).json({ error: "Failed to verify social account via OAuth." });
+    const detailMsg = error?.message || String(error);
+    res.status(500).json({
+      error: "Failed to verify social account via OAuth.",
+      details: detailMsg,
+    });
   }
 });
 
@@ -238,6 +243,8 @@ router.get("/social/accounts", requireAuth, async (req: Request, res: Response):
           .orderBy(desc(socialMetricSnapshotsTable.snapshotDate))
           .limit(1);
 
+        const syncState = acc.lastSyncedAt ? "SYNCED" : "PENDING_SYNC";
+
         return {
           id: acc.id,
           platform: acc.platform,
@@ -248,13 +255,15 @@ router.get("/social/accounts", requireAuth, async (req: Request, res: Response):
           avatarUrl: acc.avatarUrl,
           verificationStatus: acc.verificationStatus,
           isOfficialOAuth: acc.isOfficialOAuth,
-          followers: latestSnapshot?.followers || 0,
+          syncState,
+          followers: latestSnapshot ? latestSnapshot.followers : (acc.lastSyncedAt ? 0 : null),
           following: latestSnapshot?.following ?? null,
-          totalContent: latestSnapshot?.totalContent || 0,
-          avgViews: latestSnapshot?.avgViews || 0,
-          avgLikes: latestSnapshot?.avgLikes || 0,
-          avgComments: latestSnapshot?.avgComments || 0,
-          engagementRate: latestSnapshot?.engagementRate || "0.00",
+          totalContent: latestSnapshot ? latestSnapshot.totalContent : (acc.lastSyncedAt ? 0 : null),
+          reach: latestSnapshot?.reach ?? null,
+          avgViews: latestSnapshot?.avgViews ?? null,
+          avgLikes: latestSnapshot?.avgLikes ?? null,
+          avgComments: latestSnapshot?.avgComments ?? null,
+          engagementRate: latestSnapshot?.engagementRate ?? null,
           lastSyncedAt: acc.lastSyncedAt ? acc.lastSyncedAt.toISOString() : null,
           connectedAt: acc.connectedAt.toISOString(),
         };
@@ -265,6 +274,39 @@ router.get("/social/accounts", requireAuth, async (req: Request, res: Response):
   } catch (error) {
     console.error("[GET SOCIAL ACCOUNTS ERROR]", error);
     res.status(500).json({ error: "Failed to retrieve connected social accounts." });
+  }
+});
+
+// 3.5 GET /api/social/instagram/analytics (Full Instagram Data Extraction Pipeline)
+router.get("/social/instagram/analytics", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const userId = authReq.userId!;
+
+  try {
+    const [account] = await db
+      .select()
+      .from(socialAccountsTable)
+      .where(and(eq(socialAccountsTable.userId, userId), eq(socialAccountsTable.platform, "instagram")))
+      .limit(1);
+
+    if (!account) {
+      res.status(404).json({ error: "No connected Instagram account found for user." });
+      return;
+    }
+
+    if (account.verificationStatus === "DISCONNECTED") {
+      res.status(400).json({ error: `Instagram account @${account.username} is disconnected. Re-authorization required.` });
+      return;
+    }
+
+    const payload = await instagramDataPipelineService.runPipelineForAccount(account.id);
+    res.json(payload);
+  } catch (error: any) {
+    console.error("[GET INSTAGRAM ANALYTICS ERROR]", error);
+    res.status(500).json({
+      error: "Failed to execute Instagram data extraction pipeline.",
+      details: error?.message || String(error),
+    });
   }
 });
 

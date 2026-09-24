@@ -254,7 +254,7 @@ export const SocialPresenceSection = memo(({ accounts }: { accounts?: SocialAcco
                       Followers
                     </span>
                     <span className="text-base sm:text-lg font-black text-[#11182F] dark:text-slate-100 font-mono block mt-0.5">
-                      {acc.followers}
+                      {acc.followers !== null && acc.followers !== undefined ? acc.followers : "N/A"}
                     </span>
                   </div>
 
@@ -263,7 +263,7 @@ export const SocialPresenceSection = memo(({ accounts }: { accounts?: SocialAcco
                       Engagement
                     </span>
                     <span className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono block mt-0.5">
-                      {acc.engagementRate}
+                      {acc.engagementRate !== null && acc.engagementRate !== undefined && acc.engagementRate !== "N/A" ? acc.engagementRate : "N/A"}
                     </span>
                   </div>
                 </div>

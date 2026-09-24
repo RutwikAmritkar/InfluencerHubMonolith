@@ -12,6 +12,7 @@ export * from "./campaigns";
 export * from "./applications";
 export * from "./conversations";
 export * from "./notifications";
+export * from "./social-insights";
 
 
 

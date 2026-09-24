@@ -4,6 +4,7 @@ import {
   socialTokensTable,
   socialMetricSnapshotsTable,
   socialContentTable,
+  influencersTable,
   SocialAccountRecord,
 } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
@@ -167,6 +168,17 @@ export class SocialSyncService {
           updatedAt: now,
         })
         .where(eq(socialAccountsTable.id, socialAccountId));
+
+      if (account.userId) {
+        await db
+          .update(influencersTable)
+          .set({
+            followers: profile.followers,
+            avgViews: analytics.avgViews,
+            engagementRate: parseFloat(analytics.engagementRate) || 0,
+          })
+          .where(eq(influencersTable.userId, String(account.userId)));
+      }
 
       // 6. Append historical snapshot in social_metric_snapshots
       await db.insert(socialMetricSnapshotsTable).values({

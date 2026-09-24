@@ -8,6 +8,7 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "test": "tsx --test src/__tests__/auth.test.ts src/__tests__/auth_validation.test.ts src/__tests__/password_reset.test.ts src/__tests__/social-auth.test.ts",
+    "test:instagram": "tsx --env-file=.env src/__tests__/instagram-oauth-integration.test.ts && tsx --env-file=.env src/__tests__/instagram-db-persistence.test.ts && tsx --env-file=.env src/__tests__/instagram-api-integration.test.ts && tsx --env-file=.env src/__tests__/instagram-security-audit.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

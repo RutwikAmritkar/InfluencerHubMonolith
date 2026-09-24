@@ -10,7 +10,7 @@
     "test": "pnpm --filter @workspace/api-server run test",
     "db:push": "pnpm --filter @workspace/db run push",
     "db:push-force": "pnpm --filter @workspace/db run push-force",
-    "db:seed": "pnpm --filter database exec tsx ./seeds/seed.ts"
+    "db:seed": "npx tsx database/seeds/seed.ts"
   },
   "private": true,
   "dependencies": {

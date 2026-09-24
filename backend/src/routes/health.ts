@@ -12,6 +12,7 @@ const getHealthStatus = async () => {
     await db.execute(sql`SELECT 1`);
     dbStatus = "connected";
   } catch (error) {
+    console.error("[HEALTH CHECK DB ERROR]:", error);
     dbStatus = "unavailable";
   }
 

@@ -1,8 +1,7 @@
 import { Router, type IRouter } from "express";
-import { db } from "@workspace/db";
-import { influencersTable, user as userTable, type SocialAccount } from "@workspace/db";
+import { db, influencersTable, user as userTable, socialAccountsTable, socialMetricSnapshotsTable, type SocialAccount } from "@workspace/db";
 import { UpdateInfluencerBody } from "@workspace/api-zod";
-import { eq, and, gte, lte, ilike, sql } from "drizzle-orm";
+import { eq, and, gte, lte, ilike, desc, sql } from "drizzle-orm";
 import { socialVerificationService } from "../services/social-verification.service";
 import { requireAuth, optionalAuth } from "../middlewares/auth";
 
@@ -166,6 +165,45 @@ router.get("/influencers/:id", async (req, res): Promise<void> => {
       .limit(1);
 
     if (row) {
+      const dbSocialAccounts = await db
+        .select()
+        .from(socialAccountsTable)
+        .where(eq(socialAccountsTable.userId, row.influencer.userId));
+
+      let mergedSocialAccounts = row.influencer.socialAccounts || [];
+
+      if (dbSocialAccounts.length > 0) {
+        mergedSocialAccounts = await Promise.all(
+          dbSocialAccounts.map(async (acc) => {
+            const [latestSnapshot] = await db
+              .select()
+              .from(socialMetricSnapshotsTable)
+              .where(eq(socialMetricSnapshotsTable.socialAccountId, acc.id))
+              .orderBy(desc(socialMetricSnapshotsTable.snapshotDate))
+              .limit(1);
+
+            return {
+              id: `soc_${acc.id}`,
+              creatorId: id,
+              platform: acc.platform,
+              username: acc.username,
+              displayName: acc.displayName || acc.username,
+              externalAccountId: acc.externalAccountId,
+              profileUrl: acc.profileUrl || `https://${acc.platform}.com/${acc.username}`,
+              inputType: "username" as const,
+              status: acc.verificationStatus as any,
+              isOfficialOAuth: acc.isOfficialOAuth,
+              followers: latestSnapshot ? latestSnapshot.followers : (acc.lastSyncedAt ? 0 : null),
+              following: latestSnapshot?.following ?? null,
+              totalContent: latestSnapshot ? latestSnapshot.totalContent : (acc.lastSyncedAt ? 0 : null),
+              lastSyncedAt: acc.lastSyncedAt ? acc.lastSyncedAt.toISOString() : null,
+              createdAt: acc.connectedAt.toISOString(),
+              updatedAt: acc.updatedAt.toISOString(),
+            };
+          })
+        );
+      }
+
       res.json({
         id: row.influencer.id,
         userId: row.influencer.userId,
@@ -188,7 +226,7 @@ router.get("/influencers/:id", async (req, res): Promise<void> => {
         isVerified: row.influencer.isVerified,
         availability: row.influencer.availability,
         portfolio: row.influencer.portfolio,
-        socialAccounts: row.influencer.socialAccounts || [],
+        socialAccounts: mergedSocialAccounts,
         audienceData: row.influencer.audienceData || null,
         previousCollaborations: [],
         reviews: [],
