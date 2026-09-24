@@ -69,4 +69,3 @@ export interface SocialPlatformProvider {
   probeMediaInsights?(accessToken: string, mediaId: string, mediaType: string): Promise<ProbedMetricResult[]>;
   disconnect(accessToken: string): Promise<void>;
 }
-}

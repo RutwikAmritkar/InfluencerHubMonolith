@@ -564,4 +564,3 @@ export class InstagramProvider implements SocialPlatformProvider {
     return;
   }
 }
-}
