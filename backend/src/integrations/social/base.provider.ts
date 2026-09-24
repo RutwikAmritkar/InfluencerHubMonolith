@@ -40,6 +40,17 @@ export interface OAuthTokenResponse {
   scopes: string[];
 }
 
+export interface ProbedMetricResult {
+  metric: string;
+  accepted: boolean;
+  value: number | string | null;
+  period?: string | null;
+  periodStart?: Date | null;
+  periodEnd?: Date | null;
+  fetchedAt: string;
+  error?: string | null;
+}
+
 export interface SocialPlatformProvider {
   readonly platform: "instagram" | "youtube" | "tiktok";
   readonly capabilities: PlatformCapabilities;
@@ -54,5 +65,8 @@ export interface SocialPlatformProvider {
   getProfile(accessToken: string): Promise<NormalizedSocialProfile>;
   getContent(accessToken: string, externalAccountId: string, limit?: number): Promise<NormalizedSocialContent[]>;
   getInsights?(accessToken: string, externalAccountId: string): Promise<{ reach: number | null }>;
+  probeAccountInsights?(accessToken: string, externalAccountId: string): Promise<ProbedMetricResult[]>;
+  probeMediaInsights?(accessToken: string, mediaId: string, mediaType: string): Promise<ProbedMetricResult[]>;
   disconnect(accessToken: string): Promise<void>;
+}
 }

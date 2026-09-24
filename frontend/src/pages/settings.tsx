@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { useGetBrand, useUpdateBrand, useGetInfluencer, useUpdateInfluencer, SocialAccount } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
@@ -22,6 +22,15 @@ export default function Settings() {
   const { t, i18n } = useTranslation();
 
   const currentLang = i18n.language || 'en';
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("connected") === "true") {
+      const platform = params.get("platform") || "social";
+      toast.success(`Successfully connected ${platform} account via official OAuth! 🎉`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const handleLanguageChange = (langKey: string) => {
     i18n.changeLanguage(langKey);

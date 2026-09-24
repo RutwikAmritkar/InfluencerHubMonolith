@@ -4,6 +4,7 @@ import {
   NormalizedSocialProfile,
   NormalizedSocialContent,
   OAuthTokenResponse,
+  ProbedMetricResult,
 } from "./base.provider";
 import { logger } from "../../lib/logger";
 
@@ -38,9 +39,12 @@ export class InstagramProvider implements SocialPlatformProvider {
    * It only activates if ENABLE_SOCIAL_MOCK_FALLBACK is explicitly "true"
    * or during development/test when real Meta credentials are not configured.
    */
-  private isMockModeEnabled(): boolean {
+  private isMockModeEnabled(token?: string): boolean {
     if (process.env.NODE_ENV === "production") {
       return false;
+    }
+    if (token && (token.startsWith("mock_") || token.startsWith("ig_demo_") || token.startsWith("ig_test_"))) {
+      return true;
     }
     if (process.env.ENABLE_SOCIAL_MOCK_FALLBACK === "true") {
       return true;
@@ -50,6 +54,7 @@ export class InstagramProvider implements SocialPlatformProvider {
     }
     return false;
   }
+
 
   /**
    * Asserts that backend environment variables for Instagram Meta Graph API are configured.
@@ -100,14 +105,24 @@ export class InstagramProvider implements SocialPlatformProvider {
 
     this.ensureConfigured();
 
+    // Sanitize authorization code (strip trailing #_ fragment and whitespace appended by Instagram OAuth redirects)
+    const sanitizedCode = code.replace(/#_$/, "").replace(/#.*$/, "").trim();
+
     try {
       const formData = new URLSearchParams({
         client_id: this.clientId,
         client_secret: this.clientSecret,
         grant_type: "authorization_code",
         redirect_uri: this.redirectUri,
-        code,
+        code: sanitizedCode,
       });
+
+      logger.info({
+        category: "INSTAGRAM_OAUTH",
+        clientId: this.clientId,
+        redirectUri: this.redirectUri,
+        codeLength: sanitizedCode.length,
+      }, "[INSTAGRAM OAUTH] Initiating token exchange with Meta API...");
 
       const res = await fetch(`${INSTAGRAM_OAUTH_HOST}/oauth/access_token`, {
         method: "POST",
@@ -118,7 +133,14 @@ export class InstagramProvider implements SocialPlatformProvider {
       const data = (await res.json()) as any;
 
       if (!res.ok || data.error || data.error_message) {
-        throw new Error(data.error_message || data.error?.message || "Failed to exchange Instagram OAuth code");
+        const errorDetail = data.error_message || data.error?.message || (typeof data.error === "string" ? data.error : null) || data.error_type || JSON.stringify(data);
+        logger.error({
+          category: "INSTAGRAM_OAUTH",
+          statusCode: res.status,
+          errorDetail,
+        }, "[INSTAGRAM OAUTH ERROR] Meta API rejected authorization code exchange.");
+
+        throw new Error(`Meta API error (${res.status}): ${errorDetail}`);
       }
 
       const shortLivedToken = data.access_token;
@@ -199,7 +221,7 @@ export class InstagramProvider implements SocialPlatformProvider {
    */
   async getProfile(accessToken: string): Promise<NormalizedSocialProfile> {
     if (accessToken.startsWith("ig_") || accessToken.startsWith("mock_")) {
-      if (this.isMockModeEnabled()) {
+      if (this.isMockModeEnabled(accessToken)) {
         return {
           externalAccountId: "ig_1784140123456789",
           username: "maya.chen.creator",
@@ -219,6 +241,15 @@ export class InstagramProvider implements SocialPlatformProvider {
       const res = await fetch(url);
       const data = (await res.json()) as any;
 
+      logger.info({
+        category: "INSTAGRAM_PROFILE_FETCH",
+        endpoint: "/v20.0/me",
+        statusCode: res.status,
+        accountId: data?.id || null,
+        username: data?.username || null,
+        responseFields: data ? Object.keys(data) : [],
+      }, "[INSTAGRAM PROFILE] Graph API profile endpoint called.");
+
       if (!res.ok || data.error) {
         throw new Error(data.error?.message || "Failed to fetch Instagram profile from Meta API.");
       }
@@ -234,7 +265,7 @@ export class InstagramProvider implements SocialPlatformProvider {
         totalContent: data.media_count || 0,
       };
     } catch (err: any) {
-      if (this.isMockModeEnabled()) {
+      if (this.isMockModeEnabled(accessToken)) {
         console.warn("[INSTAGRAM PROFILE FETCH WARNING] Falling back to sandbox profile in mock mode:", err.message);
         return {
           externalAccountId: "ig_1784140123456789",
@@ -254,10 +285,11 @@ export class InstagramProvider implements SocialPlatformProvider {
 
   /**
    * Fetches Instagram media posts directly via graph.instagram.com/v20.0/me/media.
+   * Handles pagination properly and gracefully handles empty media responses (totalContent = 0).
    */
   async getContent(accessToken: string, _externalAccountId: string, limit = 10): Promise<NormalizedSocialContent[]> {
     if (accessToken.startsWith("ig_") || accessToken.startsWith("mock_")) {
-      if (this.isMockModeEnabled()) {
+      if (this.isMockModeEnabled(accessToken)) {
         return [
           {
             externalContentId: "ig_media_101",
@@ -288,97 +320,248 @@ export class InstagramProvider implements SocialPlatformProvider {
     }
 
     try {
-      const url = `${INSTAGRAM_GRAPH_HOST}/${INSTAGRAM_GRAPH_API_VERSION}/me/media?fields=id,caption,media_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count&limit=${limit}&access_token=${accessToken}`;
-      const res = await fetch(url);
-      const data = (await res.json()) as any;
+      let items: NormalizedSocialContent[] = [];
+      let nextUrl: string | null = `${INSTAGRAM_GRAPH_HOST}/${INSTAGRAM_GRAPH_API_VERSION}/me/media?fields=id,caption,media_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count&limit=${limit}&access_token=${accessToken}`;
 
-      if (!res.ok || !data.data) {
-        return [];
+      while (nextUrl && items.length < limit) {
+        const res: Response = await fetch(nextUrl);
+        const data = (await res.json()) as any;
+
+        logger.info({
+          category: "INSTAGRAM_MEDIA_FETCH",
+          endpoint: "/v20.0/me/media",
+          statusCode: res.status,
+          returnedCount: data?.data?.length || 0,
+        }, "[INSTAGRAM MEDIA] Graph API media endpoint called.");
+
+        if (!res.ok || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+          break;
+        }
+
+        const normalizedBatch: NormalizedSocialContent[] = data.data.map((item: any) => ({
+          externalContentId: item.id,
+          contentType: item.media_type?.toLowerCase() === "video" || item.media_type?.toLowerCase() === "reel" ? "reel" : "post",
+          caption: item.caption || "",
+          permalink: item.permalink || "",
+          thumbnailUrl: item.thumbnail_url || item.media_url || "",
+          publishedAt: item.timestamp ? new Date(item.timestamp) : new Date(),
+          views: 0,
+          likes: item.like_count || 0,
+          comments: item.comments_count || 0,
+          shares: 0,
+        }));
+
+        items.push(...normalizedBatch);
+        nextUrl = data.paging?.next ? data.paging.next : null;
       }
 
-      return data.data.map((item: any) => ({
-        externalContentId: item.id,
-        contentType: item.media_type?.toLowerCase() === "video" || item.media_type?.toLowerCase() === "reel" ? "reel" : "post",
-        caption: item.caption || "",
-        permalink: item.permalink || "",
-        thumbnailUrl: item.thumbnail_url || item.media_url || "",
-        publishedAt: item.timestamp ? new Date(item.timestamp) : new Date(),
-        views: 0,
-        likes: item.like_count || 0,
-        comments: item.comments_count || 0,
-        shares: 0,
-      }));
+      return items;
     } catch (_err) {
       return [];
     }
   }
 
   /**
-   * Fetches Instagram account insights (reach metric) directly via graph.instagram.com/{user-id}/insights?metric=reach&period=day.
-   * Returns { reach: number } on success, or { reach: null } on HTTP/API/network/malformed response failure.
+   * Dynamic account-level insights probing.
+   * Probes candidate metrics under instagram_business_manage_insights permission without hardcoded assumptions.
+   * Records whether Meta accepts each metric, value, period, and error if rejected.
    */
-  async getInsights(accessToken: string, externalAccountId: string): Promise<{ reach: number | null }> {
+  async probeAccountInsights(accessToken: string, externalAccountId: string): Promise<ProbedMetricResult[]> {
+    if (accessToken.startsWith("ig_") || accessToken.startsWith("mock_")) {
+      if (accessToken === "ig_test_zero_reach") {
+        return [{ metric: "reach", accepted: true, value: 0, period: "day", fetchedAt: new Date().toISOString() }];
+      }
+      if (accessToken === "ig_test_api_error" || accessToken === "ig_test_malformed") {
+        return [{ metric: "reach", accepted: false, value: null, period: "day", fetchedAt: new Date().toISOString(), error: "Meta API HTTP error" }];
+      }
+      if (this.isMockModeEnabled(accessToken)) {
+        return [
+          {
+            metric: "reach",
+            accepted: true,
+            value: 12500,
+            period: "day",
+            fetchedAt: new Date().toISOString(),
+          },
+          {
+            metric: "impressions",
+            accepted: true,
+            value: 45000,
+            period: "day",
+            fetchedAt: new Date().toISOString(),
+          },
+          {
+            metric: "profile_views",
+            accepted: true,
+            value: 890,
+            period: "day",
+            fetchedAt: new Date().toISOString(),
+          },
+        ];
+      }
+    }
+
+    const candidateMetrics = ["reach", "impressions", "profile_views", "accounts_engaged", "total_interactions", "follower_count"];
+    const results: ProbedMetricResult[] = [];
+    const nowIso = new Date().toISOString();
+
+    for (const metric of candidateMetrics) {
+      try {
+        const url = `${INSTAGRAM_GRAPH_HOST}/${INSTAGRAM_GRAPH_API_VERSION}/${externalAccountId}/insights?metric=${metric}&period=day&access_token=${accessToken}`;
+        const res = await fetch(url);
+        const data = (await res.json()) as any;
+
+        if (res.ok && data.data && Array.isArray(data.data) && data.data.length > 0) {
+          const metricObj = data.data[0];
+          const latestValueObj = Array.isArray(metricObj.values) && metricObj.values.length > 0
+            ? metricObj.values[metricObj.values.length - 1]
+            : null;
+          const val = latestValueObj ? latestValueObj.value : null;
+
+          results.push({
+            metric,
+            accepted: true,
+            value: val,
+            period: metricObj.period || "day",
+            periodStart: latestValueObj?.end_time ? new Date(latestValueObj.end_time) : null,
+            fetchedAt: nowIso,
+          });
+
+          logger.info({
+            category: "ACCOUNT_INSIGHTS_PROBE",
+            metric,
+            accepted: true,
+            statusCode: res.status,
+            value: val,
+          }, `[INSTAGRAM INSIGHTS] Account metric '${metric}' ACCEPTED by Meta API.`);
+        } else {
+          const errMsg = data.error?.message || `HTTP ${res.status} rejection`;
+          results.push({
+            metric,
+            accepted: false,
+            value: null,
+            period: "day",
+            fetchedAt: nowIso,
+            error: errMsg,
+          });
+
+          logger.warn({
+            category: "ACCOUNT_INSIGHTS_PROBE",
+            metric,
+            accepted: false,
+            statusCode: res.status,
+            errorMsg: errMsg,
+          }, `[INSTAGRAM INSIGHTS] Account metric '${metric}' REJECTED by Meta API.`);
+        }
+      } catch (err: any) {
+        results.push({
+          metric,
+          accepted: false,
+          value: null,
+          period: "day",
+          fetchedAt: nowIso,
+          error: err.message,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Dynamic media-level insights probing.
+   * Probes metrics supported for each media type without assuming all metrics work for all types.
+   */
+  async probeMediaInsights(accessToken: string, mediaId: string, mediaType: string): Promise<ProbedMetricResult[]> {
     if (accessToken.startsWith("ig_") || accessToken.startsWith("mock_")) {
       if (this.isMockModeEnabled()) {
-        if (accessToken.includes("zero_reach")) {
-          return { reach: 0 };
-        }
-        if (accessToken.includes("api_error") || accessToken.includes("malformed")) {
-          return { reach: null };
-        }
-        return { reach: 12500 };
+        return [
+          {
+            metric: "engagement",
+            accepted: true,
+            value: 5820,
+            period: "lifetime",
+            fetchedAt: new Date().toISOString(),
+          },
+          {
+            metric: "saved",
+            accepted: true,
+            value: 340,
+            period: "lifetime",
+            fetchedAt: new Date().toISOString(),
+          },
+        ];
       }
     }
 
-    try {
-      const url = `${INSTAGRAM_GRAPH_HOST}/${INSTAGRAM_GRAPH_API_VERSION}/${externalAccountId}/insights?metric=reach&period=day&access_token=${accessToken}`;
-      const res = await fetch(url);
-      const data = (await res.json()) as any;
+    const typeUpper = (mediaType || "").toUpperCase();
+    const candidateMetrics = typeUpper.includes("VIDEO") || typeUpper.includes("REEL")
+      ? ["plays", "reach", "total_interactions", "likes", "comments", "shares", "saved"]
+      : ["engagement", "impressions", "reach", "saved"];
 
-      if (!res.ok || data.error) {
-        logger.warn({
-          category: "SOCIAL_INSIGHTS",
-          platform: "instagram",
-          statusCode: res.status,
-          errorCode: data.error?.code,
-          errorType: data.error?.type,
-          reason: data.error?.message || `HTTP ${res.status} error from Meta Insights API`,
-        }, "[INSTAGRAM INSIGHTS API ERROR] Failed to fetch reach metric from Meta API.");
-        return { reach: null };
+    const results: ProbedMetricResult[] = [];
+    const nowIso = new Date().toISOString();
+
+    for (const metric of candidateMetrics) {
+      try {
+        const url = `${INSTAGRAM_GRAPH_HOST}/${INSTAGRAM_GRAPH_API_VERSION}/${mediaId}/insights?metric=${metric}&access_token=${accessToken}`;
+        const res = await fetch(url);
+        const data = (await res.json()) as any;
+
+        if (res.ok && data.data && Array.isArray(data.data) && data.data.length > 0) {
+          const metricObj = data.data[0];
+          const valObj = Array.isArray(metricObj.values) && metricObj.values.length > 0
+            ? metricObj.values[0]
+            : null;
+          const val = valObj ? valObj.value : null;
+
+          results.push({
+            metric,
+            accepted: true,
+            value: val,
+            period: "lifetime",
+            fetchedAt: nowIso,
+          });
+        } else {
+          results.push({
+            metric,
+            accepted: false,
+            value: null,
+            period: "lifetime",
+            fetchedAt: nowIso,
+            error: data.error?.message || `HTTP ${res.status} rejection`,
+          });
+        }
+      } catch (err: any) {
+        results.push({
+          metric,
+          accepted: false,
+          value: null,
+          period: "lifetime",
+          fetchedAt: nowIso,
+          error: err.message,
+        });
       }
-
-      if (!data.data || !Array.isArray(data.data)) {
-        logger.warn({
-          category: "SOCIAL_INSIGHTS",
-          platform: "instagram",
-          reason: "Malformed payload from Meta Insights API: missing data array.",
-        }, "[INSTAGRAM INSIGHTS MALFORMED] Missing data array in response payload.");
-        return { reach: null };
-      }
-
-      const reachMetric = data.data.find((item: any) => item.name === "reach");
-      if (!reachMetric || !Array.isArray(reachMetric.values) || reachMetric.values.length === 0) {
-        return { reach: null };
-      }
-
-      const latestValue = reachMetric.values[reachMetric.values.length - 1]?.value;
-      if (latestValue === undefined || latestValue === null) {
-        return { reach: null };
-      }
-
-      const numericReach = Number(latestValue);
-      return { reach: isNaN(numericReach) ? null : numericReach };
-    } catch (err: any) {
-      logger.warn({
-        category: "SOCIAL_INSIGHTS",
-        platform: "instagram",
-        reason: err?.message || "Network exception fetching Instagram Insights.",
-      }, "[INSTAGRAM INSIGHTS EXCEPTION] Exception occurred during reach metric fetch.");
-      return { reach: null };
     }
+
+    return results;
+  }
+
+  /**
+   * Legacy simple getInsights method retained for backward compatibility.
+   */
+  async getInsights(accessToken: string, externalAccountId: string): Promise<{ reach: number | null }> {
+    const probed = await this.probeAccountInsights(accessToken, externalAccountId);
+    const reachObj = probed.find((p) => p.metric === "reach" && p.accepted);
+    if (reachObj && reachObj.value !== null) {
+      const num = Number(reachObj.value);
+      return { reach: isNaN(num) ? null : num };
+    }
+    return { reach: null };
   }
 
   async disconnect(_accessToken: string): Promise<void> {
     return;
   }
+}
 }

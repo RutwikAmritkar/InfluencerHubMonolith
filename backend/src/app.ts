@@ -51,6 +51,21 @@ const getHealthStatus = async () => {
     await db.execute(sql`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "language" text DEFAULT 'en';`);
     await db.execute(sql`ALTER TABLE "social_metric_snapshots" ADD COLUMN IF NOT EXISTS "reach" integer DEFAULT 0;`);
     await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "social_media_insights" (
+        "id" serial PRIMARY KEY,
+        "social_account_id" integer NOT NULL REFERENCES "social_accounts"("id") ON DELETE CASCADE,
+        "external_content_id" text,
+        "metric" text NOT NULL,
+        "value" text NOT NULL,
+        "period" text,
+        "period_start" timestamptz,
+        "period_end" timestamptz,
+        "fetched_at" timestamptz NOT NULL DEFAULT now(),
+        "source" text NOT NULL DEFAULT 'instagram_graph_api',
+        "metadata" text
+      );
+    `);
+    await db.execute(sql`
       UPDATE "influencers"
       SET "audience_data" = jsonb_set(
         "audience_data",

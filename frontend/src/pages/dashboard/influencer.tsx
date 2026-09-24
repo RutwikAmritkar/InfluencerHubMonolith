@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from "react";
+import { useState, useMemo, useEffect, memo } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslation } from "react-i18next";
 import { useGetInfluencerDashboard, getGetInfluencerDashboardQueryKey } from "@workspace/api-client-react";
@@ -100,6 +100,23 @@ export default function InfluencerDashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"Views" | "Reach" | "Engagement" | "Earnings">("Views");
+  const [socialAccounts, setSocialAccounts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchSocialAccounts = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const res = await fetch(`${apiUrl}/api/social/accounts`, { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setSocialAccounts(data);
+          }
+        }
+      } catch (_e) {}
+    };
+    fetchSocialAccounts();
+  }, []);
 
   // Fetch Real API Data
   const { data, isLoading } = useGetInfluencerDashboard({
@@ -108,15 +125,36 @@ export default function InfluencerDashboard() {
     }
   });
 
+  const igAccount = useMemo(() => {
+    return socialAccounts.find((a) => a.platform?.toLowerCase() === "instagram" && a.verificationStatus === "VERIFIED");
+  }, [socialAccounts]);
+
+  const socialPresenceAccounts = useMemo(() => {
+    if (!socialAccounts || socialAccounts.length === 0) return undefined;
+    return socialAccounts.map((acc) => ({
+      platform: acc.platform?.toLowerCase(),
+      name: acc.displayName || acc.username,
+      handle: `@${acc.username}`,
+      followers: typeof acc.followers === "number" ? acc.followers.toLocaleString() : (acc.followers || 0),
+      engagementRate: `${acc.engagementRate || "0.0"}%`,
+      status: acc.verificationStatus === "VERIFIED" ? ("VERIFIED" as const) : ("CONNECTED" as const),
+      profileUrl: acc.profileUrl,
+    }));
+  }, [socialAccounts]);
+
   // MEMOIZED API DATA DERIVATIONS (prevents recalculation on tab changes)
-  const { profileCompletion, followersCount, monthlyEarnings, profileViews, campaignInvites, viewsThisWeek } = useMemo(() => ({
-    profileCompletion: typeof data?.profileCompletion === "number" ? data.profileCompletion : 40,
-    followersCount: (typeof data?.followers === "number" && !isNaN(data.followers) && data.followers > 0) ? `${(data.followers / 1000).toFixed(0)}K` : "0",
-    monthlyEarnings: (typeof data?.monthlyEarnings === "number" && !isNaN(data.monthlyEarnings) && data.monthlyEarnings > 0) ? `₹${data.monthlyEarnings.toLocaleString()}` : "₹0",
-    profileViews: (typeof data?.profileViews === "number" && !isNaN(data.profileViews)) ? data.profileViews.toLocaleString() : "0",
-    campaignInvites: typeof data?.campaignInvites === "number" ? data.campaignInvites : 0,
-    viewsThisWeek: (Array.isArray(data?.viewsThisWeek) && data.viewsThisWeek.length > 0) ? data.viewsThisWeek : defaultViewsData,
-  }), [data]);
+  const { profileCompletion, followersCount, monthlyEarnings, profileViews, campaignInvites, viewsThisWeek } = useMemo(() => {
+    const rawFollowers = (igAccount?.followers && typeof igAccount.followers === "number") ? igAccount.followers : (typeof data?.followers === "number" ? data.followers : 0);
+    const formattedFollowers = rawFollowers >= 1000 ? `${(rawFollowers / 1000).toFixed(1)}K` : rawFollowers.toString();
+    return {
+      profileCompletion: typeof data?.profileCompletion === "number" ? data.profileCompletion : 40,
+      followersCount: formattedFollowers,
+      monthlyEarnings: (typeof data?.monthlyEarnings === "number" && !isNaN(data.monthlyEarnings) && data.monthlyEarnings > 0) ? `₹${data.monthlyEarnings.toLocaleString()}` : "₹0",
+      profileViews: (typeof data?.profileViews === "number" && !isNaN(data.profileViews)) ? data.profileViews.toLocaleString() : "0",
+      campaignInvites: typeof data?.campaignInvites === "number" ? data.campaignInvites : 0,
+      viewsThisWeek: (Array.isArray(data?.viewsThisWeek) && data.viewsThisWeek.length > 0) ? data.viewsThisWeek : defaultViewsData,
+    };
+  }, [data, igAccount]);
 
   if (isLoading) {
     return (
@@ -200,11 +238,17 @@ export default function InfluencerDashboard() {
                   </div>
                   <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">INSTAGRAM</span>
                 </div>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Not Connected</span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${igAccount ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"}`}>
+                  {igAccount ? "✓ Connected" : "Not Connected"}
+                </span>
               </div>
               <div>
-                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">0</span>
-                <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">Followers</span>
+                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">
+                  {igAccount ? (typeof igAccount.followers === "number" ? igAccount.followers.toLocaleString() : (igAccount.followers || "0")) : "0"}
+                </span>
+                <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">
+                  {igAccount ? `@${igAccount.username}` : "Followers"}
+                </span>
               </div>
             </div>
 
@@ -419,7 +463,7 @@ export default function InfluencerDashboard() {
 
       {/* ─── 5. ROW 4: YOUR SOCIAL PRESENCE & ✨ AI ASSISTANT ─────────── */}
       <div className="w-full">
-        <SocialPresenceSection />
+        <SocialPresenceSection accounts={socialPresenceAccounts} />
       </div>
 
     </div>

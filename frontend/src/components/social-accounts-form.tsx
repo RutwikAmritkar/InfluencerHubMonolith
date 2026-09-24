@@ -67,6 +67,49 @@ export function SocialAccountsForm({
 }: SocialAccountsFormProps) {
   const [step, setStep] = useState<"input" | "review">("input");
   const verifyMutation = useVerifySocialAccount();
+  const [officialAccounts, setOfficialAccounts] = useState<any[]>([]);
+  const [isLoadingOfficial, setIsLoadingOfficial] = useState(false);
+
+  const fetchOfficialAccounts = async () => {
+    setIsLoadingOfficial(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiUrl}/api/social/accounts`, { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setOfficialAccounts(data);
+        }
+      }
+    } catch (_e) {
+      // Quiet fail if unauthenticated
+    } finally {
+      setIsLoadingOfficial(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOfficialAccounts();
+  }, []);
+
+  const handleDisconnectOfficial = async (platform: string) => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiUrl}/api/social/${platform}/disconnect`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || `Disconnected ${platform} account.`);
+        await fetchOfficialAccounts();
+      } else {
+        toast.error(data.error || `Failed to disconnect ${platform} account.`);
+      }
+    } catch (_e) {
+      toast.error(`Failed to disconnect ${platform} account.`);
+    }
+  };
 
   // Convert initialAccounts to draft list
   const [drafts, setDrafts] = useState<SocialAccountDraft[]>(() => {
@@ -539,68 +582,110 @@ export function SocialAccountsForm({
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Official OAuth Integration Section */}
-          <div className="p-4 rounded-xl border bg-slate-900/40 dark:bg-slate-900/80 border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                  Official OAuth Connections (Recommended)
-                </h4>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Connect directly with Instagram or YouTube to display verified follower stats and automatic performance metrics.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3 pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  try {
-                    const apiUrl = import.meta.env.VITE_API_URL || "";
-                    const res = await fetch(`${apiUrl}/api/social/instagram/connect`, { method: "POST", credentials: "include" });
-                    const data = await res.json();
-                    if (data.redirectUrl) {
-                      window.location.href = data.redirectUrl;
-                    } else {
-                      toast.error(data.error || "Could not start Instagram connection.");
-                    }
-                  } catch (_e) {
-                    toast.error("Failed to connect Instagram account.");
-                  }
-                }}
-                className="bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400 border-pink-500/30 text-xs h-9 font-medium"
-              >
-                <SocialIcon platform="instagram" className="w-4 h-4 mr-2" />
-                Connect Instagram
-              </Button>
+          {(() => {
+            const igAccount = officialAccounts.find((a) => a.platform?.toLowerCase() === "instagram" && a.verificationStatus === "VERIFIED");
+            const ytAccount = officialAccounts.find((a) => a.platform?.toLowerCase() === "youtube" && a.verificationStatus === "VERIFIED");
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  try {
-                    const apiUrl = import.meta.env.VITE_API_URL || "";
-                    const res = await fetch(`${apiUrl}/api/social/youtube/connect`, { method: "POST", credentials: "include" });
-                    const data = await res.json();
-                    if (data.redirectUrl) {
-                      window.location.href = data.redirectUrl;
-                    } else {
-                      toast.error(data.error || "Could not start YouTube connection.");
-                    }
-                  } catch (_e) {
-                    toast.error("Failed to connect YouTube account.");
-                  }
-                }}
-                className="bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 border-red-500/30 text-xs h-9 font-medium"
-              >
-                <SocialIcon platform="youtube" className="w-4 h-4 mr-2" />
-                Connect YouTube
-              </Button>
-            </div>
-          </div>
+            return (
+              <div className="space-y-4">
+                {/* Instagram OAuth Box */}
+                {igAccount ? (
+                  <div className="p-4 rounded-xl border bg-emerald-500/10 dark:bg-emerald-950/30 border-emerald-500/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        <h4 className="text-sm font-bold text-foreground">Instagram ✓ Connected</h4>
+                      </div>
+                      <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-xs px-2.5 py-0.5 font-semibold shadow-none">
+                        Verified
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+                      <div>
+                        <p className="text-sm font-bold font-mono text-foreground">
+                          @{igAccount.username}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Connected through Instagram OAuth
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              const apiUrl = import.meta.env.VITE_API_URL || "";
+                              const res = await fetch(`${apiUrl}/api/social/instagram/connect`, { method: "POST", credentials: "include" });
+                              const data = await res.json();
+                              if (data.redirectUrl) {
+                                window.location.href = data.redirectUrl;
+                              } else {
+                                toast.error(data.error || "Could not start Instagram connection.");
+                              }
+                            } catch (_e) {
+                              toast.error("Failed to connect Instagram account.");
+                            }
+                          }}
+                          className="text-xs h-8 font-medium"
+                        >
+                          Reconnect
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDisconnectOfficial("instagram")}
+                          className="text-xs h-8 font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 hover:text-rose-700"
+                        >
+                          Disconnect
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl border bg-slate-900/40 dark:bg-slate-900/80 border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                          Instagram Business Login (Official OAuth)
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Connect your professional Instagram account to verify ownership and retrieve permitted metrics.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const apiUrl = import.meta.env.VITE_API_URL || "";
+                          const res = await fetch(`${apiUrl}/api/social/instagram/connect`, { method: "POST", credentials: "include" });
+                          const data = await res.json();
+                          if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                          } else {
+                            toast.error(data.error || "Could not start Instagram connection.");
+                          }
+                        } catch (_e) {
+                          toast.error("Failed to connect Instagram account.");
+                        }
+                      }}
+                      className="bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400 border-pink-500/30 text-xs h-9 font-medium"
+                    >
+                      <SocialIcon platform="instagram" className="w-4 h-4 mr-2" />
+                      Connect Instagram
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
 
           <div className="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 rounded-xl text-blue-700 dark:text-blue-300 text-xs font-medium flex items-center gap-2">
             <Info className="w-4 h-4 shrink-0 text-blue-500" />
