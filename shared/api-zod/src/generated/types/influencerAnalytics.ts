@@ -5,12 +5,12 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { InfluencerAnalyticsAgeDistributionItem } from './influencerAnalyticsAgeDistributionItem';
-import type { InfluencerAnalyticsAudienceGender } from './influencerAnalyticsAudienceGender';
-import type { InfluencerAnalyticsCountryDistributionItem } from './influencerAnalyticsCountryDistributionItem';
-import type { InfluencerAnalyticsEngagementByMonthItem } from './influencerAnalyticsEngagementByMonthItem';
-import type { InfluencerAnalyticsFollowerGrowthItem } from './influencerAnalyticsFollowerGrowthItem';
-import type { InfluencerAnalyticsReachByMonthItem } from './influencerAnalyticsReachByMonthItem';
+import type { InfluencerAnalyticsAgeDistributionItem } from "./influencerAnalyticsAgeDistributionItem";
+import type { InfluencerAnalyticsAudienceGender } from "./influencerAnalyticsAudienceGender";
+import type { InfluencerAnalyticsCountryDistributionItem } from "./influencerAnalyticsCountryDistributionItem";
+import type { InfluencerAnalyticsEngagementByMonthItem } from "./influencerAnalyticsEngagementByMonthItem";
+import type { InfluencerAnalyticsFollowerGrowthItem } from "./influencerAnalyticsFollowerGrowthItem";
+import type { InfluencerAnalyticsReachByMonthItem } from "./influencerAnalyticsReachByMonthItem";
 
 export interface InfluencerAnalytics {
   followerGrowth: InfluencerAnalyticsFollowerGrowthItem[];

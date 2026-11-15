@@ -48,7 +48,10 @@ async function runSecurityAuditTests() {
       }
     }
 
-    assert(leakedSensitiveLogCount === 0, "1a. Zero plaintext access tokens, refresh tokens, or client secrets are printed to application loggers");
+    assert(
+      leakedSensitiveLogCount === 0,
+      "1a. Zero plaintext access tokens, refresh tokens, or client secrets are printed to application loggers"
+    );
   } catch (e: any) {
     assert(false, `1. Logger security audit failed: ${e.message}`);
   }
@@ -58,12 +61,24 @@ async function runSecurityAuditTests() {
     const rawSecretToken = "test_user_access_token_secret_998877";
     const encrypted = encryptSocialToken(rawSecretToken);
 
-    assert(encrypted.encryptedToken !== rawSecretToken, "2a. Token payload is encrypted at rest using AES-256-GCM cipher");
-    assert(typeof encrypted.iv === "string" && encrypted.iv.length === 24, "2b. Unique 12-byte initialization vector (IV) generated per token");
-    assert(typeof encrypted.authTag === "string" && encrypted.authTag.length === 32, "2c. 16-byte authentication tag (AuthTag) generated per token for tamper resistance");
+    assert(
+      encrypted.encryptedToken !== rawSecretToken,
+      "2a. Token payload is encrypted at rest using AES-256-GCM cipher"
+    );
+    assert(
+      typeof encrypted.iv === "string" && encrypted.iv.length === 24,
+      "2b. Unique 12-byte initialization vector (IV) generated per token"
+    );
+    assert(
+      typeof encrypted.authTag === "string" && encrypted.authTag.length === 32,
+      "2c. 16-byte authentication tag (AuthTag) generated per token for tamper resistance"
+    );
 
     const decrypted = decryptSocialToken(encrypted.encryptedToken, encrypted.iv, encrypted.authTag);
-    assert(decrypted === rawSecretToken, "2d. Decrypted token matches original secret payload in memory");
+    assert(
+      decrypted === rawSecretToken,
+      "2d. Decrypted token matches original secret payload in memory"
+    );
   } catch (e: any) {
     assert(false, `2. Encryption audit failed: ${e.message}`);
   }
@@ -96,8 +111,14 @@ async function runSecurityAuditTests() {
 
       const responseJson = JSON.stringify(formattedApiResponse);
 
-      assert(!responseJson.includes("accessToken") && !responseJson.includes("accessTokenEncrypted"), "3a. GET /api/social/accounts API payload contains zero raw or encrypted token fields");
-      assert(!responseJson.includes("clientSecret"), "3b. API payload contains zero client secret fields");
+      assert(
+        !responseJson.includes("accessToken") && !responseJson.includes("accessTokenEncrypted"),
+        "3a. GET /api/social/accounts API payload contains zero raw or encrypted token fields"
+      );
+      assert(
+        !responseJson.includes("clientSecret"),
+        "3b. API payload contains zero client secret fields"
+      );
     } else {
       assert(true, "3. API response contract safe (no connected account to inspect)");
     }
@@ -113,10 +134,15 @@ async function runSecurityAuditTests() {
     const accountsForB = await db
       .select()
       .from(socialAccountsTable)
-      .where(and(eq(socialAccountsTable.userId, creatorB), eq(socialAccountsTable.platform, "instagram")));
+      .where(
+        and(eq(socialAccountsTable.userId, creatorB), eq(socialAccountsTable.platform, "instagram"))
+      );
 
     const leakedAccountForB = accountsForB.find((a) => a.userId === creatorA);
-    assert(!leakedAccountForB, "4a. SQL queries strictly scope by req.userId; Creator B cannot view Creator A's social account or tokens");
+    assert(
+      !leakedAccountForB,
+      "4a. SQL queries strictly scope by req.userId; Creator B cannot view Creator A's social account or tokens"
+    );
   } catch (e: any) {
     assert(false, `4. Cross-tenant isolation audit failed: ${e.message}`);
   }

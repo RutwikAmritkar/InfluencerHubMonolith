@@ -6,10 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RegisterInputRole = typeof RegisterInputRole[keyof typeof RegisterInputRole];
-
+export type RegisterInputRole = (typeof RegisterInputRole)[keyof typeof RegisterInputRole];
 
 export const RegisterInputRole = {
-  brand: 'brand',
-  influencer: 'influencer',
+  brand: "brand",
+  influencer: "influencer",
 } as const;

@@ -38,9 +38,9 @@
     "alreadyHaveAccount": "Already have an account?"
   },
   "onboarding": {
-    "welcome": "Welcome to InfluencerHub",
+    "welcome": "Welcome to CreatorsBrand",
     "chooseLanguage": "Choose your language",
-    "languageSubtitle": "Select your preferred language for the InfluencerHub experience",
+    "languageSubtitle": "Select your preferred language for the CreatorsBrand experience",
     "continue": "Continue",
     "back": "Back",
     "step": "Step {{current}} of {{total}}",
@@ -65,7 +65,7 @@
     "connectedAccounts": "Connected Accounts",
     "help": "Help & Support",
     "appLanguage": "App Language",
-    "appLanguageSubtitle": "Select the language used across the entire InfluencerHub interface",
+    "appLanguageSubtitle": "Select the language used across the entire CreatorsBrand interface",
     "selectedLanguageNote": "The currently selected language updates immediately across your application.",
     "themeLight": "Light Theme",
     "themeDark": "Dark Theme",

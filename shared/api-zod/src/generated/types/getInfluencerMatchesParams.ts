@@ -7,5 +7,5 @@
  */
 
 export type GetInfluencerMatchesParams = {
-campaignId: number;
+  campaignId: number;
 };

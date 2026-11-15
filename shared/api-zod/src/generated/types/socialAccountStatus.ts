@@ -6,14 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SocialAccountStatus = typeof SocialAccountStatus[keyof typeof SocialAccountStatus];
-
+export type SocialAccountStatus = (typeof SocialAccountStatus)[keyof typeof SocialAccountStatus];
 
 export const SocialAccountStatus = {
-  UNVERIFIED: 'UNVERIFIED',
-  SUBMITTED: 'SUBMITTED',
-  VERIFYING: 'VERIFYING',
-  VERIFIED: 'VERIFIED',
-  FAILED: 'FAILED',
-  EXPIRED: 'EXPIRED',
+  UNVERIFIED: "UNVERIFIED",
+  SUBMITTED: "SUBMITTED",
+  VERIFYING: "VERIFYING",
+  VERIFIED: "VERIFIED",
+  FAILED: "FAILED",
+  EXPIRED: "EXPIRED",
 } as const;

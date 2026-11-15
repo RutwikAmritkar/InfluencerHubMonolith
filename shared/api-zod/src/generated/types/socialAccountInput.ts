@@ -5,7 +5,7 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { SocialAccountInputInputType } from './socialAccountInputInputType';
+import type { SocialAccountInputInputType } from "./socialAccountInputInputType";
 
 export interface SocialAccountInput {
   platform: string;

@@ -44,7 +44,7 @@ describe("Frontend E2E & Component Test Suite - Instagram OAuth Integration", ()
   test("4. Zero credential or raw token material is written to localStorage or sessionStorage", () => {
     // Simulate frontend state save
     const storedKeys = Object.keys(localStorage || {}).concat(Object.keys(sessionStorage || {}));
-    
+
     const containsSensitiveToken = storedKeys.some(
       (k) => k.toLowerCase().includes("access_token") || k.toLowerCase().includes("client_secret")
     );

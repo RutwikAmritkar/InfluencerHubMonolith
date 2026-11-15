@@ -849,6 +849,10 @@ components:
           type: string
         country:
           type: string
+        state:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
         followers:
           type: number
         engagementRate:
@@ -982,6 +986,10 @@ components:
         category:
           type: string
         country:
+          type: string
+        state:
+          type: string
+        city:
           type: string
         collaborationCost:
           type: number

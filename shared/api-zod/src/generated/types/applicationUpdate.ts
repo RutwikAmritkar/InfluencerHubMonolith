@@ -5,7 +5,7 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { ApplicationUpdateStatus } from './applicationUpdateStatus';
+import type { ApplicationUpdateStatus } from "./applicationUpdateStatus";
 
 export interface ApplicationUpdate {
   status: ApplicationUpdateStatus;

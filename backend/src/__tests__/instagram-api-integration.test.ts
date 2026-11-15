@@ -29,11 +29,26 @@ async function runInstagramApiIntegrationTests() {
   try {
     const profile = await provider.getProfile("ig_test_token");
 
-    assert(typeof profile.externalAccountId === "string" && profile.externalAccountId.length > 0, "1a. getProfile returns valid externalAccountId");
-    assert(typeof profile.username === "string" && profile.username.length > 0, "1b. getProfile returns valid username");
-    assert(typeof profile.followers === "number" && profile.followers >= 0, "1c. getProfile returns numeric follower count");
-    assert(typeof profile.following === "number" || profile.following === undefined, "1d. getProfile handles following count metric");
-    assert(typeof profile.totalContent === "number" && profile.totalContent >= 0, "1e. getProfile returns total content count");
+    assert(
+      typeof profile.externalAccountId === "string" && profile.externalAccountId.length > 0,
+      "1a. getProfile returns valid externalAccountId"
+    );
+    assert(
+      typeof profile.username === "string" && profile.username.length > 0,
+      "1b. getProfile returns valid username"
+    );
+    assert(
+      typeof profile.followers === "number" && profile.followers >= 0,
+      "1c. getProfile returns numeric follower count"
+    );
+    assert(
+      typeof profile.following === "number" || profile.following === undefined,
+      "1d. getProfile handles following count metric"
+    );
+    assert(
+      typeof profile.totalContent === "number" && profile.totalContent >= 0,
+      "1e. getProfile returns total content count"
+    );
   } catch (e: any) {
     assert(false, `1. Profile telemetry test failed: ${e.message}`);
   }
@@ -47,7 +62,10 @@ async function runInstagramApiIntegrationTests() {
     assert(positiveReach.reach === 12500, "2b. Successful reach query resolves to numeric value");
 
     const errorReach = await provider.getInsights("ig_test_api_error", "1784140123");
-    assert(errorReach.reach === null, "2c. Meta API HTTP error resolves to { reach: null } without throwing unhandled exceptions");
+    assert(
+      errorReach.reach === null,
+      "2c. Meta API HTTP error resolves to { reach: null } without throwing unhandled exceptions"
+    );
   } catch (e: any) {
     assert(false, `2. Insights test failed: ${e.message}`);
   }
@@ -62,18 +80,37 @@ async function runInstagramApiIntegrationTests() {
       totalContent: 50,
     };
 
-    const contentList = await provider.getContent("ig_test_token", mockProfile.externalAccountId, 5);
+    const contentList = await provider.getContent(
+      "ig_test_token",
+      mockProfile.externalAccountId,
+      5
+    );
     assert(Array.isArray(contentList), "3a. getContent returns array of media content");
 
     if (contentList.length > 0) {
-      assert(typeof contentList[0].externalContentId === "string", "3b. Media item contains externalContentId");
-      assert(contentList[0].contentType === "post" || contentList[0].contentType === "reel", "3c. Media item normalized to 'post' or 'reel'");
+      assert(
+        typeof contentList[0].externalContentId === "string",
+        "3b. Media item contains externalContentId"
+      );
+      assert(
+        contentList[0].contentType === "post" || contentList[0].contentType === "reel",
+        "3c. Media item normalized to 'post' or 'reel'"
+      );
     }
 
     const analytics = calculateVerifiedAnalytics(mockProfile, contentList);
-    assert(typeof analytics.engagementRate === "string", "3d. Analytics calculator computes engagement rate string");
-    assert(typeof analytics.avgLikes === "number", "3e. Analytics calculator computes average likes");
-    assert(typeof analytics.avgComments === "number", "3f. Analytics calculator computes average comments");
+    assert(
+      typeof analytics.engagementRate === "string",
+      "3d. Analytics calculator computes engagement rate string"
+    );
+    assert(
+      typeof analytics.avgLikes === "number",
+      "3e. Analytics calculator computes average likes"
+    );
+    assert(
+      typeof analytics.avgComments === "number",
+      "3f. Analytics calculator computes average comments"
+    );
   } catch (e: any) {
     assert(false, `3. Content & Analytics test failed: ${e.message}`);
   }

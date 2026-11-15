@@ -75,7 +75,9 @@ export class InstagramDataPipelineService {
       .limit(1);
 
     if (!tokenRecord) {
-      throw new Error(`OAuth credentials not found for Instagram account @${account.username}. Re-authorization required.`);
+      throw new Error(
+        `OAuth credentials not found for Instagram account @${account.username}. Re-authorization required.`
+      );
     }
 
     // Decrypt token strictly in memory
@@ -161,7 +163,10 @@ export class InstagramDataPipelineService {
     }
 
     // 3. PHASE 3 — ACCOUNT-LEVEL INSIGHTS
-    const probedAccountInsights = await this.provider.probeAccountInsights(accessToken, profile.externalAccountId);
+    const probedAccountInsights = await this.provider.probeAccountInsights(
+      accessToken,
+      profile.externalAccountId
+    );
 
     for (const insight of probedAccountInsights) {
       if (insight.accepted && insight.value !== null) {
@@ -171,7 +176,9 @@ export class InstagramDataPipelineService {
           metric: insight.metric,
           value: String(insight.value),
           period: insight.period || "day",
-          periodStart: insight.periodStart ? sql`${new Date(insight.periodStart).toISOString()}::timestamptz` : null,
+          periodStart: insight.periodStart
+            ? sql`${new Date(insight.periodStart).toISOString()}::timestamptz`
+            : null,
 
           fetchedAt: now,
           source: "instagram_graph_api",
@@ -207,14 +214,17 @@ export class InstagramDataPipelineService {
       }
     }
 
-    logger.info({
-      category: "INSTAGRAM_PIPELINE",
-      socialAccountId,
-      username: profile.username,
-      mediaCount: contentList.length,
-      accountInsightsCount: probedAccountInsights.filter((i) => i.accepted).length,
-      mediaInsightsCount: mediaInsightsList.length,
-    }, "[INSTAGRAM PIPELINE COMPLETE] Successfully executed full Instagram extraction pipeline.");
+    logger.info(
+      {
+        category: "INSTAGRAM_PIPELINE",
+        socialAccountId,
+        username: profile.username,
+        mediaCount: contentList.length,
+        accountInsightsCount: probedAccountInsights.filter((i) => i.accepted).length,
+        mediaInsightsCount: mediaInsightsList.length,
+      },
+      "[INSTAGRAM PIPELINE COMPLETE] Successfully executed full Instagram extraction pipeline."
+    );
 
     // 5. PHASE 6 — SANITIZED RESPONSE SHAPE
     return {

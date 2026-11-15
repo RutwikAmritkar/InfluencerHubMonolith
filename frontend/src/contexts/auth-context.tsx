@@ -14,18 +14,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { data: meData, isLoading: meLoading, isError } = useGetMe({
+  const {
+    data: meData,
+    isLoading: meLoading,
+    isError,
+  } = useGetMe({
     query: {
       retry: false,
       throwOnError: false,
-    } as any
+    } as any,
   });
 
   const logoutMutation = useLogout();
 
   useEffect(() => {
     if (!meLoading) {
-      if (meData && typeof meData === "object" && "user" in (meData as any) && (meData as any).user) {
+      if (
+        meData &&
+        typeof meData === "object" &&
+        "user" in (meData as any) &&
+        (meData as any).user
+      ) {
         setUser((meData as any).user);
       } else {
         setUser(null);
@@ -38,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logoutMutation.mutate(undefined, {
       onSettled: () => {
         setUser(null);
-      }
+      },
     });
   };
 

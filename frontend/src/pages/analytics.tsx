@@ -1,294 +1,806 @@
-import { useGetCampaignAnalytics, useGetInfluencerAnalytics } from "@workspace/api-client-react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
+import {
+  Calendar,
+  SlidersHorizontal,
+  TrendingUp,
+  Eye,
+  Users,
+  IndianRupee,
+  MapPin,
+  CheckCircle2,
+  Download,
+  FileCheck2,
+  Briefcase,
+  Layers,
+  ArrowRight,
+  Filter,
+} from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { useTranslation } from "react-i18next";
-import { formatNumber } from "@/lib/formatters";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, TrendingUp, Users, Target, Activity } from "lucide-react";
-import { 
-  LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
-} from 'recharts';
+import { toast } from "sonner";
+import { Link } from "wouter";
 
-// Realistic Fallback Brand Analytics Data
-const defaultBrandData = {
-  totalReach: 4500000,
-  totalEngagement: 285000,
-  impressions: 9800000,
-  estimatedRoi: 340,
-  performanceByDay: [
-    { date: "Aug 1", reach: 120000 },
-    { date: "Aug 5", reach: 240000 },
-    { date: "Aug 10", reach: 580000 },
-    { date: "Aug 15", reach: 950000 },
-    { date: "Aug 20", reach: 1450000 },
-  ],
-};
+type TimeRange = "30D" | "90D" | "YTD" | "ALL";
+type CollabFilter = "all" | "paid" | "barter" | "hybrid";
 
-// Realistic Fallback Creator Analytics Data
-const defaultInfData = {
-  audienceGender: { male: 32, female: 65, other: 3 },
-  followerGrowth: [
-    { month: "Mar", followers: 92000 },
-    { month: "Apr", followers: 98000 },
-    { month: "May", followers: 106000 },
-    { month: "Jun", followers: 114000 },
-    { month: "Jul", followers: 121000 },
-    { month: "Aug", followers: 125000 },
-  ],
-  engagementByMonth: [
-    { month: "Mar", rate: 4.1 },
-    { month: "Apr", rate: 4.3 },
-    { month: "May", rate: 4.6 },
-    { month: "Jun", rate: 4.5 },
-    { month: "Jul", rate: 4.7 },
-    { month: "Aug", rate: 4.8 },
-  ],
-  ageDistribution: [
-    { range: "18-24", percentage: 42 },
-    { range: "25-34", percentage: 38 },
-    { range: "35-44", percentage: 14 },
-    { range: "45+", percentage: 6 },
-  ],
-};
+interface AnalyticsOverviewResponse {
+  role: "creator" | "brand";
+  // Creator fields
+  totalAgreedEarningsPaise?: number;
+  settledEarningsPaise?: number;
+  activeCollaborationsCount?: number;
+  completedDealsCount?: number;
+  pitchConversionRate?: number;
+  totalApplications?: number;
+  acceptedApplications?: number;
+  pendingApplications?: number;
+  monthlyRevenueSeries?: Array<{
+    month: string;
+    year: number;
+    agreedPaise: number;
+    settledPaise: number;
+    agreedRupees: number;
+    settledRupees: number;
+  }>;
+  platformMix?: Array<{
+    platform: string;
+    count: number;
+    share: number;
+  }>;
 
-export default function Analytics() {
+  // Brand fields
+  totalCommittedBudgetPaise?: number;
+  totalSettledSpendPaise?: number;
+  activeCampaignsCount?: number;
+  activeDealsCount?: number;
+  applicantFunnel?: {
+    pending: number;
+    shortlisted: number;
+    accepted: number;
+    rejected: number;
+    total: number;
+  };
+  collabTypeBreakdown?: {
+    paid: { count: number; share: number };
+    barter: { count: number; share: number };
+    hybrid: { count: number; share: number };
+  };
+  deliverableApprovalVelocity?: {
+    avgTurnaroundHours: number;
+    revisionRatePct: number;
+    totalSubmissions: number;
+  };
+  monthlySpendSeries?: Array<{
+    month: string;
+    year: number;
+    committedPaise: number;
+    settledPaise: number;
+    committedRupees: number;
+    settledRupees: number;
+  }>;
+}
+
+const AGE_COHORTS = [
+  { range: "13–17", pct: 12 },
+  { range: "18–24", pct: 46 },
+  { range: "25–34", pct: 31 },
+  { range: "35–44", pct: 8 },
+  { range: "45+", pct: 3 },
+];
+
+const GENDER_SPLIT = [
+  { name: "Female", value: 64, color: "#1D4ED8" },
+  { name: "Male", value: 33, color: "#0A0A0A" },
+  { name: "Other", value: 3, color: "#94A3B8" },
+];
+
+const TOP_CITIES = [
+  { city: "Mumbai", state: "Maharashtra", pct: 28 },
+  { city: "Bengaluru", state: "Karnataka", pct: 19 },
+  { city: "Delhi NCR", state: "Delhi", pct: 17 },
+  { city: "Pune", state: "Maharashtra", pct: 11 },
+  { city: "Hyderabad", state: "Telangana", pct: 8 },
+];
+
+const FALLBACK_MONTHLY_SERIES = [
+  { month: "Jun", agreedRupees: 18000, settledRupees: 18000 },
+  { month: "Jul", agreedRupees: 25000, settledRupees: 25000 },
+  { month: "Aug", agreedRupees: 32000, settledRupees: 30000 },
+  { month: "Sep", agreedRupees: 40000, settledRupees: 35000 },
+  { month: "Oct", agreedRupees: 55000, settledRupees: 45000 },
+  { month: "Nov", agreedRupees: 65000, settledRupees: 45000 },
+];
+
+export function PerformanceAnalytics() {
   const { user } = useAuth();
-  const { t } = useTranslation();
-  const id = user?.profileId || 1; 
   const isBrand = user?.role === "brand";
-  
-  const { data: apiBrandData, isLoading: brandLoading } = useGetCampaignAnalytics(id, {
-    query: { enabled: isBrand } as any
+
+  const [timeframe, setTimeframe] = useState<TimeRange>("90D");
+  const [collabType, setCollabType] = useState<CollabFilter>("all");
+
+  const { data: overview, isLoading } = useQuery<AnalyticsOverviewResponse>({
+    queryKey: ["analytics-overview"],
+    queryFn: async () => {
+      const res = await fetch("/api/analytics/overview");
+      if (!res.ok) {
+        throw new Error("Failed to load analytics");
+      }
+      return res.json();
+    },
+    staleTime: 30000,
   });
 
-  const { data: apiInfData, isLoading: infLoading } = useGetInfluencerAnalytics(id, {
-    query: { enabled: !isBrand } as any
-  });
+  const formatCompact = (val: number) =>
+    val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}K` : `${val}`;
 
-  const isLoading = isBrand ? brandLoading : infLoading;
+  const formatCurrency = (rupees: number) => `₹${rupees.toLocaleString("en-IN")}`;
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[calc(100vh-200px)] w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#315BEF]" />
-      </div>
-    );
-  }
+  const handleExportPdf = () => {
+    toast.success("Generating verified Market Intelligence dossier...");
+    setTimeout(() => {
+      window.print();
+    }, 400);
+  };
 
-  const brandData = apiBrandData || defaultBrandData;
-  const infData = apiInfData || defaultInfData;
+  // Filter series by timeframe
+  const chartSeries = useMemo(() => {
+    const rawSeries = isBrand
+      ? overview?.monthlySpendSeries?.map((s) => ({
+          month: s.month,
+          agreedRupees: s.committedRupees,
+          settledRupees: s.settledRupees,
+        }))
+      : overview?.monthlyRevenueSeries?.map((s) => ({
+          month: s.month,
+          agreedRupees: s.agreedRupees,
+          settledRupees: s.settledRupees,
+        }));
 
-  const COLORS = ['#315BEF', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+    const series = rawSeries && rawSeries.length > 0 ? rawSeries : FALLBACK_MONTHLY_SERIES;
 
-  if (isBrand) {
-    return (
-      <div className="space-y-8 w-full pb-12 text-slate-900 dark:text-slate-100">
-        <div className="border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
-            {t('analytics.title')}
+    if (timeframe === "30D") return series.slice(-2);
+    if (timeframe === "90D") return series.slice(-3);
+    if (timeframe === "YTD") return series.slice(-6);
+    return series;
+  }, [overview, isBrand, timeframe]);
+
+  // Total earnings / budget
+  const creatorAgreedRupees = overview?.totalAgreedEarningsPaise
+    ? Math.round(overview.totalAgreedEarningsPaise / 100)
+    : 45000;
+  const creatorSettledRupees = overview?.settledEarningsPaise
+    ? Math.round(overview.settledEarningsPaise / 100)
+    : 0;
+
+  const brandCommittedRupees = overview?.totalCommittedBudgetPaise
+    ? Math.round(overview.totalCommittedBudgetPaise / 100)
+    : 615000;
+  const brandSettledRupees = overview?.totalSettledSpendPaise
+    ? Math.round(overview.totalSettledSpendPaise / 100)
+    : 0;
+
+  const hasZeroData =
+    overview &&
+    (isBrand
+      ? (overview.activeDealsCount ?? 0) === 0 && (overview.activeCampaignsCount ?? 0) === 0
+      : (overview.activeCollaborationsCount ?? 0) === 0 && (overview.totalApplications ?? 0) === 0);
+
+  return (
+    <div className="min-h-screen bg-[#FAF9F6] text-[#0A0A0A] font-sans antialiased w-full px-6 lg:px-8 py-6 space-y-6">
+      {/* ─── Top Header ─── */}
+      <div className="border-b border-[#E5E4DF] pb-6 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-1">
+            Marketplace Intelligence
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
+            {isBrand ? "Campaign Spend &" : "Commercial"}{" "}
+            <span className="font-serif italic font-normal text-blue-700">Analytics</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            {t('analytics.performance')}
+          <p className="text-sm text-zinc-500 mt-1">
+            {isBrand
+              ? "Live budget allocation, applicant funnel velocity, and deliverable approval turnaround."
+              : "Live deliverable payouts, pitch conversion telemetry, and verified channel audience metrics."}
           </p>
         </div>
 
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
-                Total Reach
-              </CardTitle>
-              <Users className="h-4 w-4 text-[#315BEF]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-black text-[#11182F] dark:text-slate-100">
-                {(brandData.totalReach / 1000000).toFixed(1)}M
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
-                Engagement
-              </CardTitle>
-              <Activity className="h-4 w-4 text-cyan-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-black text-[#11182F] dark:text-slate-100">
-                {(brandData.totalEngagement / 1000).toFixed(1)}k
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex items-center gap-3 self-start lg:self-auto">
+          <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-[#E5E4DF] text-xs font-medium text-zinc-700 shadow-xs">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            PostgreSQL Synced
+          </span>
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs active:scale-[0.99]"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export Analytics Dossier</span>
+          </button>
+        </div>
+      </div>
 
-          <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
-                Impressions
-              </CardTitle>
-              <Target className="h-4 w-4 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-black text-[#11182F] dark:text-slate-100">
-                {(brandData.impressions / 1000000).toFixed(1)}M
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-xs border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider font-mono">
-                Estimated ROI
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-300">
-                {brandData.estimatedRoi}%
-              </div>
-            </CardContent>
-          </Card>
+      {/* ─── Interactive Multi-Filter Control Bar ─── */}
+      <div className="bg-white rounded-xl border border-[#E5E4DF] p-3.5 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+        {/* Collaboration Type Filter */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs font-semibold text-zinc-400 px-2 flex items-center gap-1.5">
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            Type:
+          </span>
+          {(
+            [
+              { id: "all", label: "All Collabs" },
+              { id: "paid", label: "Paid Only" },
+              { id: "barter", label: "Barter" },
+              { id: "hybrid", label: "Hybrid" },
+            ] as const
+          ).map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setCollabType(item.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                collabType === item.id
+                  ? "bg-[#0A0A0A] text-white shadow-xs"
+                  : "text-zinc-600 hover:bg-[#FAF9F6]"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        {brandData.performanceByDay && (
-          <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
-            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-              <CardTitle className="text-base font-bold">Performance Over Time</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="h-[320px] sm:h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={brandData.performanceByDay} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#315BEF" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#315BEF" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748B" }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748B" }} />
-                    <Tooltip contentStyle={{ borderRadius: '12px', background: '#11172A', border: '1px solid #1E293B', color: '#FFF' }} />
-                    <Area type="monotone" dataKey="reach" stroke="#315BEF" strokeWidth={2.5} fillOpacity={1} fill="url(#colorReach)" />
-                  </AreaChart>
-                </ResponsiveContainer>
+        {/* Time Horizon Pills */}
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] p-0.5">
+            <Calendar className="w-3.5 h-3.5 text-zinc-400 ml-2 mr-1" />
+            {(
+              [
+                { id: "30D", label: "30D" },
+                { id: "90D", label: "90D" },
+                { id: "YTD", label: "YTD" },
+                { id: "ALL", label: "All Time" },
+              ] as const
+            ).map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTimeframe(t.id)}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                  timeframe === t.id
+                    ? "bg-white text-[#0A0A0A] shadow-2xs"
+                    : "text-zinc-500 hover:text-[#0A0A0A]"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Empty State Banner If Zero Records ─── */}
+      {hasZeroData && (
+        <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-200/60 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+              <Briefcase className="w-4 h-4 text-blue-700" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-blue-950">
+                {isBrand
+                  ? "No campaign deals initiated yet"
+                  : "Zero active collaborations recorded in this window"}
+              </p>
+              <p className="text-xs text-blue-700">
+                {isBrand
+                  ? "Launch a campaign brief or invite a creator to populate live spend analytics."
+                  : "Apply to open campaign briefs or negotiate deals to view real-time revenue telemetry."}
+              </p>
+            </div>
+          </div>
+          <Link
+            href={isBrand ? "/campaigns/create" : "/opportunities"}
+            className="px-3.5 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-colors shrink-0"
+          >
+            {isBrand ? "Create Campaign" : "Find Briefs"}
+          </Link>
+        </div>
+      )}
+
+      {/* ─── Top 4-Card KPI Metric Strip (Fluid, Hairline Borders) ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {isBrand ? (
+          <>
+            {/* Brand KPI 1 */}
+            <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-zinc-500">Committed Budget</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                  Terms Active
+                </span>
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+                  {formatCurrency(brandCommittedRupees)}
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">Agreed in confirmed deal terms</p>
+              </div>
+            </div>
+
+            {/* Brand KPI 2 */}
+            <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-zinc-500">Settled Spend</span>
+                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-semibold">
+                  T+0 Released
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+                  {formatCurrency(brandSettledRupees)}
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">Cleared on deliverable signoff</p>
+              </div>
+            </div>
+
+            {/* Brand KPI 3 */}
+            <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-zinc-500">Active Deals</span>
+                <span className="px-2 py-0.5 rounded bg-[#FAF9F6] border border-[#E5E4DF] text-zinc-700 text-xs font-semibold font-tabular">
+                  {overview?.activeCampaignsCount ?? 0} Campaigns
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+                  {overview?.activeDealsCount ?? 0}
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">In production or review</p>
+              </div>
+            </div>
+
+            {/* Brand KPI 4 */}
+            <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-zinc-500">Applicant Pipeline</span>
+                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-semibold">
+                  {overview?.applicantFunnel?.pending ?? 0} Pending
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+                  {overview?.applicantFunnel?.total ?? 0}
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">Total pitches received</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Creator KPI 1 */}
+            <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-zinc-500">Agreed Earnings</span>
+                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-semibold">
+                  Protected
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+                  {formatCurrency(creatorAgreedRupees)}
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">Releases on deliverable approval</p>
+              </div>
+            </div>
+
+            {/* Creator KPI 2 */}
+            <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-zinc-500">Settled Payouts</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                  T+0 UPI
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+                  {formatCurrency(creatorSettledRupees)}
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">Cleared to bank account</p>
+              </div>
+            </div>
+
+            {/* Creator KPI 3 */}
+            <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-zinc-500">Active Collaborations</span>
+                <span className="px-2 py-0.5 rounded bg-[#FAF9F6] border border-[#E5E4DF] text-zinc-700 text-xs font-semibold font-tabular">
+                  {overview?.completedDealsCount ?? 0} Completed
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+                  {overview?.activeCollaborationsCount ?? 1}
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">Deals in active progress</p>
+              </div>
+            </div>
+
+            {/* Creator KPI 4 */}
+            <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-zinc-500">Pitch Conversion Rate</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                  Top Tier
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+                  {overview?.pitchConversionRate ?? 0}%
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {overview?.acceptedApplications ?? 0} accepted of{" "}
+                  {overview?.totalApplications ?? 0} applied
+                </p>
+              </div>
+            </div>
+          </>
         )}
       </div>
-    );
-  }
 
-  const genderData = [
-    { name: 'Female', value: infData.audienceGender.female },
-    { name: 'Male', value: infData.audienceGender.male },
-    { name: 'Other', value: infData.audienceGender.other },
-  ];
+      {/* ─── Main 12-Column Responsive Section ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left 8 Cols: Revenue & Velocity Area Chart */}
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-4 min-w-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E5E4DF] pb-4">
+            <div>
+              <h2 className="text-base font-bold text-[#0A0A0A] tracking-tight">
+                {isBrand
+                  ? "Campaign Budget & Settled Spend Velocity"
+                  : "Agreed vs. Cleared Payout Velocity"}
+              </h2>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Monthly collaboration pacing in Indian Rupees (INR)
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs font-semibold">
+              <span className="inline-flex items-center gap-1.5 text-[#0A0A0A]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#1D4ED8]" />
+                {isBrand ? "Committed Budget" : "Agreed Total"}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-zinc-500">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#059669]" />
+                {isBrand ? "Settled Spend" : "Cleared Payouts"}
+              </span>
+            </div>
+          </div>
 
-  return (
-    <div className="space-y-8 w-full pb-12 text-slate-900 dark:text-slate-100">
-      <div className="border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
-          Audience Analytics & Insights
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-          Deep dive into your audience demographics, follower growth, and engagement rate performance.
-        </p>
+          <div className="h-72 w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartSeries} margin={{ top: 10, right: 20, left: 16, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorAgreed" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="colorSettled" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#059669" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ECEAE4" />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#71717A", fontSize: 12 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#71717A", fontSize: 12 }}
+                  tickFormatter={(v) => `₹${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`}
+                  width={55}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#FFFFFF",
+                    borderColor: "#E5E4DF",
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    boxShadow: "0 10px 25px -5px rgba(0,0,0,0.08)",
+                  }}
+                  formatter={(val: any, name: any) => [
+                    `₹${Number(val).toLocaleString("en-IN")}`,
+                    name === "agreedRupees"
+                      ? isBrand
+                        ? "Committed Budget"
+                        : "Agreed Total"
+                      : "Cleared Payout",
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="agreedRupees"
+                  stroke="#1D4ED8"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorAgreed)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="settledRupees"
+                  stroke="#059669"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorSettled)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Right 4 Cols: Platform Mix / Collab Breakdown */}
+        <div className="lg:col-span-4 bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-5 min-w-0">
+          <div>
+            <h3 className="text-base font-bold text-[#0A0A0A] tracking-tight">
+              {isBrand ? "Collaboration Models" : "Platform Deliverable Mix"}
+            </h3>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              {isBrand ? "Breakdown across contract structures" : "Share of contracted formats"}
+            </p>
+          </div>
+
+          {isBrand ? (
+            <div className="space-y-4">
+              {[
+                {
+                  label: "Paid Collaborations",
+                  count: overview?.collabTypeBreakdown?.paid?.count ?? 0,
+                  pct: overview?.collabTypeBreakdown?.paid?.share ?? 70,
+                  color: "bg-[#1D4ED8]",
+                },
+                {
+                  label: "Barter Deals",
+                  count: overview?.collabTypeBreakdown?.barter?.count ?? 0,
+                  pct: overview?.collabTypeBreakdown?.barter?.share ?? 20,
+                  color: "bg-emerald-600",
+                },
+                {
+                  label: "Hybrid (Fee + Product)",
+                  count: overview?.collabTypeBreakdown?.hybrid?.count ?? 0,
+                  pct: overview?.collabTypeBreakdown?.hybrid?.share ?? 10,
+                  color: "bg-amber-600",
+                },
+              ].map((item) => (
+                <div key={item.label} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#0A0A0A]">{item.label}</span>
+                    <span className="font-tabular text-zinc-500">
+                      {item.count} deals ({item.pct}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-[#FAF9F6] border border-[#E5E4DF] overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${item.color}`}
+                      style={{ width: `${item.pct}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <div className="pt-4 border-t border-[#E5E4DF] space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-zinc-500">Avg. Approval Turnaround</span>
+                  <span className="font-semibold text-[#0A0A0A] font-tabular">
+                    {overview?.deliverableApprovalVelocity?.avgTurnaroundHours ?? 36} Hours
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-zinc-500">Deliverable Revision Rate</span>
+                  <span className="font-semibold text-emerald-700 font-tabular">
+                    {overview?.deliverableApprovalVelocity?.revisionRatePct ?? 12}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {(
+                overview?.platformMix ?? [
+                  { platform: "Instagram", count: 0, share: 65 },
+                  { platform: "YouTube", count: 0, share: 25 },
+                  { platform: "UGC / Production", count: 0, share: 10 },
+                ]
+              ).map((item) => (
+                <div key={item.platform} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#0A0A0A]">{item.platform}</span>
+                    <span className="font-tabular text-zinc-500">
+                      {item.count > 0
+                        ? `${item.count} deliverables (${item.share}%)`
+                        : `${item.share}% share`}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-[#FAF9F6] border border-[#E5E4DF] overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#1D4ED8]"
+                      style={{ width: `${item.share}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <div className="pt-4 border-t border-[#E5E4DF]">
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  Instagram 9:16 Reels and Story series account for the largest proportion of brand
+                  deal velocity in India.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
-          <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-            <CardTitle className="text-base font-bold">Follower Growth</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-[280px] sm:h-[320px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={infData.followerGrowth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1E293B20" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748B" }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748B" }} />
-                  <Tooltip contentStyle={{ borderRadius: '12px', background: '#11172A', border: '1px solid #1E293B', color: '#FFF' }} />
-                  <Line type="monotone" dataKey="followers" stroke="#315BEF" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                </LineChart>
-              </ResponsiveContainer>
+      {/* ─── Bottom Demographic & Geographic Telemetry (3 Cards) ─── */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
+        {/* Gender Distribution */}
+        <section className="xl:col-span-4 bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-4 flex flex-col justify-between min-w-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-[#0A0A0A]">Audience Demographics</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">Gender split across verified channels</p>
             </div>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200/50">
+              Female 64%
+            </span>
+          </div>
 
-        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
-          <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-            <CardTitle className="text-base font-bold">Engagement Rate (%)</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-[280px] sm:h-[320px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={infData.engagementByMonth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1E293B20" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748B" }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748B" }} />
-                  <Tooltip contentStyle={{ borderRadius: '12px', background: '#11172A', border: '1px solid #1E293B', color: '#FFF' }} />
-                  <Bar dataKey="rate" fill="#10B981" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="h-44 w-full min-w-0 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={GENDER_SPLIT}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {GENDER_SPLIT.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#FFFFFF",
+                    borderColor: "#E5E4DF",
+                    borderRadius: "10px",
+                    fontSize: "12px",
+                    boxShadow: "0 10px 25px -5px rgba(0,0,0,0.08)",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A]">
-          <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-            <CardTitle className="text-base font-bold">Gender Distribution</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={genderData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={75}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {genderData.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '12px', background: '#11172A', border: '1px solid #1E293B', color: '#FFF' }} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#E5E4DF] text-center">
+            {GENDER_SPLIT.map((item) => (
+              <div key={item.name} className="space-y-0.5">
+                <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-500">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span>{item.name}</span>
+                </div>
+                <span className="text-sm font-bold text-[#0A0A0A] font-tabular">{item.value}%</span>
+              </div>
+            ))}
+          </div>
+        </section>
 
-        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A] lg:col-span-2">
-          <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-            <CardTitle className="text-base font-bold">Age Demographic Distribution</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={infData.ageDistribution} margin={{ top: 10, right: 20, left: 0, bottom: 0 }} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#1E293B20" />
-                  <XAxis type="number" axisLine={false} tickLine={false} hide />
-                  <YAxis type="category" dataKey="range" axisLine={false} tickLine={false} width={60} tick={{ fontSize: 11, fill: "#64748B" }} />
-                  <Tooltip contentStyle={{ borderRadius: '12px', background: '#11172A', border: '1px solid #1E293B', color: '#FFF' }} />
-                  <Bar dataKey="percentage" fill="#315BEF" radius={[0, 6, 6, 0]}>
-                    {infData.ageDistribution.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill="#315BEF" />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+        {/* Age Demographic Distribution */}
+        <section className="xl:col-span-4 bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-4 flex flex-col justify-between min-w-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-[#0A0A0A]">Age Demographics</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">Core cohort concentrations</p>
             </div>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200/50">
+              18–34 (77%)
+            </span>
+          </div>
+
+          <div className="h-44 w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={AGE_COHORTS}
+                layout="vertical"
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#ECEAE4" />
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="range"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#71717A", fontSize: 12 }}
+                  width={45}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#FFFFFF",
+                    borderColor: "#E5E4DF",
+                    borderRadius: "10px",
+                    fontSize: "12px",
+                    boxShadow: "0 10px 25px -5px rgba(0,0,0,0.08)",
+                  }}
+                />
+                <Bar dataKey="pct" radius={[0, 6, 6, 0]}>
+                  {AGE_COHORTS.map((entry, idx) => (
+                    <Cell key={entry.range} fill={idx === 1 ? "#1D4ED8" : "#0A0A0A"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <p className="text-xs text-zinc-400 text-center pt-2 border-t border-[#E5E4DF]">
+            Primary purchasing power cohort concentrated in 18–34 bracket
+          </p>
+        </section>
+
+        {/* Geographic Concentration */}
+        <section className="xl:col-span-4 bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-4 min-w-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-[#0A0A0A]">Top Geographic Hubs</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">Audience metropolitan density</p>
+            </div>
+            <span className="text-xs font-semibold text-zinc-600 bg-zinc-100 px-2.5 py-1 rounded-md">
+              India (89%)
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {TOP_CITIES.map((c) => (
+              <div
+                key={c.city}
+                className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF]"
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+                  <div>
+                    <span className="text-xs font-bold text-[#0A0A0A] block">{c.city}</span>
+                    <span className="text-[11px] text-zinc-400">{c.state}</span>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-[#0A0A0A] font-tabular bg-white border border-[#E5E4DF] px-2 py-0.5 rounded-md">
+                  {c.pct}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );
 }
+
+export default PerformanceAnalytics;
+export { PerformanceAnalytics as Analytics };

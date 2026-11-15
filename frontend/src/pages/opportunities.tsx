@@ -1,224 +1,476 @@
-import { useListCampaigns } from "@workspace/api-client-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Sparkles, Calendar, Users, Briefcase, Filter, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "wouter";
-import { useAuth } from "@/contexts/auth-context";
-import { useState, useMemo } from "react";
-import { formatCurrency } from "@/lib/formatters";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Realistic Fallback Opportunities List for Creators
-const defaultOpportunitiesList = [
-  {
-    id: 1,
-    title: "Summer Beauty Campaign",
-    brandName: "Glow Cosmetics",
-    brandLogoUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=150&auto=format&fit=crop",
-    description: "Seeking beauty & lifestyle creators to showcase our new SPF Glow Lotion during the summer season.",
-    budget: 5000,
-    platform: "instagram",
-    status: "active",
-    deadline: "2026-09-01",
-    matchScore: 98,
-    category: "Beauty & Wellness",
-  },
-  {
-    id: 2,
-    title: "Tech Launch 2026",
-    brandName: "NovaTech",
-    brandLogoUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=150&auto=format&fit=crop",
-    description: "Looking for tech review creators to unbox and review our new ergonomic wireless ANC headphones.",
-    budget: 12500,
-    platform: "youtube",
-    status: "active",
-    deadline: "2026-09-15",
-    matchScore: 94,
-    category: "Tech & Gaming",
-  },
-  {
-    id: 3,
-    title: "Fall Apparel Drop",
-    brandName: "UrbanFit",
-    brandLogoUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=150&auto=format&fit=crop",
-    description: "Streetwear and activewear fashion influencers wanted to style our upcoming autumn collection.",
-    budget: 18000,
-    platform: "tiktok",
-    status: "active",
-    deadline: "2026-10-01",
-    matchScore: 91,
-    category: "Fashion & Lifestyle",
-  },
-  {
-    id: 4,
-    title: "Organic Snack Rollout",
-    brandName: "FreshBite",
-    brandLogoUrl: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=150&auto=format&fit=crop",
-    description: "Health & wellness creators for a national grocery retail snack campaign.",
-    budget: 7080,
-    platform: "instagram",
-    status: "active",
-    deadline: "2026-09-20",
-    matchScore: 88,
-    category: "Food & Fitness",
-  },
-];
+import {
+  Search,
+  Filter,
+  CheckCircle2,
+  Calendar,
+  IndianRupee,
+  MapPin,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  Building2,
+  SlidersHorizontal,
+  X,
+  FileCheck,
+  Layers,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  OpportunityItem,
+  INITIAL_OPPORTUNITIES,
+  getSavedApplications,
+  saveApplication,
+  ApplicationItem,
+} from "@/services/creator-funnel";
 
 export default function Opportunities() {
-  const { user } = useAuth();
-  const [platform, setPlatform] = useState<string>("all");
-  const [search, setSearch] = useState<string>("");
+  const [opportunities] = useState<OpportunityItem[]>(INITIAL_OPPORTUNITIES);
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
 
-  const { data: apiCampaigns, isLoading } = useListCampaigns({
-    status: "active",
-  });
+  // Search & Filters
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [formatFilter, setFormatFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("all");
+  const [minPayoutFilter, setMinPayoutFilter] = useState<number>(0);
 
-  const opportunities = useMemo(() => {
-    const list = Array.isArray(apiCampaigns) && apiCampaigns.length > 0 ? apiCampaigns : defaultOpportunitiesList;
+  // Apply Modal State
+  const [pitchModalItem, setPitchModalItem] = useState<OpportunityItem | null>(null);
+  const [quotedRate, setQuotedRate] = useState<string>("");
+  const [pitchMessage, setPitchMessage] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    return list.filter((item: any) => {
+  // Sync applied campaigns from storage
+  const loadApplications = () => {
+    setApplications(getSavedApplications());
+  };
+
+  useEffect(() => {
+    loadApplications();
+    const handleUpdate = () => loadApplications();
+    window.addEventListener("cb_applications_updated", handleUpdate);
+    return () => window.removeEventListener("cb_applications_updated", handleUpdate);
+  }, []);
+
+  const appliedCampaignIds = useMemo(() => {
+    return new Set(applications.filter((a) => a.status !== "withdrawn").map((a) => a.campaignId));
+  }, [applications]);
+
+  const filteredOpportunities = useMemo(() => {
+    return opportunities.filter((op) => {
       const matchesSearch =
-        !search ||
-        item.title.toLowerCase().includes(search.toLowerCase()) ||
-        item.brandName.toLowerCase().includes(search.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(search.toLowerCase()));
+        search === "" ||
+        op.title.toLowerCase().includes(search.toLowerCase()) ||
+        op.brandName.toLowerCase().includes(search.toLowerCase()) ||
+        op.description.toLowerCase().includes(search.toLowerCase());
 
-      const matchesPlatform = platform === "all" || item.platform.toLowerCase() === platform.toLowerCase();
+      const matchesCategory = categoryFilter === "all" || op.category === categoryFilter;
 
-      return matchesSearch && matchesPlatform;
+      const matchesFormat = formatFilter === "all" || op.format === formatFilter;
+
+      const matchesCity = cityFilter === "all" || op.city === cityFilter;
+
+      const matchesPayout = minPayoutFilter === 0 || op.maxPayout >= minPayoutFilter;
+
+      return matchesSearch && matchesCategory && matchesFormat && matchesCity && matchesPayout;
     });
-  }, [apiCampaigns, search, platform]);
+  }, [opportunities, search, categoryFilter, formatFilter, cityFilter, minPayoutFilter]);
+
+  const handleOpenPitchModal = (op: OpportunityItem) => {
+    setPitchModalItem(op);
+    setQuotedRate(String(op.minPayout));
+    setPitchMessage(
+      `Hi ${op.brandName} team! I'm very excited about the ${op.title}. My audience has high affinity for ${op.category} and I'd love to deliver high-retention content for this campaign.`
+    );
+  };
+
+  const handleSubmitPitch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pitchModalItem) return;
+
+    const rateNum = Number(quotedRate);
+    if (!rateNum || rateNum <= 0) {
+      toast.error("Please enter a valid quoted rate in ₹.");
+      return;
+    }
+
+    if (!pitchMessage.trim()) {
+      toast.error("Please provide a brief pitch message for the brand.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const newApp: ApplicationItem = {
+      id: `app-${Date.now()}`,
+      campaignId: pitchModalItem.id,
+      campaignTitle: pitchModalItem.title,
+      brandName: pitchModalItem.brandName,
+      brandInitials: pitchModalItem.brandInitials,
+      brandLogoUrl: pitchModalItem.brandLogoUrl,
+      deliverableProposed: pitchModalItem.deliverable,
+      quotedRate: rateNum,
+      appliedDate: new Date().toISOString().split("T")[0],
+      status: "pending",
+      pitchMessage: pitchMessage.trim(),
+      platform: pitchModalItem.format === "YT Shorts" ? "youtube" : "instagram",
+    };
+
+    saveApplication(newApp);
+    setApplications(getSavedApplications());
+    setIsSubmitting(false);
+    setPitchModalItem(null);
+
+    toast.success(
+      `Pitch submitted for ${pitchModalItem.brandName}! Tracked in Stage 2 Applications.`
+    );
+  };
 
   return (
-    <div className="space-y-8 w-full pb-12 text-slate-900 dark:text-slate-100">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
+    <div className="workspace-canvas space-y-8 pb-16 antialiased text-[#0A0A0A]">
+      {/* ─── 1. STAGE 1 FUNNEL HEADER ───────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-4 border-b border-[#E5E4DF]">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
-              Opportunities
-            </h1>
-            <Badge className="bg-blue-50 dark:bg-blue-950/80 text-[#315BEF] dark:text-blue-400 border-blue-200 text-[10px] font-bold">
-              ✦ Recommended for You
-            </Badge>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60">
+              Stage 1 of Funnel
+            </span>
+            <span className="text-zinc-400">•</span>
+            <span className="text-xs font-semibold text-zinc-500">Discovery &amp; Open Briefs</span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            Discover active brand campaigns tailored to your niche, audience demographics, and engagement rates.
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A]">
+            Marketplace{" "}
+            <span className="font-serif italic font-normal text-blue-700">Opportunities</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-500 mt-1 max-w-2xl">
+            Filter verified, pre-funded brand briefs matching your audience demographics, delivery
+            format, and starting rate card.
           </p>
         </div>
 
-        <Link href="/applications">
-          <Button variant="outline" className="h-9 px-4 border-slate-200 dark:border-slate-700 font-bold text-xs rounded-xl cursor-pointer">
-            View My Pitches →
-          </Button>
+        {/* Funnel Progress Pill */}
+        <Link
+          href="/applications"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[#E5E4DF] hover:border-zinc-400 text-xs font-semibold text-[#0A0A0A] transition-all shadow-xs cursor-pointer group"
+        >
+          <FileCheck className="w-3.5 h-3.5 text-blue-700" />
+          <span>View Pitched Applications ({applications.length})</span>
+          <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
 
-      {/* Filter Bar */}
-      <div className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center gap-3 w-full">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
-          <Input
-            placeholder="Search opportunities by title, brand, or niche..."
-            className="pl-9 h-10 border-slate-200/80 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-xs rounded-xl"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {/* ─── 2. MULTI-AXIS FILTER CONTROLLER ─────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-[#E5E4DF] p-4 sm:p-5 shadow-xs space-y-4">
+        {/* Search Bar + Active Count */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search briefs by brand, product title, or keyword..."
+              className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700 transition-all"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto text-xs text-zinc-500 font-medium shrink-0">
+            <span>
+              Showing{" "}
+              <strong className="text-[#0A0A0A] font-tabular">
+                {filteredOpportunities.length}
+              </strong>{" "}
+              active briefs
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-          <Select value={platform} onValueChange={setPlatform}>
-            <SelectTrigger className="w-full sm:w-[160px] h-10 border-slate-200/80 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 text-xs rounded-xl font-medium">
-              <SelectValue placeholder="Platform" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white dark:bg-[#11172A] border-slate-200 dark:border-slate-800">
-              <SelectItem value="all">All Platforms</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="tiktok">TikTok</SelectItem>
-              <SelectItem value="youtube">YouTube</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Hairline Divided Filter Selectors */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-[#E5E4DF]">
+          {/* 1. Category */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
+              Category
+            </label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-blue-700 cursor-pointer"
+            >
+              <option value="all">All Categories</option>
+              <option value="Beauty & Lifestyle">Beauty &amp; Lifestyle</option>
+              <option value="Tech & Gadgets">Tech &amp; Gadgets</option>
+              <option value="Fashion & Apparel">Fashion &amp; Apparel</option>
+              <option value="Food & Fitness">Food &amp; Fitness</option>
+            </select>
+          </div>
 
-          <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl cursor-pointer">
-            <Filter className="h-4 w-4" />
-          </Button>
+          {/* 2. Format */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
+              Deliverable Format
+            </label>
+            <select
+              value={formatFilter}
+              onChange={(e) => setFormatFilter(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-blue-700 cursor-pointer"
+            >
+              <option value="all">All Formats</option>
+              <option value="9:16 Reels">9:16 Reels</option>
+              <option value="YT Shorts">YT Shorts</option>
+              <option value="Carousels">Carousels</option>
+            </select>
+          </div>
+
+          {/* 3. City */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
+              Target City
+            </label>
+            <select
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-blue-700 cursor-pointer"
+            >
+              <option value="all">All Locations (Pan-India)</option>
+              <option value="Mumbai">Mumbai</option>
+              <option value="Bengaluru">Bengaluru</option>
+              <option value="Delhi NCR">Delhi NCR</option>
+              <option value="Pune">Pune</option>
+              <option value="Hyderabad">Hyderabad</option>
+            </select>
+          </div>
+
+          {/* 4. Minimum Payout */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
+              Minimum Payout
+            </label>
+            <select
+              value={minPayoutFilter}
+              onChange={(e) => setMinPayoutFilter(Number(e.target.value))}
+              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-blue-700 cursor-pointer"
+            >
+              <option value={0}>Any Budget</option>
+              <option value={30000}>₹30,000+ Min</option>
+              <option value={45000}>₹45,000+ Min</option>
+              <option value={60000}>₹60,000+ Min</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Opportunities Cards Roster */}
-      {isLoading ? (
-        <div className="flex h-64 w-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#315BEF]" />
-        </div>
-      ) : opportunities.length > 0 ? (
-        <div className="grid gap-4 w-full">
-          {opportunities.map((item: any) => (
-            <Link key={item.id} href={`/campaigns/${item.id}`}>
-              <Card className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 shadow-xs hover:shadow-md transition-all cursor-pointer group overflow-hidden text-slate-900 dark:text-slate-100">
-                <CardContent className="p-0">
-                  <div className="flex flex-col sm:flex-row">
-                    <div className="p-5 sm:p-6 flex-1 space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-3">
-                          {item.brandLogoUrl ? (
-                            <img src={item.brandLogoUrl} className="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 object-cover" alt="Logo" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-[#315BEF] dark:text-blue-400 flex items-center justify-center font-bold text-sm">
-                              {item.brandName ? item.brandName.charAt(0) : "B"}
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{item.brandName}</p>
-                            <h3 className="text-base sm:text-lg font-bold group-hover:text-[#315BEF] dark:group-hover:text-blue-400 transition-colors">{item.title}</h3>
-                          </div>
-                        </div>
-                        <Badge className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 text-[10px] font-bold">
-                          ✦ {item.matchScore || 95}% Match
-                        </Badge>
-                      </div>
+      {/* ─── 3. DISCOVERY GRID (STAGE 1 FULL-WIDTH BRIEFS) ───────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+        {filteredOpportunities.map((item) => {
+          const isApplied = appliedCampaignIds.has(item.id);
 
-                      <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 max-w-3xl leading-relaxed">
-                        {item.description}
-                      </p>
-
-                      <div className="flex flex-wrap gap-4 sm:gap-6 text-xs pt-1">
-                        <div className="flex items-center gap-1.5">
-                          <Briefcase className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                          <span className="font-bold text-[#11182F] dark:text-slate-100">{formatCurrency(item.budget)}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Users className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                          <span className="font-bold capitalize text-slate-700 dark:text-slate-300">{item.platform}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                          <span className="text-slate-500 dark:text-slate-400">Deadline: <strong className="text-slate-700 dark:text-slate-300">{new Date(item.deadline).toLocaleDateString()}</strong></span>
-                        </div>
+          return (
+            <div
+              key={item.id}
+              className="bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs flex flex-col justify-between hover:border-zinc-400 transition-all space-y-5"
+            >
+              {/* Top Row: Brand Monogram + Title + Escrow Badge */}
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {item.brandLogoUrl ? (
+                      <img
+                        src={item.brandLogoUrl}
+                        alt={item.brandName}
+                        className="w-10 h-10 rounded-xl object-cover border border-[#E5E4DF] shadow-2xs"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-[#0A0A0A] text-white font-bold text-xs flex items-center justify-center">
+                        {item.brandInitials}
                       </div>
-                    </div>
-
-                    <div className="bg-[#F8FAFF] dark:bg-slate-800/40 p-5 sm:w-48 flex sm:flex-col justify-between items-center sm:items-end border-t sm:border-t-0 sm:border-l border-[#E2E8F3] dark:border-slate-800">
-                      <div className="text-left sm:text-right">
-                        <div className="text-xl sm:text-2xl font-black text-[#0F172A] dark:text-slate-100">{formatCurrency(item.budget)}</div>
-                        <div className="text-[10px] font-bold text-[#64748B] dark:text-slate-500 uppercase tracking-wider font-mono mt-0.5">ESTIMATED PAYOUT</div>
+                    )}
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-[#0A0A0A]">{item.brandName}</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-700" />
                       </div>
-                      <Button size="sm" className="h-8 px-4.5 rounded-xl bg-[#315CF5] hover:bg-blue-600 text-white font-bold text-xs shadow-2xs group-hover:translate-x-0.5 transition-transform cursor-pointer">
-                        Apply Now →
-                      </Button>
+                      <span className="text-[11px] text-zinc-400 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-zinc-400" />
+                        {item.city}
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-24 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-[#11172A] w-full">
-          <Sparkles className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1">No matching opportunities</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Try adjusting your filters or search terms.</p>
+
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{item.escrowStatus}</span>
+                  </span>
+                </div>
+
+                {/* Campaign Title & Deliverable Scope */}
+                <div>
+                  <h3 className="text-base font-bold text-[#0A0A0A] leading-snug">{item.title}</h3>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className="px-2 py-0.5 rounded-md bg-[#FAF9F6] border border-[#E5E4DF] text-xs font-semibold text-blue-700">
+                      {item.format}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-[#FAF9F6] border border-[#E5E4DF] text-xs font-medium text-zinc-600">
+                      {item.category}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Description Narrative */}
+                <p className="text-xs text-zinc-500 leading-relaxed line-clamp-3">
+                  {item.description}
+                </p>
+              </div>
+
+              {/* Bottom Card Footer: Deliverable, Budget Range & Funnel Action */}
+              <div className="space-y-4 pt-4 border-t border-[#E5E4DF]">
+                {/* Deliverable & Escrow Range Strip */}
+                <div className="flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-[11px] text-zinc-400 block">Deliverable Scope</span>
+                    <span className="font-semibold text-[#0A0A0A]">{item.deliverable}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[11px] text-zinc-400 block">Budget Range</span>
+                    <span className="font-bold text-emerald-700 font-tabular text-sm">
+                      ₹{item.minPayout.toLocaleString("en-IN")} – ₹
+                      {item.maxPayout.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Bar with Linked State */}
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                    <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>
+                      Deadline:{" "}
+                      <strong className="text-zinc-600 font-medium">{item.deadline}</strong>
+                    </span>
+                  </div>
+
+                  {isApplied ? (
+                    <Link
+                      href="/applications"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#FAF9F6] hover:bg-[#F2F1EC] border border-[#E5E4DF] text-xs font-semibold text-zinc-700 transition-colors cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Applied • View →</span>
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenPitchModal(item)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer shadow-xs"
+                    >
+                      <span>Apply with Pitch</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ─── 4. APPLY WITH PITCH MODAL ─────────────────────────────────────── */}
+      {pitchModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-[#E5E4DF] max-w-lg w-full p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-4 border-b border-[#E5E4DF] pb-4">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 block mb-0.5">
+                  Direct Creator Pitch
+                </span>
+                <h3 className="text-lg font-bold text-[#0A0A0A]">
+                  Apply for {pitchModalItem.title}
+                </h3>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Brand: {pitchModalItem.brandName} • Budget: ₹
+                  {pitchModalItem.minPayout.toLocaleString("en-IN")} – ₹
+                  {pitchModalItem.maxPayout.toLocaleString("en-IN")}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPitchModalItem(null)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-[#0A0A0A] hover:bg-zinc-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Pitch Form */}
+            <form onSubmit={handleSubmitPitch} className="space-y-4">
+              {/* Deliverable Recap Box */}
+              <div className="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF] text-xs space-y-1">
+                <span className="text-zinc-500 font-medium">Deliverable Required:</span>
+                <p className="font-bold text-[#0A0A0A]">{pitchModalItem.deliverable}</p>
+              </div>
+
+              {/* Quoted Rate Input */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-[#0A0A0A]">
+                  Your Quoted Fee (₹ INR)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    value={quotedRate}
+                    onChange={(e) => setQuotedRate(e.target.value)}
+                    placeholder="e.g. 45000"
+                    className="w-full h-10 pl-8 pr-3 rounded-lg border border-[#E5E4DF] bg-white text-xs font-bold font-tabular text-[#0A0A0A] focus:outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
+                    required
+                  />
+                </div>
+                <span className="text-[11px] text-zinc-400">
+                  Protected by verified milestones once brand accepts your quote.
+                </span>
+              </div>
+
+              {/* Pitch Narrative Textarea */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-[#0A0A0A]">
+                  Pitch &amp; Creative Concept
+                </label>
+                <textarea
+                  rows={4}
+                  value={pitchMessage}
+                  onChange={(e) => setPitchMessage(e.target.value)}
+                  placeholder="Explain why your audience is a strong match, your proposed visual hook, and past results..."
+                  className="w-full p-3 rounded-lg border border-[#E5E4DF] bg-white text-xs text-[#0A0A0A] leading-relaxed focus:outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700 resize-none"
+                  required
+                />
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E4DF]">
+                <button
+                  type="button"
+                  onClick={() => setPitchModalItem(null)}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-all shadow-xs cursor-pointer active:scale-[0.98]"
+                >
+                  <span>Submit Pitch to Brand</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

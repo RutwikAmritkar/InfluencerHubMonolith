@@ -5,7 +5,7 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { SocialAccount } from './socialAccount';
+import type { SocialAccount } from "./socialAccount";
 
 export interface InfluencerUpdate {
   bio?: string;

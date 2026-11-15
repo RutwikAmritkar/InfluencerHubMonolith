@@ -12,6 +12,11 @@ import analyticsRouter from "./analytics";
 import aiRouter from "./ai";
 import socialRouter from "./social";
 import uploadRouter from "./upload";
+import collaborationRequestsRouter from "./collaboration-requests";
+import dealsRouter from "./deals";
+import storageRouter from "./storage";
+import portfolioRouter from "./portfolio";
+import paymentsRouter from "./payments";
 
 const router: IRouter = Router();
 
@@ -28,5 +33,10 @@ router.use(analyticsRouter);
 router.use(aiRouter);
 router.use(socialRouter);
 router.use(uploadRouter);
+router.use(collaborationRequestsRouter);
+router.use(dealsRouter);
+router.use(storageRouter);
+router.use(portfolioRouter);
+router.use(paymentsRouter);
 
 export default router;

@@ -9,7 +9,9 @@ export const campaignsTable = pgTable("campaigns", {
   description: text("description").notNull(),
   budget: integer("budget").notNull(),
   platform: text("platform").notNull(),
-  status: text("status", { enum: ["draft", "active", "completed", "paused"] }).notNull().default("active"),
+  status: text("status", { enum: ["draft", "active", "completed", "paused"] })
+    .notNull()
+    .default("active"),
   deliverables: text("deliverables"),
   targetAudience: text("target_audience"),
   timeline: text("timeline"),
@@ -17,6 +19,9 @@ export const campaignsTable = pgTable("campaigns", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const insertCampaignSchema = createInsertSchema(campaignsTable).omit({ id: true, createdAt: true });
+export const insertCampaignSchema = createInsertSchema(campaignsTable).omit({
+  id: true,
+  createdAt: true,
+});
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 export type Campaign = typeof campaignsTable.$inferSelect;

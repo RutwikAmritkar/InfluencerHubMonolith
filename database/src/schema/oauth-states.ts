@@ -6,7 +6,9 @@ export const oauthStatesTable = pgTable(
   {
     id: serial("id").primaryKey(),
     state: text("state").notNull(),
-    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     provider: text("provider").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),

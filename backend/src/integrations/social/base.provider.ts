@@ -52,7 +52,7 @@ export interface ProbedMetricResult {
 }
 
 export interface SocialPlatformProvider {
-  readonly platform: "instagram" | "youtube" | "tiktok";
+  readonly platform: "instagram" | "youtube";
   readonly capabilities: PlatformCapabilities;
 
   getAuthorizationUrl(state: string): Promise<string>;
@@ -63,9 +63,20 @@ export interface SocialPlatformProvider {
     expiresIn?: number;
   }>;
   getProfile(accessToken: string): Promise<NormalizedSocialProfile>;
-  getContent(accessToken: string, externalAccountId: string, limit?: number): Promise<NormalizedSocialContent[]>;
+  getContent(
+    accessToken: string,
+    externalAccountId: string,
+    limit?: number
+  ): Promise<NormalizedSocialContent[]>;
   getInsights?(accessToken: string, externalAccountId: string): Promise<{ reach: number | null }>;
-  probeAccountInsights?(accessToken: string, externalAccountId: string): Promise<ProbedMetricResult[]>;
-  probeMediaInsights?(accessToken: string, mediaId: string, mediaType: string): Promise<ProbedMetricResult[]>;
+  probeAccountInsights?(
+    accessToken: string,
+    externalAccountId: string
+  ): Promise<ProbedMetricResult[]>;
+  probeMediaInsights?(
+    accessToken: string,
+    mediaId: string,
+    mediaType: string
+  ): Promise<ProbedMetricResult[]>;
   disconnect(accessToken: string): Promise<void>;
 }

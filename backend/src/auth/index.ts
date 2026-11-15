@@ -4,11 +4,15 @@ import { admin, bearer } from "better-auth/plugins";
 import { db } from "@workspace/db";
 import * as authSchema from "@workspace/db/schema";
 import { logAuditEvent } from "./audit";
+import { logger } from "../lib/logger.js";
 
 import { sendPasswordResetEmail, sendVerificationEmailService } from "../services/email.service";
 
 const baseURL = process.env.BETTER_AUTH_URL || process.env.SERVER_URL || "http://localhost:3000";
-const secret = process.env.BETTER_AUTH_SECRET || process.env.SESSION_SECRET || "influencer-hub-secret-key-production-32-chars";
+const secret =
+  process.env.BETTER_AUTH_SECRET ||
+  process.env.SESSION_SECRET ||
+  "influencer-hub-secret-key-production-32-chars";
 
 export function isEmailVerificationRequired(): boolean {
   const val = process.env.EMAIL_VERIFICATION_REQUIRED;
@@ -19,7 +23,15 @@ export function isEmailVerificationRequired(): boolean {
 export const auth = betterAuth({
   baseURL,
   secret,
-  trustedOrigins: ["http://localhost:5000", "http://localhost:5001"],
+  trustedOrigins: [
+    process.env.APP_URL,
+    process.env.CLIENT_URL,
+    process.env.FRONTEND_URL,
+    "https://creatorsbrand.in",
+    "https://www.creatorsbrand.in",
+    "http://localhost:5000",
+    "http://localhost:5001",
+  ].filter(Boolean) as string[],
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -33,7 +45,7 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: isEmailVerificationRequired(),
     async sendResetPassword(data, request) {
-      console.log(`[AUTH LOG] Password reset requested for ${data.user.email}. Token link: ${data.url}`);
+      logger.info({ email: data.user.email }, "[AUTH] Password reset requested");
       await sendPasswordResetEmail({
         email: data.user.email,
         url: data.url,
@@ -50,7 +62,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: false,
     async sendVerificationEmail(data, request) {
-      console.log(`[AUTH LOG] Verification email sent to ${data.user.email}. Verification link: ${data.url}`);
+      logger.info({ email: data.user.email }, "[AUTH] Verification email sent");
       await sendVerificationEmailService({
         email: data.user.email,
         url: data.url,
@@ -65,20 +77,26 @@ export const auth = betterAuth({
   },
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID || "demo-google-client-id",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "demo-google-client-secret",
-      enabled: Boolean(process.env.GOOGLE_CLIENT_ID),
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      enabled: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     },
     apple: {
-      clientId: process.env.APPLE_CLIENT_ID || "demo-apple-client-id",
-      clientSecret: process.env.APPLE_CLIENT_SECRET || "demo-apple-client-secret",
-      enabled: Boolean(process.env.APPLE_CLIENT_ID),
+      clientId: process.env.APPLE_CLIENT_ID || "",
+      clientSecret: process.env.APPLE_CLIENT_SECRET || "",
+      enabled: Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET),
     },
   },
   rateLimit: {
     enabled: true,
     window: 60,
     max: 100,
+  },
+  advanced: {
+    useSecureCookies:
+      process.env.NODE_ENV === "production" &&
+      !baseURL.startsWith("http://localhost") &&
+      !baseURL.startsWith("http://127.0.0.1"),
   },
   plugins: [
     admin({

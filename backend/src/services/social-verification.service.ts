@@ -22,7 +22,9 @@ export class InstagramVerificationProvider implements ISocialVerificationProvide
     const handle = (account.username || "").trim();
 
     if (account.inputType === "url") {
-      const isValidDomain = /^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9_.-]+\/?$/i.test(rawUrl);
+      const isValidDomain = /^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9_.-]+\/?$/i.test(
+        rawUrl
+      );
       if (!isValidDomain) {
         return {
           status: "FAILED",
@@ -78,38 +80,6 @@ export class YouTubeVerificationProvider implements ISocialVerificationProvider 
   }
 }
 
-export class TikTokVerificationProvider implements ISocialVerificationProvider {
-  platform = "tiktok";
-
-  async verify(account: SocialAccount): Promise<VerificationResult> {
-    const rawUrl = (account.profileUrl || "").toLowerCase();
-    const handle = (account.username || "").trim();
-
-    if (account.inputType === "url") {
-      const isValidDomain = /^(https?:\/\/)?(www\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/?$/i.test(rawUrl);
-      if (!isValidDomain) {
-        return {
-          status: "FAILED",
-          errorMessage: "Invalid TikTok profile URL format.",
-        };
-      }
-    } else {
-      if (!handle || handle.length < 1 || handle.includes(" ")) {
-        return {
-          status: "FAILED",
-          errorMessage: "Invalid TikTok handle format.",
-        };
-      }
-    }
-
-    return {
-      status: "SUBMITTED",
-      verificationType: "PROFILE_EXISTS",
-      verifiedAt: new Date().toISOString(),
-    };
-  }
-}
-
 export class FacebookVerificationProvider implements ISocialVerificationProvider {
   platform = "facebook";
 
@@ -150,7 +120,9 @@ export class XVerificationProvider implements ISocialVerificationProvider {
     const handle = (account.username || "").trim();
 
     if (account.inputType === "url") {
-      const isValidDomain = /^(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\/[a-zA-Z0-9_]+\/?$/i.test(rawUrl);
+      const isValidDomain = /^(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\/[a-zA-Z0-9_]+\/?$/i.test(
+        rawUrl
+      );
       if (!isValidDomain) {
         return {
           status: "FAILED",
@@ -246,7 +218,9 @@ export class PinterestVerificationProvider implements ISocialVerificationProvide
     const handle = (account.username || "").trim();
 
     if (account.inputType === "url") {
-      const isValidDomain = /^(https?:\/\/)?(www\.)?pinterest\.com\/[a-zA-Z0-9_.-]+\/?$/i.test(rawUrl);
+      const isValidDomain = /^(https?:\/\/)?(www\.)?pinterest\.com\/[a-zA-Z0-9_.-]+\/?$/i.test(
+        rawUrl
+      );
       if (!isValidDomain) {
         return {
           status: "FAILED",
@@ -278,7 +252,9 @@ export class SnapchatVerificationProvider implements ISocialVerificationProvider
     const handle = (account.username || "").trim();
 
     if (account.inputType === "url") {
-      const isValidDomain = /^(https?:\/\/)?(www\.)?snapchat\.com\/add\/[a-zA-Z0-9_.-]+\/?$/i.test(rawUrl);
+      const isValidDomain = /^(https?:\/\/)?(www\.)?snapchat\.com\/add\/[a-zA-Z0-9_.-]+\/?$/i.test(
+        rawUrl
+      );
       if (!isValidDomain) {
         return {
           status: "FAILED",
@@ -309,7 +285,8 @@ export class FallbackVerificationProvider implements ISocialVerificationProvider
     const rawUrl = (account.profileUrl || "").toLowerCase();
     const handle = (account.username || "").trim();
 
-    const isValid = (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) || handle.length > 0;
+    const isValid =
+      rawUrl.startsWith("http://") || rawUrl.startsWith("https://") || handle.length > 0;
     if (!isValid) {
       return {
         status: "FAILED",
@@ -334,7 +311,6 @@ export class SocialVerificationService {
   constructor() {
     this.registerProvider(new InstagramVerificationProvider());
     this.registerProvider(new YouTubeVerificationProvider());
-    this.registerProvider(new TikTokVerificationProvider());
     this.registerProvider(new FacebookVerificationProvider());
     this.registerProvider(new XVerificationProvider());
     this.registerProvider(new TwitchVerificationProvider());

@@ -3,7 +3,9 @@ import { socialAccountsTable } from "./social-accounts";
 
 export const socialMetricSnapshotsTable = pgTable("social_metric_snapshots", {
   id: serial("id").primaryKey(),
-  socialAccountId: integer("social_account_id").notNull().references(() => socialAccountsTable.id, { onDelete: "cascade" }),
+  socialAccountId: integer("social_account_id")
+    .notNull()
+    .references(() => socialAccountsTable.id, { onDelete: "cascade" }),
   platform: text("platform").notNull(),
   snapshotDate: timestamp("snapshot_date", { withTimezone: true }).notNull().defaultNow(),
   followers: integer("followers").notNull().default(0),

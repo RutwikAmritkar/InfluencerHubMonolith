@@ -21,9 +21,14 @@ export class YouTubeProvider implements SocialPlatformProvider {
   private redirectUri: string;
 
   constructor() {
-    this.clientId = process.env.YOUTUBE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || "demo-youtube-client-id";
-    this.clientSecret = process.env.YOUTUBE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET || "demo-youtube-client-secret";
-    this.redirectUri = process.env.YOUTUBE_REDIRECT_URI || "http://localhost:5001/api/social/youtube/callback";
+    this.clientId =
+      process.env.YOUTUBE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || "demo-youtube-client-id";
+    this.clientSecret =
+      process.env.YOUTUBE_CLIENT_SECRET ||
+      process.env.GOOGLE_CLIENT_SECRET ||
+      "demo-youtube-client-secret";
+    this.redirectUri =
+      process.env.YOUTUBE_REDIRECT_URI || "http://localhost:5001/api/social/youtube/callback";
   }
 
   async getAuthorizationUrl(state: string): Promise<string> {
@@ -70,17 +75,24 @@ export class YouTubeProvider implements SocialPlatformProvider {
 
       const data = (await res.json()) as any;
       if (!res.ok || data.error) {
-        throw new Error(data.error_description || data.error || "Failed to exchange YouTube authorization code");
+        throw new Error(
+          data.error_description || data.error || "Failed to exchange YouTube authorization code"
+        );
       }
 
       return {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
         expiresIn: data.expires_in || 3600,
-        scopes: data.scope ? data.scope.split(" ") : ["https://www.googleapis.com/auth/youtube.readonly"],
+        scopes: data.scope
+          ? data.scope.split(" ")
+          : ["https://www.googleapis.com/auth/youtube.readonly"],
       };
     } catch (err: any) {
-      console.warn("[YOUTUBE OAUTH WARNING] Live OAuth exchange failed, falling back to sandbox token:", err.message);
+      console.warn(
+        "[YOUTUBE OAUTH WARNING] Live OAuth exchange failed, falling back to sandbox token:",
+        err.message
+      );
       return {
         accessToken: `yt_access_token_${Date.now()}`,
         refreshToken: `yt_refresh_token_${Date.now()}`,
@@ -90,7 +102,9 @@ export class YouTubeProvider implements SocialPlatformProvider {
     }
   }
 
-  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> {
+  async refreshAccessToken(
+    refreshToken: string
+  ): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> {
     if (refreshToken.startsWith("yt_")) {
       return {
         accessToken: `yt_refreshed_token_${Date.now()}`,
@@ -121,7 +135,10 @@ export class YouTubeProvider implements SocialPlatformProvider {
         expiresIn: data.expires_in || 3600,
       };
     } catch (err: any) {
-      console.warn("[YOUTUBE TOKEN REFRESH WARNING] Falling back to refreshed sandbox token:", err.message);
+      console.warn(
+        "[YOUTUBE TOKEN REFRESH WARNING] Falling back to refreshed sandbox token:",
+        err.message
+      );
       return {
         accessToken: `yt_refreshed_token_${Date.now()}`,
         expiresIn: 3600,
@@ -136,7 +153,8 @@ export class YouTubeProvider implements SocialPlatformProvider {
         username: "techvision_official",
         displayName: "TechVision Channel",
         profileUrl: "https://youtube.com/@techvision_official",
-        avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400",
+        avatarUrl:
+          "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400",
         followers: 82500,
         following: null,
         totalContent: 94,
@@ -146,7 +164,8 @@ export class YouTubeProvider implements SocialPlatformProvider {
     }
 
     try {
-      const url = "https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true";
+      const url =
+        "https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true";
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -180,7 +199,8 @@ export class YouTubeProvider implements SocialPlatformProvider {
         username: "techvision_official",
         displayName: "TechVision Channel",
         profileUrl: "https://youtube.com/@techvision_official",
-        avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400",
+        avatarUrl:
+          "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400",
         followers: 82500,
         following: null,
         totalContent: 94,
@@ -190,7 +210,11 @@ export class YouTubeProvider implements SocialPlatformProvider {
     }
   }
 
-  async getContent(accessToken: string, externalAccountId: string, limit = 10): Promise<NormalizedSocialContent[]> {
+  async getContent(
+    accessToken: string,
+    externalAccountId: string,
+    limit = 10
+  ): Promise<NormalizedSocialContent[]> {
     if (accessToken.startsWith("yt_")) {
       return [
         {
@@ -199,7 +223,8 @@ export class YouTubeProvider implements SocialPlatformProvider {
           title: "Ultimate 2026 Tech & Creator Studio Setup Tour!",
           caption: "In-depth look at our video editing, lighting, and podcasting setup.",
           permalink: "https://youtube.com/watch?v=mock_yt_201",
-          thumbnailUrl: "https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&q=80&w=400",
+          thumbnailUrl:
+            "https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&q=80&w=400",
           publishedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
           views: 124000,
           likes: 8900,
@@ -212,7 +237,8 @@ export class YouTubeProvider implements SocialPlatformProvider {
           title: "Top 5 AI Productivity Tools You Need in 2026 #shorts",
           caption: "Quick breakdown of game-changing creator tools.",
           permalink: "https://youtube.com/shorts/mock_yt_202",
-          thumbnailUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400",
+          thumbnailUrl:
+            "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=400",
           publishedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
           views: 88000,
           likes: 7200,
@@ -233,7 +259,10 @@ export class YouTubeProvider implements SocialPlatformProvider {
         return [];
       }
 
-      const videoIds = searchData.items.map((i: any) => i.id?.videoId).filter(Boolean).join(",");
+      const videoIds = searchData.items
+        .map((i: any) => i.id?.videoId)
+        .filter(Boolean)
+        .join(",");
       if (!videoIds) return [];
 
       const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds}`;
@@ -246,7 +275,8 @@ export class YouTubeProvider implements SocialPlatformProvider {
         const snippet = video.snippet || {};
         const stats = video.statistics || {};
         const title = snippet.title || "";
-        const isShort = title.toLowerCase().includes("#shorts") || title.toLowerCase().includes("#short");
+        const isShort =
+          title.toLowerCase().includes("#shorts") || title.toLowerCase().includes("#short");
 
         return {
           externalContentId: video.id,

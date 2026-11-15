@@ -5,7 +5,7 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { CampaignAnalyticsPerformanceByDayItem } from './campaignAnalyticsPerformanceByDayItem';
+import type { CampaignAnalyticsPerformanceByDayItem } from "./campaignAnalyticsPerformanceByDayItem";
 
 export interface CampaignAnalytics {
   totalReach: number;

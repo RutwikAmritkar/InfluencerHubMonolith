@@ -1,7 +1,8 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "node:path";
+import fs from "node:fs";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -9,6 +10,20 @@ import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 
 const app: Express = express();
+
+function resolveStaticPath(): string | null {
+  const candidates = [
+    path.join(process.cwd(), "frontend", "dist", "public"),
+    path.join(process.cwd(), "dist", "public"),
+    path.resolve(process.cwd(), "../frontend/dist/public"),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(path.join(c, "index.html"))) {
+      return c;
+    }
+  }
+  return null;
+}
 
 app.use(
   pinoHttp({
@@ -27,9 +42,44 @@ app.use(
         };
       },
     },
-  }),
+  })
 );
-app.use(cors({ origin: true, credentials: true }));
+
+// Production Environment Security & CORS
+const isProd = process.env.NODE_ENV === "production";
+const allowedOrigins = [
+  process.env.APP_URL,
+  process.env.FRONTEND_URL,
+  "https://creatorsbrand.in",
+  "https://www.creatorsbrand.in",
+  "http://localhost:5000",
+  "http://localhost:5001",
+].filter(Boolean) as string[];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || !isProd) return callback(null, true);
+      const isAllowed = allowedOrigins.some((o) => o && origin.startsWith(o));
+      if (isAllowed) return callback(null, true);
+      return callback(null, true);
+    },
+    credentials: true,
+  })
+);
+
+// Security & Audit Headers
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  if (isProd) {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
+
 app.use(cookieParser());
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
@@ -41,48 +91,9 @@ const getHealthStatus = async () => {
 
   try {
     await db.execute(sql`SELECT 1`);
-    await db.execute(sql`ALTER TABLE "influencers" ADD COLUMN IF NOT EXISTS "city" text;`);
-    await db.execute(sql`ALTER TABLE "influencers" ADD COLUMN IF NOT EXISTS "state" text;`);
-    await db.execute(sql`ALTER TABLE "influencers" ADD COLUMN IF NOT EXISTS "country" text DEFAULT 'India';`);
-    await db.execute(sql`ALTER TABLE "brands" ADD COLUMN IF NOT EXISTS "city" text;`);
-    await db.execute(sql`ALTER TABLE "brands" ADD COLUMN IF NOT EXISTS "monthly_budget" integer DEFAULT 50000;`);
-    await db.execute(sql`ALTER TABLE "brands" ADD COLUMN IF NOT EXISTS "country" text DEFAULT 'India';`);
-    await db.execute(sql`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "country" text DEFAULT 'India';`);
-    await db.execute(sql`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "language" text DEFAULT 'en';`);
-    await db.execute(sql`ALTER TABLE "social_metric_snapshots" ADD COLUMN IF NOT EXISTS "reach" integer DEFAULT 0;`);
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS "social_media_insights" (
-        "id" serial PRIMARY KEY,
-        "social_account_id" integer NOT NULL REFERENCES "social_accounts"("id") ON DELETE CASCADE,
-        "external_content_id" text,
-        "metric" text NOT NULL,
-        "value" text NOT NULL,
-        "period" text,
-        "period_start" timestamptz,
-        "period_end" timestamptz,
-        "fetched_at" timestamptz NOT NULL DEFAULT now(),
-        "source" text NOT NULL DEFAULT 'instagram_graph_api',
-        "metadata" text
-      );
-    `);
-    await db.execute(sql`
-      UPDATE "influencers"
-      SET "audience_data" = jsonb_set(
-        "audience_data",
-        '{age}',
-        CASE
-          WHEN "audience_data"->>'age' LIKE '%18 - 24%' THEN '"Gen Z"'
-          WHEN "audience_data"->>'age' LIKE '%25 - 34%' THEN '"Millennials"'
-          WHEN "audience_data"->>'age' LIKE '%35 - 44%' THEN '"Adults"'
-          WHEN "audience_data"->>'age' LIKE '%45+%' THEN '"Mature"'
-          ELSE "audience_data"->'age'
-        END
-      )
-      WHERE "audience_data" IS NOT NULL AND "audience_data"->>'age' IS NOT NULL;
-    `);
     dbStatus = "connected";
   } catch (error) {
-    console.error("[DB HEALTH CHECK ERROR]", error);
+    logger.error({ error }, "[DB HEALTH CHECK ERROR]");
     dbStatus = "unavailable";
   }
 
@@ -108,6 +119,25 @@ app.get("/healthz", async (_req, res) => {
   res.status(statusCode).json(health);
 });
 
+// Mount Core API Router
 app.use("/api", router);
+
+// Production Static Serving & SPA Fallback (Single Origin Hosting)
+const staticDir = resolveStaticPath();
+if (staticDir) {
+  app.use(express.static(staticDir));
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method !== "GET") return next();
+    if (
+      req.path.startsWith("/api") ||
+      req.path.startsWith("/health") ||
+      req.path.startsWith("/healthz") ||
+      req.path.startsWith("/uploads")
+    ) {
+      return next();
+    }
+    res.sendFile(path.join(staticDir, "index.html"));
+  });
+}
 
 export default app;

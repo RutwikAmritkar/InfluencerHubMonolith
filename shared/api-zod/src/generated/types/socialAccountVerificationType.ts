@@ -6,11 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SocialAccountVerificationType = typeof SocialAccountVerificationType[keyof typeof SocialAccountVerificationType];
-
+export type SocialAccountVerificationType =
+  (typeof SocialAccountVerificationType)[keyof typeof SocialAccountVerificationType];
 
 export const SocialAccountVerificationType = {
-  PROFILE_EXISTS: 'PROFILE_EXISTS',
-  OWNER_VERIFIED: 'OWNER_VERIFIED',
-  OAUTH_CONNECTED: 'OAUTH_CONNECTED',
+  PROFILE_EXISTS: "PROFILE_EXISTS",
+  OWNER_VERIFIED: "OWNER_VERIFIED",
+  OAUTH_CONNECTED: "OAUTH_CONNECTED",
 } as const;

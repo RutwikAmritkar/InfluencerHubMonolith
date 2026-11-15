@@ -47,7 +47,11 @@ export interface CreatorContext {
 }
 
 export interface LLMProvider {
-  generateInsights(prompt: string, context: CreatorContext, language?: string): Promise<LLMResponse>;
+  generateInsights(
+    prompt: string,
+    context: CreatorContext,
+    language?: string
+  ): Promise<LLMResponse>;
 }
 
 export class OpenAIProvider implements LLMProvider {
@@ -57,14 +61,19 @@ export class OpenAIProvider implements LLMProvider {
     this.apiKey = apiKey;
   }
 
-  async generateInsights(prompt: string, context: CreatorContext, language: string = 'en'): Promise<LLMResponse> {
-    const langInstruction = language === 'hi'
-      ? 'Respond in Hindi. Do NOT translate creator names, brand names, campaign names, social usernames, URLs, or technical terms.'
-      : language === 'mr'
-      ? 'Respond in Marathi. Do NOT translate creator names, brand names, campaign names, social usernames, URLs, or technical terms.'
-      : 'Respond in English.';
+  async generateInsights(
+    prompt: string,
+    context: CreatorContext,
+    language: string = "en"
+  ): Promise<LLMResponse> {
+    const langInstruction =
+      language === "hi"
+        ? "Respond in Hindi. Do NOT translate creator names, brand names, campaign names, social usernames, URLs, or technical terms."
+        : language === "mr"
+          ? "Respond in Marathi. Do NOT translate creator names, brand names, campaign names, social usernames, URLs, or technical terms."
+          : "Respond in English.";
 
-    const systemInstruction = `You are InfluencerHub Intelligence — an AI advisor for creators.
+    const systemInstruction = `You are CreatorsBrand Intelligence — an AI advisor for creators.
 ${langInstruction}
 Your job is to analyze creator telemetry and provide practical recommendations around:
 - audience growth
@@ -191,14 +200,18 @@ export function generateFallbackResponse(prompt: string, context: CreatorContext
     };
   }
 
-  if (lowercasePrompt.includes("grow") || lowercasePrompt.includes("follower") || lowercasePrompt.includes("audience")) {
+  if (
+    lowercasePrompt.includes("grow") ||
+    lowercasePrompt.includes("follower") ||
+    lowercasePrompt.includes("audience")
+  ) {
     return {
       answer: `Your ${context.creator.category} profile currently has ${context.creator.followers.toLocaleString()} followers with strong growth potential in cross-platform video sharing.`,
       insights: [
         {
           category: "growth",
-          title: "Cross-post to TikTok & Instagram",
-          description: `Re-purposing short clips across ${context.creator.platforms.join(" & ") || "Instagram & TikTok"} accelerates brand discovery.`,
+          title: "Cross-post to Shorts & Instagram Reels",
+          description: `Re-purposing short clips across ${context.creator.platforms.join(" & ") || "Instagram & YouTube"} accelerates brand discovery.`,
           metric: "+42%",
           priority: "high",
           relevance: 95,
@@ -272,22 +285,26 @@ function validateLLMResponse(parsed: any, context: CreatorContext): LLMResponse 
     return generateFallbackResponse("default", context);
   }
 
-  const answer = typeof parsed.answer === "string" && parsed.answer.trim()
-    ? parsed.answer.trim()
-    : `Analysis complete for ${context.creator.name}.`;
+  const answer =
+    typeof parsed.answer === "string" && parsed.answer.trim()
+      ? parsed.answer.trim()
+      : `Analysis complete for ${context.creator.name}.`;
 
   const rawInsights = Array.isArray(parsed.insights) ? parsed.insights : [];
   const insights: LLMInsight[] = rawInsights.slice(0, 6).map((item: any) => ({
-    category: ["audience", "timing", "growth", "revenue", "engagement", "campaign"].includes(item.category)
+    category: ["audience", "timing", "growth", "revenue", "engagement", "campaign"].includes(
+      item.category
+    )
       ? item.category
       : "growth",
     title: String(item.title || "Insight Title"),
     description: String(item.description || "Insight description."),
     metric: item.metric ? String(item.metric) : null,
     priority: ["high", "medium", "low"].includes(item.priority) ? item.priority : "medium",
-    relevance: typeof item.relevance === "number" && item.relevance >= 1 && item.relevance <= 100
-      ? Math.round(item.relevance)
-      : 90,
+    relevance:
+      typeof item.relevance === "number" && item.relevance >= 1 && item.relevance <= 100
+        ? Math.round(item.relevance)
+        : 90,
     action: String(item.action || "Explore →"),
   }));
 
@@ -300,7 +317,8 @@ function validateLLMResponse(parsed: any, context: CreatorContext): LLMResponse 
 
   return {
     answer,
-    insights: insights.length > 0 ? insights : generateFallbackResponse("default", context).insights,
+    insights:
+      insights.length > 0 ? insights : generateFallbackResponse("default", context).insights,
     recommendations,
   };
 }
@@ -315,12 +333,19 @@ export class LLMService {
     }
   }
 
-  async generate(prompt: string, context: CreatorContext, language: string = 'en'): Promise<LLMResponse> {
+  async generate(
+    prompt: string,
+    context: CreatorContext,
+    language: string = "en"
+  ): Promise<LLMResponse> {
     if (this.provider) {
       try {
         return await this.provider.generateInsights(prompt, context, language);
       } catch (err: any) {
-        console.warn("[LLMService] OpenAI provider error, falling back to rule engine:", err?.message || err);
+        console.warn(
+          "[LLMService] OpenAI provider error, falling back to rule engine:",
+          err?.message || err
+        );
       }
     }
     return generateFallbackResponse(prompt, context);

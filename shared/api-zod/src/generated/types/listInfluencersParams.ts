@@ -7,10 +7,10 @@
  */
 
 export type ListInfluencersParams = {
-platform?: string;
-category?: string;
-country?: string;
-minFollowers?: number;
-maxFollowers?: number;
-search?: string;
+  platform?: string;
+  category?: string;
+  country?: string;
+  minFollowers?: number;
+  maxFollowers?: number;
+  search?: string;
 };

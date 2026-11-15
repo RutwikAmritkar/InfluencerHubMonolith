@@ -24,7 +24,10 @@ async function runApiTests() {
   try {
     const getRes = await fetch(`${API_BASE}/influencers/1/social-accounts`);
     const accounts = (await getRes.json()) as SocialAccount[];
-    assert(getRes.status === 200 && Array.isArray(accounts), "1. GET social accounts returns HTTP 200 and array");
+    assert(
+      getRes.status === 200 && Array.isArray(accounts),
+      "1. GET social accounts returns HTTP 200 and array"
+    );
   } catch (e: any) {
     assert(false, `1. GET social accounts failed: ${e.message}`);
   }
@@ -43,7 +46,10 @@ async function runApiTests() {
       }),
     });
     const data = (await postRes.json()) as any;
-    assert(postRes.status === 201 && data.status === "UNVERIFIED" && data.platform === "x", "2. POST social account returns 201 Created with status UNVERIFIED");
+    assert(
+      postRes.status === 201 && data.status === "UNVERIFIED" && data.platform === "x",
+      "2. POST social account returns 201 Created with status UNVERIFIED"
+    );
     newAccId = data.id;
   } catch (e: any) {
     assert(false, `2. POST social account failed: ${e.message}`);
@@ -62,7 +68,10 @@ async function runApiTests() {
       }),
     });
     const updatedData = (await putRes.json()) as any;
-    assert(putRes.status === 200 && updatedData.username === "e2e_creator_x_updated", "3. PUT social account updates handle in database");
+    assert(
+      putRes.status === 200 && updatedData.username === "e2e_creator_x_updated",
+      "3. PUT social account updates handle in database"
+    );
   } catch (e: any) {
     assert(false, `3. PUT social account failed: ${e.message}`);
   }
@@ -75,9 +84,9 @@ async function runApiTests() {
     const verifiedData = (await verifyRes.json()) as SocialAccount;
     assert(
       verifyRes.status === 200 &&
-      verifiedData.status === "VERIFIED" &&
-      verifiedData.verificationType === "PROFILE_EXISTS" &&
-      typeof verifiedData.verifiedAt === "string",
+        verifiedData.status === "VERIFIED" &&
+        verifiedData.verificationType === "PROFILE_EXISTS" &&
+        typeof verifiedData.verifiedAt === "string",
       "4. POST verify returns status VERIFIED, verificationType PROFILE_EXISTS, and ISO verifiedAt timestamp"
     );
   } catch (e: any) {
@@ -134,15 +143,18 @@ async function runApiTests() {
     // Wait 3.5s to bypass rate-limit cooldown if any
     await new Promise((r) => setTimeout(r, 3500));
 
-    const verifyFailRes = await fetch(`${API_BASE}/influencers/1/social-accounts/${failAccId}/verify`, {
-      method: "POST",
-    });
+    const verifyFailRes = await fetch(
+      `${API_BASE}/influencers/1/social-accounts/${failAccId}/verify`,
+      {
+        method: "POST",
+      }
+    );
     const verifyFailData = (await verifyFailRes.json()) as any;
     assert(
       verifyFailRes.status === 200 &&
-      verifyFailData.status === "FAILED" &&
-      typeof verifyFailData.errorMessage === "string" &&
-      !verifyFailData.verifiedAt,
+        verifyFailData.status === "FAILED" &&
+        typeof verifyFailData.errorMessage === "string" &&
+        !verifyFailData.verifiedAt,
       "7. Invalid profile domain returns status FAILED with errorMessage and no verifiedAt"
     );
   } catch (e: any) {
@@ -155,7 +167,10 @@ async function runApiTests() {
       method: "DELETE",
     });
     const delData = (await delRes.json()) as any;
-    assert(delRes.status === 200 && delData.success === true, "8. DELETE social account removes account from database");
+    assert(
+      delRes.status === 200 && delData.success === true,
+      "8. DELETE social account removes account from database"
+    );
 
     // Clean up second test account
     await fetch(`${API_BASE}/influencers/1/social-accounts/${failAccId}`, { method: "DELETE" });

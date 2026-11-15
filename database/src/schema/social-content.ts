@@ -3,7 +3,9 @@ import { socialAccountsTable } from "./social-accounts";
 
 export const socialContentTable = pgTable("social_content", {
   id: serial("id").primaryKey(),
-  socialAccountId: integer("social_account_id").notNull().references(() => socialAccountsTable.id, { onDelete: "cascade" }),
+  socialAccountId: integer("social_account_id")
+    .notNull()
+    .references(() => socialAccountsTable.id, { onDelete: "cascade" }),
   platform: text("platform").notNull(),
   externalContentId: text("external_content_id").notNull(),
   contentType: text("content_type").notNull(), // "post" | "reel" | "video" | "short"

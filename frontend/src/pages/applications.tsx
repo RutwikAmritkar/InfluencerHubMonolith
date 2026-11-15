@@ -1,337 +1,529 @@
-import { useState, useMemo } from "react";
-import { useAuth } from "@/contexts/auth-context";
-import { formatCurrency } from "@/lib/formatters";
-import { useListApplications, getListApplicationsQueryKey, useUpdateApplication } from "@workspace/api-client-react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "wouter";
-import { 
-  FileCheck, 
-  Search, 
-  Filter, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
-  Briefcase, 
-  Calendar, 
-  Building2, 
-  Loader2, 
+import {
+  FileCheck,
+  CheckCircle2,
+  Clock,
+  Sparkles,
   ArrowRight,
-  ExternalLink,
-  MessageSquare
+  ShieldCheck,
+  Trash2,
+  Eye,
+  X,
+  Compass,
+  AlertCircle,
+  MessageSquare,
+  Building2,
+  Calendar,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
-import { formatDate } from "@/lib/formatters";
+import {
+  ApplicationItem,
+  getSavedApplications,
+  withdrawApplication,
+} from "@/services/creator-funnel";
 
-// Realistic Fallback Applications List
-const defaultApplications = [
-  {
-    id: 1,
-    campaignId: 1,
-    campaignTitle: "Summer Beauty Campaign",
-    brandName: "Glow Cosmetics",
-    influencerId: 1,
-    influencerName: "Maya Chen",
-    influencerAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
-    status: "accepted",
-    message: "I'd love to showcase Glow Cosmetics! My audience of 125K engages heavily with daily skincare reels and summer beauty routines.",
-    createdAt: "2026-08-14T10:30:00.000Z",
-    budget: 5000,
-    platform: "instagram",
-  },
-  {
-    id: 2,
-    campaignId: 2,
-    campaignTitle: "Tech Launch 2026",
-    brandName: "NovaTech",
-    influencerId: 1,
-    influencerName: "Maya Chen",
-    influencerAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
-    status: "pending",
-    message: "Super excited about this rollout. I can deliver high engagement unboxing content and audio quality testing.",
-    createdAt: "2026-08-18T14:15:00.000Z",
-    budget: 12500,
-    platform: "youtube",
-  },
-  {
-    id: 3,
-    campaignId: 3,
-    campaignTitle: "Fall Apparel Drop",
-    brandName: "UrbanFit",
-    influencerId: 1,
-    influencerName: "Maya Chen",
-    influencerAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop",
-    status: "pending",
-    message: "Fashion and streetwear styling is my core focus. Would love to feature your autumn activewear collection.",
-    createdAt: "2026-08-20T09:00:00.000Z",
-    budget: 18000,
-    platform: "tiktok",
-  },
-];
+type FilterTab = "all" | "pending" | "shortlisted" | "accepted" | "declined" | "withdrawn";
 
 export default function Applications() {
-  const { user } = useAuth();
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [viewingPitch, setViewingPitch] = useState<ApplicationItem | null>(null);
 
-  const { data: apiApplications, isLoading } = useListApplications(
-    {
-      influencerId: user?.role === "influencer" ? user.id : undefined,
-      status: statusFilter !== "all" ? (statusFilter as "pending" | "accepted" | "rejected") : undefined,
-    },
-    {
-      query: {
-        queryKey: getListApplicationsQueryKey({
-          influencerId: user?.role === "influencer" ? user.id : undefined,
-          status: statusFilter !== "all" ? (statusFilter as "pending" | "accepted" | "rejected") : undefined,
-        }),
-      },
-    }
-  );
-
-  const updateApplication = useUpdateApplication();
-
-  const applications = useMemo(() => {
-    const rawList = Array.isArray(apiApplications) && apiApplications.length > 0 ? apiApplications : defaultApplications;
-    
-    return rawList.filter((app: any) => {
-      const matchesSearch = 
-        !search ||
-        (app.campaignTitle && app.campaignTitle.toLowerCase().includes(search.toLowerCase())) ||
-        (app.brandName && app.brandName.toLowerCase().includes(search.toLowerCase())) ||
-        (app.influencerName && app.influencerName.toLowerCase().includes(search.toLowerCase()));
-
-      const matchesStatus = 
-        statusFilter === "all" || app.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [apiApplications, search, statusFilter]);
-
-  const handleUpdateStatus = (appId: number, status: "accepted" | "rejected") => {
-    updateApplication.mutate(
-      { id: appId, data: { status } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
-          toast.success(`Application status updated to ${status}`);
-        },
-        onError: () => {
-          toast.success(`Application updated to ${status} (Demo Mode)`);
-        },
-      }
-    );
+  const loadData = () => {
+    setApplications(getSavedApplications());
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "accepted":
-        return (
-          <Badge className="bg-[#EEF3FF] dark:bg-blue-950/80 text-[#315BEF] dark:text-blue-300 border-blue-200 dark:border-blue-800 text-[11px] font-bold px-2.5 py-0.5">
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> {t('applications.accepted')}
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge className="bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800 text-[11px] font-bold px-2.5 py-0.5">
-            <XCircle className="w-3.5 h-3.5 mr-1" /> {t('applications.rejected')}
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 text-[11px] font-bold px-2.5 py-0.5">
-            <Clock className="w-3.5 h-3.5 mr-1" /> {t('applications.pending')}
-          </Badge>
-        );
+  useEffect(() => {
+    loadData();
+    const handleUpdate = () => loadData();
+    window.addEventListener("cb_applications_updated", handleUpdate);
+    return () => window.removeEventListener("cb_applications_updated", handleUpdate);
+  }, []);
+
+  const counts = useMemo(() => {
+    return {
+      all: applications.length,
+      pending: applications.filter((a) => a.status === "pending").length,
+      shortlisted: applications.filter((a) => a.status === "shortlisted").length,
+      accepted: applications.filter((a) => a.status === "accepted").length,
+      declined: applications.filter((a) => a.status === "declined").length,
+      withdrawn: applications.filter((a) => a.status === "withdrawn").length,
+    };
+  }, [applications]);
+
+  const filteredApplications = useMemo(() => {
+    if (activeTab === "all") return applications;
+    return applications.filter((a) => a.status === activeTab);
+  }, [applications, activeTab]);
+
+  const handleWithdraw = (app: ApplicationItem) => {
+    if (
+      confirm(
+        `Withdraw your pitch for "${app.campaignTitle}"? This will return the brief to available opportunities.`
+      )
+    ) {
+      withdrawApplication(app.id);
+      const updated = getSavedApplications();
+      setApplications(updated);
+      if (viewingPitch && viewingPitch.id === app.id) {
+        setViewingPitch(updated.find((a) => a.id === app.id) || null);
+      }
+      toast.info(`Pitch for ${app.brandName} marked as Withdrawn.`);
     }
   };
 
   return (
-    <div className="space-y-8 w-full pb-12 text-slate-900 dark:text-slate-100">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
+    <div className="workspace-canvas space-y-8 pb-16 antialiased text-[#0A0A0A]">
+      {/* ─── 1. PITCH PIPELINE HEADER ───────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-4 border-b border-[#E5E4DF]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
-            {t('applications.title')}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60">
+              PITCH PIPELINE
+            </span>
+            <span className="text-zinc-400">•</span>
+            <span className="text-xs font-semibold text-zinc-500">
+              Application &amp; Quote Status
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A]">
+            Deal <span className="font-serif italic font-normal text-blue-700">Applications</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            {t('applications.subtitle')}
+          <p className="text-xs sm:text-sm text-zinc-500 mt-1 max-w-2xl">
+            Audit your submitted pitches, track brand decision turnarounds, and transition accepted
+            collaborations into production.
           </p>
         </div>
 
-        <Link href="/campaigns">
-          <Button className="h-9 px-4 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer">
-            {t('navigation.campaigns')} <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
-        </Link>
-      </div>
-
-      {/* Search & Status Filter Bar */}
-      <div className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center gap-3 w-full">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
-          <Input
-            placeholder="Search by campaign title or brand name..."
-            className="pl-9 h-10 border-slate-200/80 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-xs rounded-xl"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[160px] h-10 border-slate-200/80 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 text-xs rounded-xl font-medium">
-              <SelectValue placeholder="Filter Status" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white dark:bg-[#11172A] border-slate-200 dark:border-slate-800">
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending Review</SelectItem>
-              <SelectItem value="accepted">Accepted</SelectItem>
-              <SelectItem value="rejected">Declined</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 shrink-0 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl cursor-pointer"
+        {/* Funnel Navigation Action */}
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/opportunities"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors shadow-xs"
           >
-            <Filter className="h-4 w-4" />
-          </Button>
+            <span>Browse Open Briefs</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
 
-      {/* Applications List */}
-      {isLoading ? (
-        <div className="flex h-64 w-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#315BEF]" />
+      {/* ─── 2. FUNNEL PIPELINE SUMMARY METRICS ──────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-4 rounded-xl bg-white border border-[#E5E4DF] shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-medium text-zinc-500 block">Total Submitted Pitches</span>
+            <span className="text-2xl font-bold text-[#0A0A0A] font-tabular">{counts.all}</span>
+          </div>
+          <div className="w-9 h-9 rounded-lg bg-zinc-100 border border-[#E5E4DF] flex items-center justify-center text-zinc-700">
+            <FileCheck className="w-4 h-4 text-blue-700" />
+          </div>
         </div>
-      ) : applications.length > 0 ? (
-        <div className="grid gap-4 w-full">
-          {applications.map((app: any) => (
-            <Card
-              key={app.id}
-              className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 shadow-xs hover:shadow-md transition-all overflow-hidden text-slate-900 dark:text-slate-100"
+
+        <div className="p-4 rounded-xl bg-white border border-[#E5E4DF] shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-medium text-zinc-500 block">Pending Brand Decisions</span>
+            <span className="text-2xl font-bold text-amber-600 font-tabular">{counts.pending}</span>
+          </div>
+          <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-700">
+            <Clock className="w-4 h-4" />
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-white border border-[#E5E4DF] shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-medium text-zinc-500 block">Accepted &amp; Funded</span>
+            <span className="text-2xl font-bold text-emerald-600 font-tabular">
+              {counts.accepted}
+            </span>
+          </div>
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-700">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+        </div>
+      </div>
+
+      {/* ─── 3. FILTER TABS BAR ──────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 border-b border-[#E5E4DF] pb-3 overflow-x-auto">
+        {(
+          [
+            { id: "all", label: "All Pitches", count: counts.all },
+            { id: "pending", label: "Pending Review", count: counts.pending },
+            { id: "shortlisted", label: "Shortlisted", count: counts.shortlisted },
+            { id: "accepted", label: "Accepted", count: counts.accepted },
+            { id: "declined", label: "Declined", count: counts.declined },
+            { id: "withdrawn", label: "Withdrawn", count: counts.withdrawn },
+          ] as const
+        ).map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                isActive
+                  ? "bg-[#0A0A0A] text-white shadow-xs"
+                  : "text-zinc-600 hover:bg-white hover:text-[#0A0A0A]"
+              }`}
             >
-              <CardContent className="p-5 sm:p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3.5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-[#315BEF] dark:text-blue-400 flex items-center justify-center font-extrabold text-sm shrink-0">
-                      <FileCheck className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Link href={`/campaigns/${app.campaignId}`}>
-                          <h3 className="text-base sm:text-lg font-bold hover:text-[#315BEF] dark:hover:text-blue-400 transition-colors cursor-pointer inline-flex items-center gap-1.5">
-                            {app.campaignTitle || `Campaign #${app.campaignId}`}
-                            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                          </h3>
-                        </Link>
+              <span>{tab.label}</span>
+              <span
+                className={`text-[11px] font-bold px-1.5 py-0.5 rounded-lg font-tabular ${
+                  isActive
+                    ? "bg-white/20 text-white"
+                    : "bg-[#FAF9F6] text-zinc-500 border border-[#E5E4DF]"
+                }`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── 4. PIPELINE LEDGER (CLEAN HAIRLINE TABLE) ───────────────────────── */}
+      <div className="bg-white rounded-2xl border border-[#E5E4DF] overflow-hidden shadow-xs">
+        {/* Desktop Table Header (text-xs / 12px) */}
+        <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3.5 bg-[#FAF9F6] border-b border-[#E5E4DF] text-xs font-bold uppercase tracking-wider text-zinc-500">
+          <div className="col-span-4">Campaign &amp; Brand</div>
+          <div className="col-span-3">Deliverable Proposed</div>
+          <div className="col-span-2">Quoted Rate</div>
+          <div className="col-span-1">Status</div>
+          <div className="col-span-2 text-right">Action</div>
+        </div>
+
+        {/* Ledger Rows */}
+        {filteredApplications.length === 0 ? (
+          <div className="py-16 px-6 text-center space-y-3">
+            <AlertCircle className="w-8 h-8 text-zinc-300 mx-auto" />
+            <h3 className="text-sm font-bold text-[#0A0A0A]">No applications found</h3>
+            <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+              You haven't submitted any pitches in this category. Explore opportunities to pitch
+              your media kit.
+            </p>
+            <Link
+              href="/opportunities"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0A0A0A] text-white text-xs font-semibold mt-2 shadow-xs cursor-pointer"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>Browse Open Briefs</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-[#E5E4DF]">
+            {filteredApplications.map((app) => {
+              const isAccepted = app.status === "accepted";
+              const isPending = app.status === "pending";
+              const isShortlisted = app.status === "shortlisted";
+              const isWithdrawn = app.status === "withdrawn";
+
+              return (
+                <div
+                  key={app.id}
+                  onClick={() => setViewingPitch(app)}
+                  className="p-5 lg:px-6 lg:py-4 flex flex-col lg:grid lg:grid-cols-12 gap-4 items-start lg:items-center hover:bg-[#FAF9F6] transition-colors cursor-pointer group"
+                >
+                  {/* Col 1: Campaign & Brand (4 cols) */}
+                  <div className="lg:col-span-4 flex items-center gap-3 min-w-0 w-full">
+                    {app.brandLogoUrl ? (
+                      <img
+                        src={app.brandLogoUrl}
+                        alt={app.brandName}
+                        className="w-10 h-10 rounded-xl object-cover border border-[#E5E4DF] shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-[#0A0A0A] text-white font-bold text-xs flex items-center justify-center shrink-0">
+                        {app.brandInitials}
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 mt-0.5">
-                        <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{app.brandName || "Brand Campaign"}</span>
-                      </p>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-[#0A0A0A] truncate">
+                          {app.brandName}
+                        </span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+                      </div>
+                      <h4 className="text-xs font-semibold text-zinc-700 truncate mt-0.5 group-hover:text-blue-700 transition-colors">
+                        {app.campaignTitle}
+                      </h4>
+                      <span className="text-[11px] text-zinc-400 font-tabular block">
+                        Pitched on{" "}
+                        {new Date(app.appliedDate).toLocaleDateString("en-IN", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    {getStatusBadge(app.status)}
+                  {/* Col 2: Deliverable Proposed (3 cols) */}
+                  <div className="lg:col-span-3 text-xs w-full">
+                    <span className="lg:hidden text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-0.5">
+                      Proposed Deliverable
+                    </span>
+                    <span className="font-semibold text-[#0A0A0A] block">
+                      {app.deliverableProposed}
+                    </span>
+                    <span className="text-[11px] text-zinc-500 capitalize">
+                      {app.platform} integration
+                    </span>
+                  </div>
+
+                  {/* Col 3: Quoted Rate (2 cols) */}
+                  <div className="lg:col-span-2 text-xs w-full">
+                    <span className="lg:hidden text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-0.5">
+                      Quoted Rate
+                    </span>
+                    <span className="text-sm font-bold text-[#0A0A0A] font-tabular block">
+                      ₹{app.quotedRate.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-[11px] text-emerald-600 font-semibold">
+                      Milestone Protected
+                    </span>
+                  </div>
+
+                  {/* Col 4: Status Pill (1 col) */}
+                  <div className="lg:col-span-1 w-full">
+                    {isAccepted ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 whitespace-nowrap">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Accepted</span>
+                      </span>
+                    ) : isShortlisted ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/70 whitespace-nowrap">
+                        <Sparkles className="w-3.5 h-3.5 text-blue-700" />
+                        <span>Shortlisted</span>
+                      </span>
+                    ) : isPending ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/70 whitespace-nowrap">
+                        <Clock className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Reviewing</span>
+                      </span>
+                    ) : isWithdrawn ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-zinc-100 text-zinc-500 border border-zinc-200 whitespace-nowrap">
+                        <span>Withdrawn</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-zinc-100 text-zinc-600 border border-zinc-200 whitespace-nowrap">
+                        <span>Declined</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Col 5: Actions (2 cols) */}
+                  <div className="lg:col-span-2 flex items-center justify-start lg:justify-end gap-2 w-full pt-2 lg:pt-0 border-t lg:border-t-0 border-[#E5E4DF]">
+                    {isAccepted ? (
+                      <Link
+                        href="/my-campaigns"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                      >
+                        <span>Workspace</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingPitch(app);
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF9F6] hover:bg-zinc-100 border border-[#E5E4DF] text-xs font-semibold text-zinc-700 transition-colors cursor-pointer"
+                          title="View your submitted pitch proposal"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                          <span>View Pitch</span>
+                        </button>
+                        {!isWithdrawn && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleWithdraw(app);
+                            }}
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            title="Withdraw pitch proposal"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ─── 5. INTERACTIVE RIGHT-HAND SLIDE-OVER PITCH DRAWER ────────────────── */}
+      {viewingPitch && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-300 ease-out"
+            onClick={() => setViewingPitch(null)}
+          />
+
+          {/* Drawer Container */}
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-8 sm:pl-12">
+            <div className="w-screen max-w-md sm:max-w-lg bg-white border-l border-[#E5E4DF] shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300 ease-out">
+              {/* Header */}
+              <div className="p-6 border-b border-[#E5E4DF] bg-[#FAF9F6] flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60">
+                      PITCH DOSSIER
+                    </span>
+                    <span className="text-zinc-400">•</span>
+                    <span className="text-xs font-semibold text-zinc-600 capitalize">
+                      {viewingPitch.status}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-[#0A0A0A] leading-snug">
+                    {viewingPitch.campaignTitle}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    {viewingPitch.brandLogoUrl ? (
+                      <img
+                        src={viewingPitch.brandLogoUrl}
+                        alt={viewingPitch.brandName}
+                        className="w-5 h-5 rounded-md object-cover border border-[#E5E4DF]"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 rounded-md bg-[#0A0A0A] text-white font-bold text-[11px] flex items-center justify-center">
+                        {viewingPitch.brandInitials}
+                      </div>
+                    )}
+                    <span className="text-xs font-semibold text-zinc-700">
+                      {viewingPitch.brandName}
+                    </span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-700" />
                   </div>
                 </div>
 
-                {/* Pitch Message */}
-                {app.message && (
-                  <div className="p-3.5 bg-[#F8FAFF] dark:bg-slate-800/50 rounded-xl border border-[#E2E8F3] dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
-                    <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] block mb-1 font-mono">
-                      Submitted Pitch:
+                <button
+                  type="button"
+                  onClick={() => setViewingPitch(null)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-[#0A0A0A] hover:bg-zinc-200/60 transition-colors cursor-pointer"
+                  title="Close Drawer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Scrollable Body Content */}
+              <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+                {/* Rate & Turnaround Summary */}
+                <div className="grid grid-cols-2 gap-3 p-4 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF]">
+                  <div>
+                    <span className="text-[11px] font-medium text-zinc-500 block mb-0.5">
+                      Quoted INR Rate
                     </span>
-                    "{app.message}"
+                    <span className="text-lg font-bold text-[#0A0A0A] font-tabular">
+                      ₹{viewingPitch.quotedRate.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-[11px] text-emerald-600 font-semibold block mt-0.5 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                      Milestone Protected
+                    </span>
                   </div>
+                  <div>
+                    <span className="text-[11px] font-medium text-zinc-500 block mb-0.5">
+                      Turnaround Timeline
+                    </span>
+                    <span className="text-sm font-bold text-[#0A0A0A] block">
+                      5–7 Business Days
+                    </span>
+                    <span className="text-[11px] text-zinc-500 block mt-0.5">
+                      48h brand review window
+                    </span>
+                  </div>
+                </div>
+
+                {/* Scope Specifications */}
+                <div className="p-4 rounded-xl border border-[#E5E4DF] bg-white space-y-2.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+                    Deliverable Specifications
+                  </span>
+                  <div className="flex items-center justify-between py-1.5 border-b border-[#E5E4DF]/60">
+                    <span className="text-zinc-500">Deliverable Format</span>
+                    <span className="font-semibold text-[#0A0A0A]">
+                      {viewingPitch.deliverableProposed}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1.5 border-b border-[#E5E4DF]/60">
+                    <span className="text-zinc-500">Platform Channel</span>
+                    <span className="font-semibold text-[#0A0A0A] capitalize">
+                      {viewingPitch.platform}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-zinc-500">Submission Date</span>
+                    <span className="font-semibold text-[#0A0A0A] font-tabular">
+                      {new Date(viewingPitch.appliedDate).toLocaleDateString("en-IN", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Pitch Narrative */}
+                <div className="space-y-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 block">
+                    Submitted Pitch Note
+                  </span>
+                  <div className="p-4 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] text-zinc-700 leading-relaxed font-normal whitespace-pre-wrap text-xs">
+                    {viewingPitch.pitchMessage}
+                  </div>
+                </div>
+              </div>
+
+              {/* Drawer Footer Actions */}
+              <div className="p-5 border-t border-[#E5E4DF] bg-white flex items-center justify-between gap-3">
+                {viewingPitch.status === "withdrawn" ? (
+                  <span className="text-xs font-semibold text-zinc-400 px-3 py-2 rounded-lg bg-zinc-100 border border-zinc-200">
+                    Pitch Withdrawn
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleWithdraw(viewingPitch)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-red-200 text-xs font-semibold text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Withdraw Pitch</span>
+                  </button>
                 )}
 
-                {/* Card Footer Info */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-1 text-xs text-slate-500 dark:text-slate-400">
-                  <div className="flex flex-wrap gap-4 sm:gap-6 font-medium">
-                    {app.budget && (
-                      <div className="flex items-center gap-1.5">
-                        <Briefcase className="h-3.5 w-3.5 text-slate-400" />
-                        <span className="font-bold text-[#11182F] dark:text-slate-100">
-                          {formatCurrency(app.budget)}
-                        </span>
-                      </div>
-                    )}
-                    {app.platform && (
-                      <div className="flex items-center gap-1.5 capitalize font-bold text-slate-700 dark:text-slate-300">
-                        {app.platform}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                      <span>Applied: {new Date(app.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons for Brand User */}
-                  {user?.role === "brand" && app.status === "pending" && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl cursor-pointer"
-                        onClick={() => handleUpdateStatus(app.id, "rejected")}
-                      >
-                        Decline
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-8 px-3 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl cursor-pointer shadow-xs"
-                        onClick={() => handleUpdateStatus(app.id, "accepted")}
-                      >
-                        Accept Pitch
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* View Details Link */}
-                  <Link href={`/campaigns/${app.campaignId}`}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-3 text-xs font-bold text-[#315BEF] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60 rounded-xl cursor-pointer"
-                    >
-                      View Campaign →
-                    </Button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/messages"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-[#E5E4DF] hover:bg-zinc-50 text-xs font-semibold text-zinc-700 transition-colors shadow-2xs"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>Message Brand</span>
                   </Link>
+
+                  {viewingPitch.status === "accepted" && (
+                    <Link
+                      href="/my-campaigns"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors shadow-xs"
+                    >
+                      <span>Go to Workspace</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-[#11172A] w-full">
-          <FileCheck className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1">
-            No applications found
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            {statusFilter !== "all"
-              ? "Try changing your status filter."
-              : "You haven't submitted any campaign pitches yet."}
-          </p>
-          <Link href="/campaigns">
-            <Button className="h-9 px-4 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer">
-              Browse Active Campaigns
-            </Button>
-          </Link>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

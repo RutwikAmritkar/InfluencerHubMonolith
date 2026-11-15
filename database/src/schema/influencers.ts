@@ -1,8 +1,18 @@
-import { pgTable, text, serial, timestamp, integer, real, boolean, jsonb } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  integer,
+  real,
+  boolean,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export type SocialAccountStatus = "UNVERIFIED" | "SUBMITTED" | "VERIFYING" | "VERIFIED" | "FAILED" | "EXPIRED";
+export type SocialAccountStatus =
+  "UNVERIFIED" | "SUBMITTED" | "VERIFYING" | "VERIFIED" | "FAILED" | "EXPIRED";
 export type VerificationType = "PROFILE_EXISTS" | "OWNER_VERIFIED" | "OAUTH_CONNECTED";
 
 export interface SocialAccount {
@@ -49,9 +59,16 @@ export const influencersTable = pgTable("influencers", {
   goals: text("goals").array().notNull().default([]),
   onboardingStep: text("onboarding_step").default("C1"),
   onboardingStatus: text("onboarding_status").default("pending"),
+  instagramVerified: boolean("instagram_verified").default(false),
+  youtubeVerified: boolean("youtube_verified").default(false),
+  verificationCode: text("verification_code"),
+  lastSyncedAt: timestamp("last_synced_at"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const insertInfluencerSchema = createInsertSchema(influencersTable).omit({ id: true, createdAt: true });
+export const insertInfluencerSchema = createInsertSchema(influencersTable).omit({
+  id: true,
+  createdAt: true,
+});
 export type InsertInfluencer = z.infer<typeof insertInfluencerSchema>;
 export type Influencer = typeof influencersTable.$inferSelect;

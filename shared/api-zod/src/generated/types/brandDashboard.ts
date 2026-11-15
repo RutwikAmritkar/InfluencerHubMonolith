@@ -5,8 +5,8 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { Campaign } from './campaign';
-import type { Influencer } from './influencer';
+import type { Campaign } from "./campaign";
+import type { Influencer } from "./influencer";
 
 export interface BrandDashboard {
   totalCampaigns: number;

@@ -3,7 +3,9 @@ import { socialAccountsTable } from "./social-accounts";
 
 export const socialTokensTable = pgTable("social_tokens", {
   id: serial("id").primaryKey(),
-  socialAccountId: integer("social_account_id").notNull().references(() => socialAccountsTable.id, { onDelete: "cascade" }),
+  socialAccountId: integer("social_account_id")
+    .notNull()
+    .references(() => socialAccountsTable.id, { onDelete: "cascade" }),
   accessTokenEncrypted: text("access_token_encrypted").notNull(),
   refreshTokenEncrypted: text("refresh_token_encrypted"),
   tokenIv: text("token_iv").notNull(),

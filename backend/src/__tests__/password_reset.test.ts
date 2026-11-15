@@ -1,5 +1,11 @@
 import { auth } from "../auth/index";
-import { db, user as userTable, influencersTable, brandsTable, auditLogsTable } from "@workspace/db";
+import {
+  db,
+  user as userTable,
+  influencersTable,
+  brandsTable,
+  auditLogsTable,
+} from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { getLatestDevResetLink } from "../services/email.service";
 
@@ -71,7 +77,9 @@ async function runPasswordResetTestSuite() {
 
     const creatorDevLink = getLatestDevResetLink();
     assert(
-      Boolean(creatorDevLink) && creatorDevLink?.email === creatorEmail && Boolean(creatorDevLink?.token),
+      Boolean(creatorDevLink) &&
+        creatorDevLink?.email === creatorEmail &&
+        Boolean(creatorDevLink?.token),
       "1c. Password reset token generated and dispatched via email service"
     );
 
@@ -101,12 +109,21 @@ async function runPasswordResetTestSuite() {
     const newCreatorLogin = await auth.api.signInEmail({
       body: { email: creatorEmail, password: creatorNewPassword },
     });
-    assert(Boolean(newCreatorLogin?.user?.id), "1f. NEW password authenticates Creator successfully");
-    assert(newCreatorLogin.user.id === creatorUserId, "1g. Authenticated Creator matches user identity");
+    assert(
+      Boolean(newCreatorLogin?.user?.id),
+      "1f. NEW password authenticates Creator successfully"
+    );
+    assert(
+      newCreatorLogin.user.id === creatorUserId,
+      "1g. Authenticated Creator matches user identity"
+    );
 
     // 1h. Verify DB Email Verification State is preserved
     const [dbCreator] = await db.select().from(userTable).where(eq(userTable.id, creatorUserId));
-    assert(dbCreator.emailVerified === false, "1h. Password reset preserves existing emailVerified state");
+    assert(
+      dbCreator.emailVerified === false,
+      "1h. Password reset preserves existing emailVerified state"
+    );
   } catch (e: any) {
     assert(false, `1. Creator password reset flow failed: ${e.message}`);
   }
@@ -183,7 +200,7 @@ async function runPasswordResetTestSuite() {
   // 3. NEGATIVE & SECURITY VERIFICATION TESTS
   // -----------------------------------------------------
   console.log("\n--- 3. Testing Security & Negative Scenarios ---");
-  
+
   // 3a. Account Enumeration Protection Test
   try {
     const unknownEmail = `unknown.user.${timestamp}@influencerhub.demo`;
@@ -201,7 +218,10 @@ async function runPasswordResetTestSuite() {
       // Even if internal error happens, client endpoint handler wraps it to return 200 generic message
       enumerationProtected = true;
     }
-    assert(enumerationProtected, "3a. Account enumeration protection operates safely for unknown emails");
+    assert(
+      enumerationProtected,
+      "3a. Account enumeration protection operates safely for unknown emails"
+    );
   } catch (e: any) {
     assert(false, `3a. Account enumeration test failed: ${e.message}`);
   }
@@ -260,7 +280,9 @@ async function runPasswordResetTestSuite() {
     assert(hasResetAudit, "3d. Security audit log event 'PASSWORD_RESET_REQUESTED' recorded in DB");
 
     const plainPassInLogs = auditLogs.some(
-      (l) => l.details && (l.details.includes(creatorOldPassword) || l.details.includes(creatorNewPassword))
+      (l) =>
+        l.details &&
+        (l.details.includes(creatorOldPassword) || l.details.includes(creatorNewPassword))
     );
     assert(!plainPassInLogs, "3e. Plaintext passwords are NEVER present in audit logs");
   } catch (e: any) {

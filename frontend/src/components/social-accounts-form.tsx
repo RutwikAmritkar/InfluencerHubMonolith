@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { SocialAccount, SocialAccountStatus, SocialAccountVerificationType, useVerifySocialAccount } from "@workspace/api-client-react";
+import {
+  SocialAccount,
+  SocialAccountStatus,
+  SocialAccountVerificationType,
+  useVerifySocialAccount,
+} from "@workspace/api-client-react";
 
 type VerificationType = SocialAccountVerificationType;
 import { PLATFORM_CONFIGS, PlatformConfig, SocialIcon, SocialPlatformId } from "./social-icons";
@@ -111,10 +116,13 @@ export function SocialAccountsForm({
     }
   };
 
-  // Convert initialAccounts to draft list
+  // Convert initialAccounts to draft list (excluding instagram which is managed exclusively via Official OAuth)
   const [drafts, setDrafts] = useState<SocialAccountDraft[]>(() => {
-    if (initialAccounts.length > 0) {
-      return initialAccounts.map((acc) => ({
+    const manualAccounts = initialAccounts.filter(
+      (acc) => acc.platform?.toLowerCase() !== "instagram"
+    );
+    if (manualAccounts.length > 0) {
+      return manualAccounts.map((acc) => ({
         id: acc.id,
         creatorId: acc.creatorId,
         platform: (acc.platform.toLowerCase() as SocialPlatformId) || "other",
@@ -127,17 +135,17 @@ export function SocialAccountsForm({
       }));
     }
 
-    // Default initial platform when no accounts exist
-    return [
-      { platform: "instagram", value: "", inputType: "username", status: "UNVERIFIED" },
-    ];
+    return [];
   });
 
   const initialAccountsSerialized = JSON.stringify(initialAccounts);
 
   useEffect(() => {
     if (initialAccounts && initialAccounts.length > 0) {
-      const newDrafts: SocialAccountDraft[] = initialAccounts.map((acc) => ({
+      const manualAccounts = initialAccounts.filter(
+        (acc) => acc.platform?.toLowerCase() !== "instagram"
+      );
+      const newDrafts: SocialAccountDraft[] = manualAccounts.map((acc) => ({
         id: acc.id,
         creatorId: acc.creatorId,
         platform: (acc.platform.toLowerCase() as SocialPlatformId) || "other",
@@ -156,7 +164,7 @@ export function SocialAccountsForm({
   }, [initialAccountsSerialized]);
 
   const availablePlatforms = (Object.keys(PLATFORM_CONFIGS) as SocialPlatformId[]).filter(
-    (p) => !drafts.some((d) => d.platform === p)
+    (p) => p !== "instagram" && !drafts.some((d) => d.platform === p)
   );
 
   const handleAddPlatform = (platform: SocialPlatformId) => {
@@ -182,7 +190,12 @@ export function SocialAccountsForm({
         if (d.platform !== platform) return d;
 
         let updatedType = d.inputType;
-        if (val.trim().startsWith("http://") || val.trim().startsWith("https://") || val.includes(".com") || val.includes(".tv")) {
+        if (
+          val.trim().startsWith("http://") ||
+          val.trim().startsWith("https://") ||
+          val.includes(".com") ||
+          val.includes(".tv")
+        ) {
           updatedType = "url";
         } else if (val.trim().startsWith("@") || (!val.includes("/") && !val.includes("."))) {
           updatedType = "username";
@@ -204,12 +217,18 @@ export function SocialAccountsForm({
 
   const handleTypeToggle = (platform: SocialPlatformId, newType: "username" | "url") => {
     setDrafts((prev) =>
-      prev.map((d) => (d.platform === platform ? { ...d, inputType: newType, status: "UNVERIFIED", error: undefined } : d))
+      prev.map((d) =>
+        d.platform === platform
+          ? { ...d, inputType: newType, status: "UNVERIFIED", error: undefined }
+          : d
+      )
     );
   };
 
   // Normalization logic
-  const normalizeAccount = (draft: SocialAccountDraft): { normalized: SocialAccount; error?: string } => {
+  const normalizeAccount = (
+    draft: SocialAccountDraft
+  ): { normalized: SocialAccount; error?: string } => {
     const raw = draft.value.trim();
     const config = PLATFORM_CONFIGS[draft.platform] || PLATFORM_CONFIGS.other;
     const now = new Date().toISOString();
@@ -287,7 +306,8 @@ export function SocialAccountsForm({
         }
 
         const pathSegments = parsedUrl.pathname.split("/").filter(Boolean);
-        const extractedHandle = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1].replace(/^@/, "") : "";
+        const extractedHandle =
+          pathSegments.length > 0 ? pathSegments[pathSegments.length - 1].replace(/^@/, "") : "";
 
         return {
           normalized: {
@@ -336,7 +356,11 @@ export function SocialAccountsForm({
 
     // Set UI to VERIFYING state
     setDrafts((prev) =>
-      prev.map((d) => (d.platform === platform ? { ...d, status: "VERIFYING", isVerifying: true, error: undefined } : d))
+      prev.map((d) =>
+        d.platform === platform
+          ? { ...d, status: "VERIFYING", isVerifying: true, error: undefined }
+          : d
+      )
     );
 
     // Call API if account has backend ID
@@ -369,7 +393,12 @@ export function SocialAccountsForm({
             setDrafts((prev) =>
               prev.map((d) =>
                 d.platform === platform
-                  ? { ...d, status: "FAILED", errorMessage: "Verification error occurred.", isVerifying: false }
+                  ? {
+                      ...d,
+                      status: "FAILED",
+                      errorMessage: "Verification error occurred.",
+                      isVerifying: false,
+                    }
                   : d
               )
             );
@@ -399,7 +428,9 @@ export function SocialAccountsForm({
                   status: isValid ? "SUBMITTED" : "FAILED",
                   verificationType: isValid ? "PROFILE_EXISTS" : undefined,
                   verifiedAt: isValid ? now : undefined,
-                  errorMessage: isValid ? undefined : `Could not verify ${config.name} profile URL or handle format.`,
+                  errorMessage: isValid
+                    ? undefined
+                    : `Could not verify ${config.name} profile URL or handle format.`,
                   isVerifying: false,
                 }
               : d
@@ -489,13 +520,14 @@ export function SocialAccountsForm({
           </div>
           <CardTitle className="text-2xl font-bold">Review your social profiles</CardTitle>
           <CardDescription className="text-sm">
-            Check your connected accounts before saving them to your InfluencerHub profile.
+            Check your connected accounts before saving them to your CreatorsBrand profile.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="space-y-3">
             {validAccounts.map((acc) => {
-              const config = PLATFORM_CONFIGS[(acc.platform.toLowerCase() as SocialPlatformId) || "other"];
+              const config =
+                PLATFORM_CONFIGS[(acc.platform.toLowerCase() as SocialPlatformId) || "other"];
               const displayHandle = acc.username ? `@${acc.username}` : acc.profileUrl;
 
               return (
@@ -524,7 +556,9 @@ export function SocialAccountsForm({
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground font-mono mt-0.5">{displayHandle}</p>
+                      <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                        {displayHandle}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -557,7 +591,11 @@ export function SocialAccountsForm({
               <ArrowLeft className="w-4 h-4 mr-2" /> Back to Edit
             </Button>
 
-            <Button onClick={handleFinalConfirm} disabled={isSaving} className="w-full sm:w-auto h-11 px-8">
+            <Button
+              onClick={handleFinalConfirm}
+              disabled={isSaving}
+              className="w-full sm:w-auto h-11 px-8"
+            >
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Confirm & Continue
               <ArrowRight className="w-4 h-4 ml-2" />
@@ -583,32 +621,51 @@ export function SocialAccountsForm({
         <CardContent className="space-y-6">
           {/* Official OAuth Integration Section */}
           {(() => {
-            const igAccount = officialAccounts.find((a) => a.platform?.toLowerCase() === "instagram" && a.verificationStatus === "VERIFIED");
-            const ytAccount = officialAccounts.find((a) => a.platform?.toLowerCase() === "youtube" && a.verificationStatus === "VERIFIED");
+            const igAccount = officialAccounts.find(
+              (a) =>
+                a.platform?.toLowerCase() === "instagram" && a.verificationStatus === "VERIFIED"
+            );
 
             return (
               <div className="space-y-4">
-                {/* Instagram OAuth Box */}
+                {/* Instagram OAuth Card */}
                 {igAccount ? (
-                  <div className="p-4 rounded-xl border bg-emerald-500/10 dark:bg-emerald-950/30 border-emerald-500/30 space-y-3">
+                  <div className="p-4.5 rounded-2xl border bg-emerald-500/10 dark:bg-emerald-950/30 border-emerald-500/30 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                        <h4 className="text-sm font-bold text-foreground">Instagram ✓ Connected</h4>
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                        <h4 className="text-sm font-bold text-foreground">
+                          Instagram ✓ Verified via Official OAuth
+                        </h4>
                       </div>
                       <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-xs px-2.5 py-0.5 font-semibold shadow-none">
                         Verified
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+
+                    <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-emerald-500/20">
                       <div>
-                        <p className="text-sm font-bold font-mono text-foreground">
+                        <p className="text-base font-extrabold text-foreground font-mono">
                           @{igAccount.username}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Connected through Instagram OAuth
-                        </p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground font-medium mt-1">
+                          <span>
+                            Followers:{" "}
+                            <strong className="text-foreground">{igAccount.followers ?? 0}</strong>
+                          </span>
+                          <span>
+                            Following:{" "}
+                            <strong className="text-foreground">{igAccount.following ?? 0}</strong>
+                          </span>
+                          <span>
+                            Posts:{" "}
+                            <strong className="text-foreground">
+                              {igAccount.totalContent ?? 0}
+                            </strong>
+                          </span>
+                        </div>
                       </div>
+
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
@@ -617,7 +674,10 @@ export function SocialAccountsForm({
                           onClick={async () => {
                             try {
                               const apiUrl = import.meta.env.VITE_API_URL || "";
-                              const res = await fetch(`${apiUrl}/api/social/instagram/connect`, { method: "POST", credentials: "include" });
+                              const res = await fetch(`${apiUrl}/api/social/instagram/connect`, {
+                                method: "POST",
+                                credentials: "include",
+                              });
                               const data = await res.json();
                               if (data.redirectUrl) {
                                 window.location.href = data.redirectUrl;
@@ -628,7 +688,7 @@ export function SocialAccountsForm({
                               toast.error("Failed to connect Instagram account.");
                             }
                           }}
-                          className="text-xs h-8 font-medium"
+                          className="text-xs h-8 font-semibold border-slate-300 dark:border-slate-700"
                         >
                           Reconnect
                         </Button>
@@ -637,7 +697,7 @@ export function SocialAccountsForm({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDisconnectOfficial("instagram")}
-                          className="text-xs h-8 font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 hover:text-rose-700"
+                          className="text-xs h-8 font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 hover:text-rose-700"
                         >
                           Disconnect
                         </Button>
@@ -645,15 +705,16 @@ export function SocialAccountsForm({
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-xl border bg-slate-900/40 dark:bg-slate-900/80 border-slate-800 space-y-3">
+                  <div className="p-4.5 rounded-2xl border bg-slate-50 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 space-y-3 shadow-xs">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4 text-emerald-500" />
                           Instagram Business Login (Official OAuth)
                         </h4>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Connect your professional Instagram account to verify ownership and retrieve permitted metrics.
+                          Connect your professional Instagram account to verify ownership and
+                          retrieve permitted metrics.
                         </p>
                       </div>
                     </div>
@@ -664,7 +725,10 @@ export function SocialAccountsForm({
                       onClick={async () => {
                         try {
                           const apiUrl = import.meta.env.VITE_API_URL || "";
-                          const res = await fetch(`${apiUrl}/api/social/instagram/connect`, { method: "POST", credentials: "include" });
+                          const res = await fetch(`${apiUrl}/api/social/instagram/connect`, {
+                            method: "POST",
+                            credentials: "include",
+                          });
                           const data = await res.json();
                           if (data.redirectUrl) {
                             window.location.href = data.redirectUrl;
@@ -675,7 +739,7 @@ export function SocialAccountsForm({
                           toast.error("Failed to connect Instagram account.");
                         }
                       }}
-                      className="bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400 border-pink-500/30 text-xs h-9 font-medium"
+                      className="bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400 border-pink-500/30 text-xs h-9 font-bold"
                     >
                       <SocialIcon platform="instagram" className="w-4 h-4 mr-2" />
                       Connect Instagram
@@ -686,10 +750,12 @@ export function SocialAccountsForm({
             );
           })()}
 
-
           <div className="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 rounded-xl text-blue-700 dark:text-blue-300 text-xs font-medium flex items-center gap-2">
             <Info className="w-4 h-4 shrink-0 text-blue-500" />
-            <span>Manual handle entries remain marked as Submitted until official OAuth ownership is connected.</span>
+            <span>
+              Manual handle entries remain marked as Submitted until official OAuth ownership is
+              connected.
+            </span>
           </div>
 
           <div className="space-y-4">
@@ -704,13 +770,16 @@ export function SocialAccountsForm({
                   {/* Card Header Row: Icon + Name + Badge on Left | Action Buttons on Right */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-muted/40">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <div className={`p-1.5 rounded-md bg-white dark:bg-slate-900 shadow-xs ${config.color}`}>
+                      <div
+                        className={`p-1.5 rounded-md bg-white dark:bg-slate-900 shadow-xs ${config.color}`}
+                      >
                         <SocialIcon platform={draft.platform} className="w-5 h-5" />
                       </div>
                       <span className="font-semibold text-sm">{config.name}</span>
 
                       {/* Verification Status Badge */}
-                      {(draft.status === "SUBMITTED" || (!draft.status && draft.value.trim().length > 0)) && (
+                      {(draft.status === "SUBMITTED" ||
+                        (!draft.status && draft.value.trim().length > 0)) && (
                         <Badge
                           className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 shadow-none font-medium flex items-center gap-1 text-xs px-2.5 py-0.5"
                           title="Your profile has been submitted. Ownership verification will be required before it can display as Verified."
@@ -732,19 +801,21 @@ export function SocialAccountsForm({
 
                     <div className="flex items-center gap-2 shrink-0">
                       {/* Verify Action Button for Unverified / Failed accounts */}
-                      {draft.value.trim().length > 0 && draft.status !== "VERIFIED" && draft.status !== "VERIFYING" && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleVerify(draft.platform)}
-                          disabled={draft.isVerifying}
-                          className="h-8 text-xs font-medium text-primary hover:text-primary hover:bg-primary/10 border-primary/30 shrink-0"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5 mr-1" />
-                          {draft.status === "FAILED" ? "Try Again" : "Verify"}
-                        </Button>
-                      )}
+                      {draft.value.trim().length > 0 &&
+                        draft.status !== "VERIFIED" &&
+                        draft.status !== "VERIFYING" && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleVerify(draft.platform)}
+                            disabled={draft.isVerifying}
+                            className="h-8 text-xs font-medium text-primary hover:text-primary hover:bg-primary/10 border-primary/30 shrink-0"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+                            {draft.status === "FAILED" ? "Try Again" : "Verify"}
+                          </Button>
+                        )}
 
                       {/* Remove Button */}
                       <Button
@@ -764,7 +835,9 @@ export function SocialAccountsForm({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
                       <span className="text-xs text-muted-foreground font-medium">
-                        {draft.inputType === "username" ? "Enter username or handle" : "Enter full profile URL"}
+                        {draft.inputType === "username"
+                          ? "Enter username or handle"
+                          : "Enter full profile URL"}
                       </span>
 
                       {/* Input Type Selector Toggle */}
@@ -804,9 +877,7 @@ export function SocialAccountsForm({
                         value={draft.value}
                         onChange={(e) => handleInputChange(draft.platform, e.target.value)}
                         placeholder={
-                          draft.inputType === "username"
-                            ? "johncreator"
-                            : config.placeholder
+                          draft.inputType === "username" ? "johncreator" : config.placeholder
                         }
                         className={`bg-background h-10 w-full ${
                           draft.inputType === "username" ? "pl-7" : "pl-3"
@@ -815,31 +886,32 @@ export function SocialAccountsForm({
                     </div>
                   </div>
 
-                    {/* Verification Failed Banner */}
-                    {draft.status === "FAILED" && (
-                      <div className="flex items-center justify-between text-xs text-rose-600 dark:text-rose-400 bg-rose-500/10 p-2.5 rounded-md font-medium border border-rose-500/20">
-                        <span className="flex items-center gap-1.5">
-                          <AlertTriangle className="w-4 h-4 shrink-0" />
-                          {draft.errorMessage || "Verification failed: Could not verify profile URL or handle format."}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleVerify(draft.platform)}
-                          className="h-6 text-xs text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 px-2"
-                        >
-                          <RotateCw className="w-3 h-3 mr-1" /> Try Again
-                        </Button>
-                      </div>
-                    )}
+                  {/* Verification Failed Banner */}
+                  {draft.status === "FAILED" && (
+                    <div className="flex items-center justify-between text-xs text-rose-600 dark:text-rose-400 bg-rose-500/10 p-2.5 rounded-md font-medium border border-rose-500/20">
+                      <span className="flex items-center gap-1.5">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        {draft.errorMessage ||
+                          "Verification failed: Could not verify profile URL or handle format."}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleVerify(draft.platform)}
+                        className="h-6 text-xs text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 px-2"
+                      >
+                        <RotateCw className="w-3 h-3 mr-1" /> Try Again
+                      </Button>
+                    </div>
+                  )}
 
-                    {draft.error && (
-                      <p className="text-xs text-destructive mt-1 flex items-center gap-1 font-medium">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        {draft.error}
-                      </p>
-                    )}
+                  {draft.error && (
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1 font-medium">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      {draft.error}
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -850,7 +922,10 @@ export function SocialAccountsForm({
             <div className="pt-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full border-dashed h-11 hover:border-primary/50">
+                  <Button
+                    variant="outline"
+                    className="w-full border-dashed h-11 hover:border-primary/50"
+                  >
                     <Plus className="w-4 h-4 mr-2 text-primary" />
                     Add Another Platform
                   </Button>
