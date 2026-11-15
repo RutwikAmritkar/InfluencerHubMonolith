@@ -88,31 +88,54 @@ export class SocialSyncService {
           );
         }
       } catch (err: any) {
-        logSocialSyncEvent("DECRYPT_WARNING", { platform: account.platform, socialAccountId, username: account.username, success: false, error: err.message });
+        logSocialSyncEvent("DECRYPT_WARNING", {
+          platform: account.platform,
+          socialAccountId,
+          username: account.username,
+          success: false,
+          error: err.message,
+        });
       }
 
       // Auto-refresh token if expired
       if (tokenRecord.expiresAt && new Date(tokenRecord.expiresAt) <= new Date() && refreshToken) {
         try {
-          logSocialSyncEvent("TOKEN_REFRESH_ATTEMPT", { platform: account.platform, socialAccountId, username: account.username, success: true });
+          logSocialSyncEvent("TOKEN_REFRESH_ATTEMPT", {
+            platform: account.platform,
+            socialAccountId,
+            username: account.username,
+            success: true,
+          });
           const refreshed = await provider.refreshAccessToken(refreshToken);
           accessToken = refreshed.accessToken;
           const encryptedAccess = encryptSocialToken(accessToken);
-          const encryptedRefresh = refreshed.refreshToken ? encryptSocialToken(refreshed.refreshToken) : null;
+          const encryptedRefresh = refreshed.refreshToken
+            ? encryptSocialToken(refreshed.refreshToken)
+            : null;
 
           await db
             .update(socialTokensTable)
             .set({
               accessTokenEncrypted: encryptedAccess.encryptedToken,
-              refreshTokenEncrypted: encryptedRefresh ? encryptedRefresh.encryptedToken : tokenRecord.refreshTokenEncrypted,
+              refreshTokenEncrypted: encryptedRefresh
+                ? encryptedRefresh.encryptedToken
+                : tokenRecord.refreshTokenEncrypted,
               tokenIv: encryptedAccess.iv,
               tokenAuthTag: encryptedAccess.authTag,
-              expiresAt: refreshed.expiresIn ? new Date(Date.now() + refreshed.expiresIn * 1000) : null,
+              expiresAt: refreshed.expiresIn
+                ? new Date(Date.now() + refreshed.expiresIn * 1000)
+                : null,
               updatedAt: new Date(),
             })
             .where(eq(socialTokensTable.id, tokenRecord.id));
         } catch (refreshErr: any) {
-          logSocialSyncEvent("TOKEN_REFRESH_FAILED", { platform: account.platform, socialAccountId, username: account.username, success: false, error: refreshErr.message });
+          logSocialSyncEvent("TOKEN_REFRESH_FAILED", {
+            platform: account.platform,
+            socialAccountId,
+            username: account.username,
+            success: false,
+            error: refreshErr.message,
+          });
           await db
             .update(socialAccountsTable)
             .set({ verificationStatus: "REAUTH_REQUIRED", updatedAt: new Date() })
@@ -244,7 +267,13 @@ export class SocialSyncService {
         }
       }
 
-      logSocialSyncEvent("SYNC_SUCCESS", { platform: account.platform, socialAccountId, username: profile.username, followers: profile.followers, success: true });
+      logSocialSyncEvent("SYNC_SUCCESS", {
+        platform: account.platform,
+        socialAccountId,
+        username: profile.username,
+        followers: profile.followers,
+        success: true,
+      });
 
       return {
         success: true,
@@ -256,7 +285,13 @@ export class SocialSyncService {
         lastSyncedAt: now.toISOString(),
       };
     } catch (error: any) {
-      logSocialSyncEvent("SYNC_ERROR", { platform: account.platform, socialAccountId, username: account.username, success: false, error: error.message });
+      logSocialSyncEvent("SYNC_ERROR", {
+        platform: account.platform,
+        socialAccountId,
+        username: account.username,
+        success: false,
+        error: error.message,
+      });
 
       await db
         .update(socialAccountsTable)
@@ -275,7 +310,6 @@ export class SocialSyncService {
       };
     }
   }
-
 
   /**
    * Synchronize all active social accounts belonging to a user ID.

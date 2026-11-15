@@ -1,307 +1,501 @@
-import { useState, useMemo } from "react";
-import { useAuth } from "@/contexts/auth-context";
-import { formatCurrency } from "@/lib/formatters";
-import { useListApplications, useListCampaigns } from "@workspace/api-client-react";
-import { Link } from "wouter";
-import { 
-  Megaphone, 
-  Briefcase, 
-  Calendar, 
-  Clock, 
-  CheckCircle2, 
-  ArrowRight, 
-  FileText, 
-  DollarSign, 
-  Loader2, 
+import { useState } from "react";
+import {
+  CheckCircle2,
+  Clock,
+  Circle,
+  ExternalLink,
+  MessageSquare,
+  ShieldCheck,
+  Calendar,
+  Instagram,
+  Link2,
+  FileCheck2,
+  ArrowUpRight,
   Sparkles,
-  Search,
-  ChevronRight
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link } from "wouter";
+import { toast } from "sonner";
 
-// Realistic Accepted / Contracted Creator Campaigns
-const defaultAcceptedCampaigns = [
+type CampaignTab = "active" | "scheduled" | "completed";
+
+interface DeliverableItem {
+  id: string;
+  title: string;
+  spec: string;
+  dueDate: string;
+  status: "approved" | "in_review" | "pending";
+  submittedUrl?: string;
+}
+
+interface ContractedCampaign {
+  id: string;
+  brandName: string;
+  brandInitials: string;
+  title: string;
+  platform: string;
+  totalEscrow: number;
+  releasedAmount: number;
+  deadline: string;
+  tab: CampaignTab;
+  summary: string;
+  usageRights: string;
+  hashtags: string[];
+  deliverables: DeliverableItem[];
+}
+
+const INITIAL_CAMPAIGNS: ContractedCampaign[] = [
   {
-    id: 1,
-    campaignId: 1,
-    title: "Summer Beauty Campaign",
+    id: "camp-1",
     brandName: "Glow Cosmetics",
-    brandLogoUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=150&auto=format&fit=crop",
-    description: "Create 1 Instagram Reel and 2 Story frames featuring product application for the new SPF Glow Lotion.",
-    budget: 5000,
-    platform: "instagram",
-    stage: "active", // 'active' | 'upcoming' | 'completed'
-    startDate: "2026-08-01",
-    deadline: "2026-09-01",
-    deliverablesStatus: "1 of 3 Deliverables Submitted",
-    nextMilestone: "Instagram Reel Draft Review",
+    brandInitials: "GC",
+    title: "Summer Skincare Launch",
+    platform: "Instagram",
+    totalEscrow: 45000,
+    releasedAmount: 15000,
+    deadline: "Nov 24, 2026",
+    tab: "active",
+    summary:
+      "Create 1 Instagram Reel and 2 Story frames featuring natural daylight product application for the new SPF 50 Glow Lotion.",
+    usageRights: "30 Days Organic Whitelisting",
+    hashtags: ["#GlowSPF50", "#CleanSkincareIndia", "#AD"],
+    deliverables: [
+      {
+        id: "d1",
+        title: "1× Instagram Reel (30–45s)",
+        spec: "9:16 Vertical • Hook within first 2.5s • Natural daylight texture shot",
+        dueDate: "Nov 18, 2026",
+        status: "in_review",
+        submittedUrl: "https://drive.google.com/file/d/glow-spf-reel-v1",
+      },
+      {
+        id: "d2",
+        title: "Story Frame #1 — Unboxing & Texture",
+        spec: "15s Vertical • Close-up swatch + brand tag @glowcosmetics",
+        dueDate: "Nov 22, 2026",
+        status: "pending",
+      },
+      {
+        id: "d3",
+        title: "Story Frame #2 — Swipe-Up Link & Code",
+        spec: "15s Vertical • Include MAYA15 discount sticker",
+        dueDate: "Nov 24, 2026",
+        status: "pending",
+      },
+    ],
   },
   {
-    id: 2,
-    campaignId: 2,
-    title: "Tech Launch 2026",
-    brandName: "NovaTech",
-    brandLogoUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=150&auto=format&fit=crop",
-    description: "Unboxing & hands-on review video for the new ergonomic wireless ANC headphones on YouTube.",
-    budget: 12500,
-    platform: "youtube",
-    stage: "upcoming",
-    startDate: "2026-09-05",
-    deadline: "2026-09-25",
-    deliverablesStatus: "Contract Signed • Awaiting Product Sample",
-    nextMilestone: "Product Sample Shipment Tracking",
-  },
-  {
-    id: 3,
-    campaignId: 4,
-    title: "Spring Wellness Rollout",
-    brandName: "FreshBite",
-    brandLogoUrl: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=150&auto=format&fit=crop",
-    description: "TikTok organic snack recipe integration and grocery haul vlog featuring FreshBite products.",
-    budget: 4200,
-    platform: "tiktok",
-    stage: "completed",
-    startDate: "2026-05-10",
-    deadline: "2026-06-15",
-    deliverablesStatus: "All Deliverables Approved",
-    nextMilestone: "Payout Released (₹4,200)",
+    id: "camp-comp-1",
+    brandName: "PureDew Skin",
+    brandInitials: "PD",
+    title: "Monsoon Hydration Essentials",
+    platform: "Instagram",
+    totalEscrow: 38000,
+    releasedAmount: 38000,
+    deadline: "Oct 18, 2026",
+    tab: "completed",
+    summary:
+      "1× 9:16 Reel and 2 Stories demonstrating lightweight hydration serums during high-humidity season. Verified 42K organic reach.",
+    usageRights: "Full Organic Usage Rights",
+    hashtags: ["#PureDewHydration", "#MonsoonSkincare", "#AD"],
+    deliverables: [
+      {
+        id: "d-comp-1",
+        title: "1× 9:16 Reel (45s)",
+        spec: "Full routine demonstration with verified ER",
+        dueDate: "Oct 12, 2026",
+        status: "approved",
+        submittedUrl: "https://instagram.com/reel/C89218_demo",
+      },
+      {
+        id: "d-comp-2",
+        title: "2× Story Frames",
+        spec: "Swipe-up link + ingredient transparency callout",
+        dueDate: "Oct 15, 2026",
+        status: "approved",
+        submittedUrl: "https://instagram.com/stories/highlights/puredew",
+      },
+    ],
   },
 ];
 
-export default function MyCampaigns() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"active" | "upcoming" | "completed">("active");
-  const [search, setSearch] = useState("");
+export default function ContractedCampaigns() {
+  const [campaigns, setCampaigns] = useState<ContractedCampaign[]>(INITIAL_CAMPAIGNS);
+  const [activeTab, setActiveTab] = useState<CampaignTab>("active");
+  const [selectedId, setSelectedId] = useState<string>("camp-1");
+  const [linkInputs, setLinkInputs] = useState<Record<string, string>>({});
 
-  const { data: apiApplications, isLoading: appsLoading } = useListApplications({
-    influencerId: user?.id,
-    status: "accepted",
-  });
+  const counts = {
+    active: campaigns.filter((c) => c.tab === "active").length,
+    scheduled: campaigns.filter((c) => c.tab === "scheduled").length,
+    completed: campaigns.filter((c) => c.tab === "completed").length,
+  };
 
-  const campaigns = useMemo(() => {
-    // If backend data is returned, filter accepted applications
-    let list = defaultAcceptedCampaigns;
-    if (Array.isArray(apiApplications) && apiApplications.length > 0) {
-      list = apiApplications.map((app: any) => ({
-        id: app.id,
-        campaignId: app.campaignId,
-        title: app.campaignTitle || "Accepted Campaign",
-        brandName: app.brandName || "Brand Partner",
-        brandLogoUrl: app.brandLogoUrl || "",
-        description: app.message || "Contracted campaign deliverable.",
-        budget: app.budget || 5000,
-        platform: app.platform || "instagram",
-        stage: app.stage || "active",
-        startDate: app.startDate || "2026-08-01",
-        deadline: app.deadline || "2026-09-01",
-        deliverablesStatus: app.deliverablesStatus || "In Progress",
-        nextMilestone: app.nextMilestone || "Content Review",
-      }));
+  const visibleCampaigns = campaigns.filter((c) => c.tab === activeTab);
+  const selectedCampaign = visibleCampaigns.find((c) => c.id === selectedId) || visibleCampaigns[0];
+
+  const handleDeliverableSubmit = (campaignId: string, deliverableId: string) => {
+    const url = linkInputs[deliverableId]?.trim();
+    if (!url) {
+      toast.error("Please enter a valid Google Drive, Dropbox, or live Reel URL.");
+      return;
     }
 
-    return list.filter((c) => {
-      const matchesTab = c.stage === activeTab;
-      const matchesSearch =
-        !search ||
-        c.title.toLowerCase().includes(search.toLowerCase()) ||
-        c.brandName.toLowerCase().includes(search.toLowerCase());
+    setCampaigns((prev) =>
+      prev.map((camp) =>
+        camp.id === campaignId
+          ? {
+              ...camp,
+              deliverables: camp.deliverables.map((d) =>
+                d.id === deliverableId ? { ...d, status: "in_review", submittedUrl: url } : d
+              ),
+            }
+          : camp
+      )
+    );
+    setLinkInputs((prev) => ({ ...prev, [deliverableId]: "" }));
+    toast.success("Deliverable draft submitted! Brand notified for review.");
+  };
 
-      return matchesTab && matchesSearch;
-    });
-  }, [apiApplications, activeTab, search]);
-
-  const getStageBadge = (stage: string) => {
-    switch (stage) {
-      case "active":
-        return (
-          <Badge className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 text-[11px] font-bold">
-            🟢 Active & In Progress
-          </Badge>
-        );
-      case "upcoming":
-        return (
-          <Badge className="bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200 text-[11px] font-bold">
-            🔵 Scheduled / Upcoming
-          </Badge>
-        );
-      case "completed":
-        return (
-          <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 text-[11px] font-bold">
-            ✓ Completed & Paid
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{stage}</Badge>;
-    }
+  const handleDownloadPdf = () => {
+    toast.success("Generating verified commercial agreement PDF dossier...");
+    setTimeout(() => {
+      window.print();
+    }, 400);
   };
 
   return (
-    <div className="space-y-8 w-full pb-12 text-slate-900 dark:text-slate-100">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
+    <div className="workspace-canvas w-full min-h-screen bg-[#FAF9F6] text-[#0A0A0A] space-y-6 pb-16 antialiased font-sans">
+      {/* ─── Header & Primary CTA ─── */}
+      <div className="border-b border-[#E5E4DF] pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
-            My Campaigns
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-1">
+            Stage 3 of Funnel • Execution Workspace
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
+            Contracted{" "}
+            <span className="font-serif italic font-normal text-blue-700">Campaigns</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            Manage your contracted brand partnerships, submit deliverables, and track payout milestones.
+          <p className="text-sm text-zinc-500 mt-1">
+            Manage confirmed brand partnerships, submit milestone drafts, and track deliverable
+            payouts.
           </p>
         </div>
 
-        <Link href="/opportunities">
-          <Button className="h-9 px-4 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer">
-            Explore Opportunities →
-          </Button>
+        <Link
+          href="/opportunities"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors self-start sm:self-auto cursor-pointer shadow-xs active:scale-[0.98]"
+        >
+          <span>Explore Opportunities</span>
+          <ArrowUpRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
-      {/* Tabs & Search Bar */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full sm:w-auto">
-            <TabsList className="bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 grid grid-cols-3 w-full sm:w-auto">
-              <TabsTrigger value="active" className="text-xs font-bold px-5 rounded-xl cursor-pointer">
-                Active
-              </TabsTrigger>
-              <TabsTrigger value="upcoming" className="text-xs font-bold px-5 rounded-xl cursor-pointer">
-                Upcoming
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="text-xs font-bold px-5 rounded-xl cursor-pointer">
-                Completed
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
-            <Input
-              placeholder="Search my campaigns..."
-              className="pl-9 h-10 border-slate-200/80 dark:border-slate-700 bg-white dark:bg-[#11172A] text-xs rounded-xl"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+      {/* ─── Stage Filter Tabs + Compact Escrow Telemetry ─── */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-white border border-[#E5E4DF] shadow-2xs">
+          {(
+            [
+              { id: "active", label: "Active", count: counts.active },
+              { id: "scheduled", label: "Scheduled", count: counts.scheduled },
+              { id: "completed", label: "Completed", count: counts.completed },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                setActiveTab(t.id);
+                const firstInTab = campaigns.find((c) => c.tab === t.id);
+                if (firstInTab) setSelectedId(firstInTab.id);
+              }}
+              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === t.id
+                  ? "bg-[#0A0A0A] text-white shadow-xs"
+                  : "text-zinc-600 hover:text-[#0A0A0A]"
+              }`}
+            >
+              <span>{t.label}</span>
+              <span
+                className={`px-1.5 py-0.2 rounded text-[11px] font-bold font-tabular ${
+                  activeTab === t.id
+                    ? "bg-white/20 text-white"
+                    : "bg-[#FAF9F6] text-zinc-500 border border-[#E5E4DF]"
+                }`}
+              >
+                {t.count}
+              </span>
+            </button>
+          ))}
         </div>
 
-        {/* Campaigns List */}
-        {appsLoading ? (
-          <div className="flex h-64 w-full items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-[#315BEF]" />
+        <div className="flex flex-wrap items-center gap-3 text-xs">
+          <div className="px-3.5 py-2 rounded-xl bg-white border border-[#E5E4DF] flex items-center gap-2 shadow-2xs">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span className="text-zinc-500">Agreed Payout:</span>
+            <span className="font-bold text-[#0A0A0A] font-tabular">
+              ₹{(selectedCampaign ? selectedCampaign.totalEscrow : 45000).toLocaleString("en-IN")}
+            </span>
           </div>
-        ) : campaigns.length > 0 ? (
-          <div className="grid gap-4 w-full pt-2">
-            {campaigns.map((c) => (
-              <Card
-                key={c.id}
-                className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 shadow-xs hover:shadow-md transition-all overflow-hidden text-slate-900 dark:text-slate-100"
-              >
-                <CardContent className="p-5 sm:p-6 space-y-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-                    <div className="flex items-center gap-3">
-                      {c.brandLogoUrl ? (
-                        <img
-                          src={c.brandLogoUrl}
-                          className="w-11 h-11 rounded-xl border border-slate-200 dark:border-slate-700 object-cover"
-                          alt="Brand Logo"
-                        />
-                      ) : (
-                        <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-[#315BEF] dark:text-blue-400 flex items-center justify-center font-bold text-sm">
-                          {c.brandName.charAt(0)}
+          <div className="px-3.5 py-2 rounded-xl bg-white border border-[#E5E4DF] flex items-center gap-2 shadow-2xs">
+            <Clock className="w-4 h-4 text-blue-700" />
+            <span className="text-zinc-500">Final Deadline:</span>
+            <span className="font-bold text-[#0A0A0A]">
+              {selectedCampaign ? selectedCampaign.deadline : "Nov 24, 2026"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Main Asymmetric 7 / 5 Execution Grid ─── */}
+      {visibleCampaigns.length > 0 && selectedCampaign ? (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          {/* LEFT 7 COLUMNS: Campaign Progress & Inline Deliverable Checklist */}
+          <div className="xl:col-span-7 space-y-6 min-w-0">
+            {visibleCampaigns.map((camp) => {
+              const completedCount = camp.deliverables.filter(
+                (d) => d.status === "approved" || d.status === "in_review"
+              ).length;
+              const progressPct = Math.round((completedCount / camp.deliverables.length) * 100);
+
+              return (
+                <div
+                  key={camp.id}
+                  onClick={() => setSelectedId(camp.id)}
+                  className={`bg-white rounded-2xl border transition-all shadow-xs overflow-hidden cursor-pointer ${
+                    camp.id === selectedCampaign.id
+                      ? "border-blue-700/60 ring-1 ring-blue-700/20"
+                      : "border-[#E5E4DF] hover:border-zinc-400"
+                  }`}
+                >
+                  {/* Card Top Bar */}
+                  <div className="p-6 border-b border-[#E5E4DF] space-y-4">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-xl bg-zinc-900 text-white text-sm font-bold flex items-center justify-center shrink-0 shadow-2xs">
+                          {camp.brandInitials}
                         </div>
-                      )}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{c.brandName}</p>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-zinc-500">
+                              {camp.brandName}
+                            </span>
+                            <span className="text-zinc-300">•</span>
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-zinc-600">
+                              <Instagram className="w-3.5 h-3.5 text-zinc-400" />
+                              {camp.platform}
+                            </span>
+                          </div>
+                          <h2 className="text-lg font-bold text-[#0A0A0A] mt-0.5">{camp.title}</h2>
                         </div>
-                        <Link href={`/campaigns/${c.campaignId}`}>
-                          <h3 className="text-base sm:text-lg font-bold hover:text-[#315BEF] dark:hover:text-blue-400 transition-colors cursor-pointer inline-flex items-center gap-1.5">
-                            {c.title}
-                          </h3>
-                        </Link>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-3">
-                      {getStageBadge(c.stage)}
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-                    {c.description}
-                  </p>
-
-                  <div className="p-3.5 bg-[#F8FAFF] dark:bg-slate-800/50 rounded-xl border border-[#E2E8F3] dark:border-slate-700/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
-                    <div>
-                      <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] block font-mono">
-                        Deliverable Status:
-                      </span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                        {c.deliverablesStatus}
-                      </span>
-                    </div>
-
-                    <div className="text-left sm:text-right">
-                      <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] block font-mono">
-                        Next Milestone:
-                      </span>
-                      <span className="font-bold text-[#315BEF] dark:text-blue-400 mt-0.5 block">
-                        {c.nextMilestone}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-1 text-xs text-slate-500 dark:text-slate-400">
-                    <div className="flex flex-wrap gap-4 sm:gap-6 font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <Briefcase className="h-3.5 w-3.5 text-slate-400" />
-                        <span className="font-bold text-[#11182F] dark:text-slate-100">
-                          {formatCurrency(c.budget)}
+                      <div className="flex items-center gap-2.5">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-xs font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Active Deal • ₹{camp.totalEscrow.toLocaleString("en-IN")}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 capitalize font-bold text-slate-700 dark:text-slate-300">
-                        {c.platform}
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                        <span>Deadline: {new Date(c.deadline).toLocaleDateString()}</span>
-                      </div>
                     </div>
 
-                    <Link href={`/campaigns/${c.campaignId}`}>
-                      <Button className="h-8 px-4 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-2xs cursor-pointer">
-                        Manage Campaign →
-                      </Button>
-                    </Link>
+                    {/* Visual Milestone Progress Bar */}
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-[#0A0A0A]">
+                          Deliverable Progress ({completedCount} of {camp.deliverables.length}{" "}
+                          submitted)
+                        </span>
+                        <span className="font-bold text-blue-700 font-tabular">{progressPct}%</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-[#F2F1EC] overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-blue-700 transition-all duration-300"
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+
+                  {/* Individual Deliverable Rows (No modal needed to submit) */}
+                  <div className="divide-y divide-[#E5E4DF]">
+                    {camp.deliverables.map((del) => (
+                      <div
+                        key={del.id}
+                        className="p-6 space-y-3 bg-white hover:bg-[#FAF9F6]/50 transition-colors"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            {del.status === "approved" ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                            ) : del.status === "in_review" ? (
+                              <Clock className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+                            ) : (
+                              <Circle className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
+                            )}
+                            <div>
+                              <h3 className="text-sm font-bold text-[#0A0A0A]">{del.title}</h3>
+                              <p className="text-xs text-zinc-500 mt-0.5">{del.spec}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 shrink-0">
+                            <span className="text-xs text-zinc-500 font-tabular">
+                              Due {del.dueDate}
+                            </span>
+                            {del.status === "in_review" ? (
+                              <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/70 text-xs font-semibold">
+                                Draft Under Review
+                              </span>
+                            ) : del.status === "approved" ? (
+                              <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-xs font-semibold">
+                                Approved
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-md bg-[#FAF9F6] text-zinc-600 border border-[#E5E4DF] text-xs font-medium">
+                                Awaiting Submission
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Inline Link Submission or Submitted Preview */}
+                        {del.submittedUrl ? (
+                          <div className="ml-7 flex items-center justify-between gap-3 px-3.5 py-2 rounded-lg bg-[#FAF9F6] border border-[#E5E4DF] text-xs">
+                            <span className="text-zinc-600 truncate font-mono text-[11px]">
+                              {del.submittedUrl}
+                            </span>
+                            <a
+                              href={del.submittedUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-blue-700 font-semibold shrink-0 hover:underline cursor-pointer"
+                            >
+                              <span>Preview</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="ml-7 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                            <div className="relative flex-1">
+                              <Link2 className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                              <input
+                                type="url"
+                                value={linkInputs[del.id] || ""}
+                                onChange={(e) =>
+                                  setLinkInputs((prev) => ({
+                                    ...prev,
+                                    [del.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Paste Drive draft link or live Instagram post URL..."
+                                className="w-full h-9 pl-9 pr-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-blue-700"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeliverableSubmit(camp.id, del.id);
+                              }}
+                              className="px-4 h-9 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors shrink-0 cursor-pointer shadow-xs active:scale-[0.98]"
+                            >
+                              Submit Link
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ) : (
-          <div className="text-center py-20 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-[#11172A] w-full">
-            <Megaphone className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1">
-              No {activeTab} campaigns
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              {activeTab === "active"
-                ? "You don't have any active campaign deliverables right now."
-                : activeTab === "upcoming"
-                ? "No upcoming scheduled campaigns."
-                : "No completed campaign history yet."}
-            </p>
-            <Link href="/opportunities">
-              <Button className="h-9 px-4 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer">
-                Explore & Apply to Opportunities
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
+
+          {/* RIGHT 5 COLUMNS: Sticky Brief Guidelines & Escrow Ledger */}
+          <aside className="xl:col-span-5 xl:sticky xl:top-20 bg-white rounded-2xl border border-[#E5E4DF] shadow-xs divide-y divide-[#E5E4DF] min-w-0">
+            <div className="p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+                  Contract Brief &amp; Terms
+                </span>
+                <span className="text-xs text-zinc-400 font-tabular">
+                  Final Deadline: {selectedCampaign.deadline}
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-[#0A0A0A]">
+                {selectedCampaign.title} — {selectedCampaign.brandName}
+              </h3>
+              <p className="text-xs text-zinc-600 leading-relaxed">{selectedCampaign.summary}</p>
+            </div>
+
+            {/* Required Tags & Usage Rights */}
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-zinc-500">Usage Rights</span>
+                <span className="font-semibold text-[#0A0A0A]">{selectedCampaign.usageRights}</span>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs text-zinc-500 block">
+                  Mandatory Hashtags &amp; Disclosures
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedCampaign.hashtags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2.5 py-1 rounded-md bg-[#FAF9F6] border border-[#E5E4DF] text-xs font-mono font-medium text-[#0A0A0A]"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Milestone Breakdown */}
+            <div className="p-6 space-y-3 bg-[#FAF9F6]/60">
+              <h4 className="text-xs font-bold text-[#0A0A0A]">Milestone Schedule</h4>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-600">Milestone 1: Reel Draft &amp; Live Link</span>
+                  <span className="font-semibold text-[#0A0A0A] font-tabular">₹30,000</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-600">Milestone 2: 2× Story Frames Live</span>
+                  <span className="font-semibold text-[#0A0A0A] font-tabular">₹15,000</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Thread Action */}
+            <div className="p-5 flex items-center gap-3">
+              <Link
+                href="/messages"
+                className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs active:scale-[0.98]"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Message {selectedCampaign.brandName}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3.5 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] hover:bg-zinc-100 text-xs font-semibold text-[#0A0A0A] transition-colors cursor-pointer shadow-2xs"
+              >
+                <FileCheck2 className="w-3.5 h-3.5 text-zinc-500" />
+                <span>Contract PDF</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-[#E5E4DF] p-12 text-center space-y-2">
+          <p className="text-sm font-bold text-[#0A0A0A]">No {activeTab} campaigns yet</p>
+          <p className="text-xs text-zinc-500">
+            Accepted brand applications automatically appear here once terms are confirmed.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
+
+export { ContractedCampaigns as MyCampaigns };

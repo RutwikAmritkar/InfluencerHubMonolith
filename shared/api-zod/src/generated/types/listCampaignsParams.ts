@@ -7,7 +7,7 @@
  */
 
 export type ListCampaignsParams = {
-platform?: string;
-status?: string;
-brandId?: number;
+  platform?: string;
+  status?: string;
+  brandId?: number;
 };

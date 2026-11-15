@@ -2,8 +2,13 @@ import { db } from "@workspace/db";
 import {
   usersTable, influencersTable, brandsTable, campaignsTable,
   applicationsTable, notificationsTable, conversationsTable, messagesTable,
+  user as userTable, account as accountTable, session as sessionTable, verification as verificationTable
 } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { auth } from "../../backend/src/auth/index";
 import crypto from "crypto";
+
+const DEMO_PASSWORD = "demo1234";
 
 function hashPassword(password: string): string {
   const secret = process.env.SESSION_SECRET ?? "influencer-hub-secret";
@@ -11,9 +16,9 @@ function hashPassword(password: string): string {
 }
 
 async function seed() {
-  console.log("Seeding database...");
+  console.log("Seeding database with Better Auth credential support...");
 
-  // Clear existing data
+  // Clear existing data in reverse dependency order
   await db.delete(messagesTable);
   await db.delete(conversationsTable);
   await db.delete(notificationsTable);
@@ -21,17 +26,21 @@ async function seed() {
   await db.delete(campaignsTable);
   await db.delete(influencersTable);
   await db.delete(brandsTable);
+  await db.delete(sessionTable);
+  await db.delete(accountTable);
+  await db.delete(verificationTable);
+  await db.delete(userTable);
   await db.delete(usersTable);
 
   // ── Influencer users ─────────────────────────────────────────────────────────
   const influencerData = [
-    { name: "Maya Chen", email: "maya@influencerhub.demo", category: "Beauty & Fashion", country: "US", followers: 892000, engagement: 4.8, avgViews: 320000, cost: 4500, platforms: ["Instagram", "TikTok"], languages: ["English", "Mandarin"], avatar: "https://i.pravatar.cc/150?img=47", monthly: 18000, verified: true },
+    { name: "Maya Chen", email: "maya@influencerhub.demo", category: "Beauty & Fashion", country: "India", followers: 892000, engagement: 4.8, avgViews: 320000, cost: 4500, platforms: ["Instagram", "TikTok"], languages: ["English", "Mandarin"], avatar: "https://i.pravatar.cc/150?img=47", monthly: 18000, verified: true },
     { name: "Carlos Rivera", email: "carlos@influencerhub.demo", category: "Fitness & Health", country: "MX", followers: 1240000, engagement: 3.9, avgViews: 480000, cost: 6200, platforms: ["YouTube", "Instagram"], languages: ["Spanish", "English"], avatar: "https://i.pravatar.cc/150?img=12", monthly: 24000, verified: true },
-    { name: "Aisha Patel", email: "aisha@influencerhub.demo", category: "Technology", country: "IN", followers: 445000, engagement: 6.2, avgViews: 180000, cost: 2800, platforms: ["YouTube", "TikTok"], languages: ["Hindi", "English"], avatar: "https://i.pravatar.cc/150?img=32", monthly: 12000, verified: true },
+    { name: "Aisha Patel", email: "aisha@influencerhub.demo", category: "Technology", country: "India", followers: 445000, engagement: 6.2, avgViews: 180000, cost: 2800, platforms: ["YouTube", "TikTok"], languages: ["Hindi", "English"], avatar: "https://i.pravatar.cc/150?img=32", monthly: 12000, verified: true },
     { name: "Liam O'Brien", email: "liam@influencerhub.demo", category: "Travel & Lifestyle", country: "AU", followers: 678000, engagement: 5.1, avgViews: 245000, cost: 3400, platforms: ["Instagram", "YouTube"], languages: ["English"], avatar: "https://i.pravatar.cc/150?img=51", monthly: 15000, verified: false },
     { name: "Yuki Tanaka", email: "yuki@influencerhub.demo", category: "Food & Cooking", country: "JP", followers: 523000, engagement: 7.3, avgViews: 195000, cost: 2600, platforms: ["Instagram", "TikTok"], languages: ["Japanese", "English"], avatar: "https://i.pravatar.cc/150?img=44", monthly: 9800, verified: true },
     { name: "Sofia Andersen", email: "sofia@influencerhub.demo", category: "Sustainable Living", country: "DK", followers: 312000, engagement: 8.4, avgViews: 142000, cost: 1900, platforms: ["Instagram"], languages: ["Danish", "English"], avatar: "https://i.pravatar.cc/150?img=25", monthly: 7200, verified: false },
-    { name: "Marcus Williams", email: "marcus@influencerhub.demo", category: "Gaming", country: "US", followers: 2100000, engagement: 2.8, avgViews: 720000, cost: 9800, platforms: ["YouTube", "TikTok"], languages: ["English"], avatar: "https://i.pravatar.cc/150?img=68", monthly: 42000, verified: true },
+    { name: "Marcus Williams", email: "marcus@influencerhub.demo", category: "Gaming", country: "India", followers: 2100000, engagement: 2.8, avgViews: 720000, cost: 9800, platforms: ["YouTube", "TikTok"], languages: ["English"], avatar: "https://i.pravatar.cc/150?img=68", monthly: 42000, verified: true },
     { name: "Priya Sharma", email: "priya@influencerhub.demo", category: "Education", country: "IN", followers: 387000, engagement: 5.9, avgViews: 163000, cost: 2200, platforms: ["YouTube", "Instagram"], languages: ["Hindi", "English", "Marathi"], avatar: "https://i.pravatar.cc/150?img=38", monthly: 8900, verified: true },
     { name: "Jake Thompson", email: "jake@influencerhub.demo", category: "Fitness & Health", country: "CA", followers: 756000, engagement: 4.4, avgViews: 287000, cost: 4100, platforms: ["Instagram", "TikTok"], languages: ["English", "French"], avatar: "https://i.pravatar.cc/150?img=59", monthly: 17500, verified: true },
     { name: "Amara Diallo", email: "amara@influencerhub.demo", category: "Fashion", country: "NG", followers: 228000, engagement: 9.1, avgViews: 98000, cost: 1400, platforms: ["Instagram", "TikTok"], languages: ["English", "Yoruba", "French"], avatar: "https://i.pravatar.cc/150?img=29", monthly: 5400, verified: false },
@@ -61,23 +70,52 @@ async function seed() {
     { name: "Aria Music Group", email: "aria@influencerhub.demo", industry: "Music & Entertainment", country: "US", logo: "https://logo.clearbit.com/spotify.com", desc: "Independent music label and streaming consultancy.", website: "https://aria.demo" },
   ];
 
-  // Insert brand users and profiles
-  const brandUsers = await db.insert(usersTable).values(
-    brandData.map(b => ({ email: b.email, passwordHash: hashPassword("demo123"), role: "brand" as const, name: b.name }))
-  ).returning();
+  // Register brand users via Better Auth + Legacy users table
+  const brandUsers: Array<{ stringId: string; integerId: number; name: string }> = [];
+  for (const b of brandData) {
+    const signup = await auth.api.signUpEmail({
+      body: { email: b.email, password: DEMO_PASSWORD, name: b.name },
+    });
+    const stringId = signup.user.id;
+    await db.update(userTable).set({ role: "brand", country: b.country }).where(eq(userTable.id, stringId));
+
+    const [legacyUser] = await db.insert(usersTable).values({
+      email: b.email,
+      passwordHash: hashPassword(DEMO_PASSWORD),
+      role: "brand",
+      name: b.name,
+    }).returning();
+
+    brandUsers.push({ stringId, integerId: legacyUser.id, name: b.name });
+  }
 
   const brands = await db.insert(brandsTable).values(
-    brandData.map((b, i) => ({ userId: brandUsers[i].id, name: b.name, industry: b.industry, country: b.country, description: b.desc, logoUrl: b.logo, website: b.website }))
+    brandData.map((b, i) => ({ userId: brandUsers[i].stringId, name: b.name, industry: b.industry, country: b.country, description: b.desc, logoUrl: b.logo, website: b.website }))
   ).returning();
 
-  // Insert influencer users and profiles
-  const infUsers = await db.insert(usersTable).values(
-    influencerData.map(inf => ({ email: inf.email, passwordHash: hashPassword("demo123"), role: "influencer" as const, name: inf.name, avatarUrl: inf.avatar }))
-  ).returning();
+  // Register influencer users via Better Auth + Legacy users table
+  const infUsers: Array<{ stringId: string; integerId: number; name: string }> = [];
+  for (const inf of influencerData) {
+    const signup = await auth.api.signUpEmail({
+      body: { email: inf.email, password: DEMO_PASSWORD, name: inf.name },
+    });
+    const stringId = signup.user.id;
+    await db.update(userTable).set({ role: "influencer", country: inf.country, image: inf.avatar }).where(eq(userTable.id, stringId));
+
+    const [legacyUser] = await db.insert(usersTable).values({
+      email: inf.email,
+      passwordHash: hashPassword(DEMO_PASSWORD),
+      role: "influencer",
+      name: inf.name,
+      avatarUrl: inf.avatar,
+    }).returning();
+
+    infUsers.push({ stringId, integerId: legacyUser.id, name: inf.name });
+  }
 
   const influencers = await db.insert(influencersTable).values(
     influencerData.map((inf, i) => ({
-      userId: infUsers[i].id,
+      userId: infUsers[i].stringId,
       bio: `${inf.name} is a ${inf.category} creator with a passionate community. Known for authentic storytelling and high engagement.`,
       category: inf.category,
       country: inf.country,
@@ -157,24 +195,24 @@ async function seed() {
 
   // ── Notifications ────────────────────────────────────────────────────────────
   await db.insert(notificationsTable).values([
-    { userId: infUsers[0].id, type: "application", title: "Application Accepted", body: "Peak Performance Co. accepted your application for the Fall Collection campaign.", isRead: false },
-    { userId: infUsers[0].id, type: "invite", title: "New Campaign Invitation", body: "Lumière Beauty has invited you to collaborate on their Summer Glow campaign.", isRead: false },
-    { userId: infUsers[0].id, type: "message", title: "New Message from Harvest Kitchen", body: "Hey! We'd love to discuss the recipe series collaboration.", isRead: true },
-    { userId: brandUsers[0].id, type: "application", title: "3 New Applications", body: "3 influencers applied to your NovaTech Product Launch campaign.", isRead: false },
-    { userId: brandUsers[0].id, type: "message", title: "New Message from Aisha Patel", body: "Thank you for considering me for the campaign!", isRead: false },
+    { userId: infUsers[0].integerId, type: "application", title: "Application Accepted", body: "Peak Performance Co. accepted your application for the Fall Collection campaign.", isRead: false },
+    { userId: infUsers[0].integerId, type: "invite", title: "New Campaign Invitation", body: "Lumière Beauty has invited you to collaborate on their Summer Glow campaign.", isRead: false },
+    { userId: infUsers[0].integerId, type: "message", title: "New Message from Harvest Kitchen", body: "Hey! We'd love to discuss the recipe series collaboration.", isRead: true },
+    { userId: brandUsers[0].integerId, type: "application", title: "3 New Applications", body: "3 influencers applied to your NovaTech Product Launch campaign.", isRead: false },
+    { userId: brandUsers[0].integerId, type: "message", title: "New Message from Aisha Patel", body: "Thank you for considering me for the campaign!", isRead: false },
   ]);
 
   // ── Seed conversations ────────────────────────────────────────────────────────
-  const [conv1] = await db.insert(conversationsTable).values({ user1Id: brandUsers[1].id, user2Id: infUsers[0].id }).returning();
+  const [conv1] = await db.insert(conversationsTable).values({ user1Id: brandUsers[1].integerId, user2Id: infUsers[0].integerId }).returning();
   await db.insert(messagesTable).values([
-    { conversationId: conv1.id, senderId: brandUsers[1].id, content: "Hi Maya! We love your content and think you'd be perfect for our Summer Glow campaign.", isRead: true },
-    { conversationId: conv1.id, senderId: infUsers[0].id, content: "Thank you so much! I've been a Lumière fan for years. Would love to hear more details.", isRead: true },
-    { conversationId: conv1.id, senderId: brandUsers[1].id, content: "We're looking for 8 Reels and 15 Stories. Budget is $18k. Does that work for you?", isRead: false },
+    { conversationId: conv1.id, senderId: brandUsers[1].integerId, content: "Hi Maya! We love your content and think you'd be perfect for our Summer Glow campaign.", isRead: true },
+    { conversationId: conv1.id, senderId: infUsers[0].integerId, content: "Thank you so much! I've been a Lumière fan for years. Would love to hear more details.", isRead: true },
+    { conversationId: conv1.id, senderId: brandUsers[1].integerId, content: "We're looking for 8 Reels and 15 Stories. Budget is $18k. Does that work for you?", isRead: false },
   ]);
 
   console.log(`Seeded: ${brandUsers.length} brands, ${infUsers.length} influencers, ${campaigns.length} campaigns`);
-  console.log("Demo login: maya@influencerhub.demo / demo123 (influencer)");
-  console.log("Demo login: nova@influencerhub.demo / demo123 (brand)");
+  console.log(`Demo login: maya@influencerhub.demo / ${DEMO_PASSWORD} (influencer)`);
+  console.log(`Demo login: nova@influencerhub.demo / ${DEMO_PASSWORD} (brand)`);
 }
 
 seed().catch(err => {

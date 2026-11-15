@@ -27,47 +27,57 @@ const providers: Record<string, SocialPlatformProvider> = {
 };
 
 // 1. POST /api/social/:platform/connect
-router.post("/social/:platform/connect", requireAuth, requireRole(["influencer"]), async (req: Request, res: Response): Promise<void> => {
-  const authReq = req as AuthenticatedRequest;
-  const platformRaw = req.params.platform;
-  const platform = (Array.isArray(platformRaw) ? platformRaw[0] : platformRaw).toLowerCase();
-  const provider = providers[platform];
+router.post(
+  "/social/:platform/connect",
+  requireAuth,
+  requireRole(["influencer"]),
+  async (req: Request, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const platformRaw = req.params.platform;
+    const platform = (Array.isArray(platformRaw) ? platformRaw[0] : platformRaw).toLowerCase();
+    const provider = providers[platform];
 
-  if (!provider) {
-    res.status(400).json({ error: `Platform '${platform}' is not supported. Supported platforms: instagram, youtube.` });
-    return;
+    if (!provider) {
+      res.status(400).json({
+        error: `Platform '${platform}' is not supported. Supported platforms: instagram, youtube.`,
+      });
+      return;
+    }
+
+    const userId = authReq.userId!;
+    const state = crypto.randomBytes(24).toString("hex");
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 15 * 60 * 1000); // Valid for 15 minutes
+
+    // Persist short-lived, single-use OAuth state record in PostgreSQL
+    await db.insert(oauthStatesTable).values({
+      state,
+      userId,
+      provider: platform,
+      createdAt: now,
+      expiresAt,
+    });
+
+    const redirectUrl = await provider.getAuthorizationUrl(state);
+
+    res.json({
+      platform,
+      redirectUrl,
+      state,
+      capabilities: provider.capabilities,
+    });
   }
-
-  const userId = authReq.userId!;
-  const state = crypto.randomBytes(24).toString("hex");
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + 15 * 60 * 1000); // Valid for 15 minutes
-
-  // Persist short-lived, single-use OAuth state record in PostgreSQL
-  await db.insert(oauthStatesTable).values({
-    state,
-    userId,
-    provider: platform,
-    createdAt: now,
-    expiresAt,
-  });
-
-  const redirectUrl = await provider.getAuthorizationUrl(state);
-
-  res.json({
-    platform,
-    redirectUrl,
-    state,
-    capabilities: provider.capabilities,
-  });
-});
+);
 
 // 2. GET /api/social/:platform/callback
 router.get("/social/:platform/callback", async (req: Request, res: Response): Promise<void> => {
   const platformRaw = req.params.platform;
   const platform = (Array.isArray(platformRaw) ? platformRaw[0] : platformRaw).toLowerCase();
   const provider = providers[platform];
-  const { code, state, error, error_reason, error_description } = req.query as Record<string, string>;
+  const { code, state, error, error_reason, error_description } = req.query as Record<
+    string,
+    string
+  >;
 
   if (!provider) {
     res.status(400).json({ error: `Platform '${platform}' is not supported.` });
@@ -75,7 +85,9 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
   }
 
   if (error || error_reason || error_description) {
-    res.status(400).json({ error: `OAuth authorization failed or was canceled: ${error_description || error_reason || error}` });
+    res.status(400).json({
+      error: `OAuth authorization failed or was canceled: ${error_description || error_reason || error}`,
+    });
     return;
   }
 
@@ -102,7 +114,9 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
   }
 
   if (new Date() > new Date(stateRecord.expiresAt)) {
-    res.status(400).json({ error: "OAuth state has expired. Please initiate authorization again." });
+    res
+      .status(400)
+      .json({ error: "OAuth state has expired. Please initiate authorization again." });
     return;
   }
 
@@ -112,7 +126,9 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
   }
 
   if (stateRecord.provider.toLowerCase() !== platform) {
-    res.status(400).json({ error: `OAuth state provider mismatch (expected '${stateRecord.provider}', got '${platform}').` });
+    res.status(400).json({
+      error: `OAuth state provider mismatch (expected '${stateRecord.provider}', got '${platform}').`,
+    });
     return;
   }
 
@@ -129,6 +145,28 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
     const tokens = await provider.exchangeCodeForTokens(code);
     const profile = await provider.getProfile(tokens.accessToken);
 
+    // Enforce strict cross-creator account ownership: check if externalAccountId is already owned by another creator
+    const crossAccount = await db
+      .select()
+      .from(socialAccountsTable)
+      .where(
+        and(
+          eq(socialAccountsTable.platform, platform as any),
+          eq(socialAccountsTable.externalAccountId, profile.externalAccountId)
+        )
+      )
+      .limit(1);
+
+    if (crossAccount.length > 0 && crossAccount[0].userId !== userId) {
+      console.warn(
+        `[OAUTH OWNERSHIP CONFLICT] Instagram account @${profile.username} (${profile.externalAccountId}) is already connected to user '${crossAccount[0].userId}'. Connection rejected for user '${userId}'.`
+      );
+      const clientUrl =
+        process.env.CLIENT_URL || process.env.FRONTEND_URL || "http://localhost:5000";
+      res.redirect(`${clientUrl}/settings?error=account_already_connected&platform=${platform}`);
+      return;
+    }
+
     // Encrypt access and refresh tokens using AES-256-GCM
     const encryptedAccess = encryptSocialToken(tokens.accessToken);
     const encryptedRefresh = tokens.refreshToken ? encryptSocialToken(tokens.refreshToken) : null;
@@ -137,7 +175,12 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
     const existingAccounts = await db
       .select()
       .from(socialAccountsTable)
-      .where(and(eq(socialAccountsTable.userId, userId), eq(socialAccountsTable.platform, platform as any)))
+      .where(
+        and(
+          eq(socialAccountsTable.userId, userId),
+          eq(socialAccountsTable.platform, platform as any)
+        )
+      )
       .limit(1);
 
     let socialAccountId: number;
@@ -207,7 +250,11 @@ router.get("/social/:platform/callback", async (req: Request, res: Response): Pr
     await logAuditEvent({
       userId,
       action: "OAUTH_ACCOUNT_CONNECTED",
-      details: JSON.stringify({ platform, username: profile.username, externalAccountId: profile.externalAccountId }),
+      details: JSON.stringify({
+        platform,
+        username: profile.username,
+        externalAccountId: profile.externalAccountId,
+      }),
     });
 
     const clientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || "http://localhost:5000";
@@ -256,9 +303,9 @@ router.get("/social/accounts", requireAuth, async (req: Request, res: Response):
           verificationStatus: acc.verificationStatus,
           isOfficialOAuth: acc.isOfficialOAuth,
           syncState,
-          followers: latestSnapshot ? latestSnapshot.followers : (acc.lastSyncedAt ? 0 : null),
+          followers: latestSnapshot ? latestSnapshot.followers : acc.lastSyncedAt ? 0 : null,
           following: latestSnapshot?.following ?? null,
-          totalContent: latestSnapshot ? latestSnapshot.totalContent : (acc.lastSyncedAt ? 0 : null),
+          totalContent: latestSnapshot ? latestSnapshot.totalContent : acc.lastSyncedAt ? 0 : null,
           reach: latestSnapshot?.reach ?? null,
           avgViews: latestSnapshot?.avgViews ?? null,
           avgLikes: latestSnapshot?.avgLikes ?? null,
@@ -278,225 +325,285 @@ router.get("/social/accounts", requireAuth, async (req: Request, res: Response):
 });
 
 // 3.5 GET /api/social/instagram/analytics (Full Instagram Data Extraction Pipeline)
-router.get("/social/instagram/analytics", requireAuth, async (req: Request, res: Response): Promise<void> => {
-  const authReq = req as AuthenticatedRequest;
-  const userId = authReq.userId!;
+router.get(
+  "/social/instagram/analytics",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId!;
 
-  try {
-    const [account] = await db
-      .select()
-      .from(socialAccountsTable)
-      .where(and(eq(socialAccountsTable.userId, userId), eq(socialAccountsTable.platform, "instagram")))
-      .limit(1);
+    try {
+      const [account] = await db
+        .select()
+        .from(socialAccountsTable)
+        .where(
+          and(eq(socialAccountsTable.userId, userId), eq(socialAccountsTable.platform, "instagram"))
+        )
+        .limit(1);
 
-    if (!account) {
-      res.status(404).json({ error: "No connected Instagram account found for user." });
-      return;
+      if (!account) {
+        res.status(404).json({ error: "No connected Instagram account found for user." });
+        return;
+      }
+
+      if (account.verificationStatus === "DISCONNECTED") {
+        res.status(400).json({
+          error: `Instagram account @${account.username} is disconnected. Re-authorization required.`,
+        });
+        return;
+      }
+
+      const payload = await instagramDataPipelineService.runPipelineForAccount(account.id);
+      res.json(payload);
+    } catch (error: any) {
+      console.error("[GET INSTAGRAM ANALYTICS ERROR]", error);
+      res.status(500).json({
+        error: "Failed to execute Instagram data extraction pipeline.",
+        details: error?.message || String(error),
+      });
     }
-
-    if (account.verificationStatus === "DISCONNECTED") {
-      res.status(400).json({ error: `Instagram account @${account.username} is disconnected. Re-authorization required.` });
-      return;
-    }
-
-    const payload = await instagramDataPipelineService.runPipelineForAccount(account.id);
-    res.json(payload);
-  } catch (error: any) {
-    console.error("[GET INSTAGRAM ANALYTICS ERROR]", error);
-    res.status(500).json({
-      error: "Failed to execute Instagram data extraction pipeline.",
-      details: error?.message || String(error),
-    });
   }
-});
+);
 
 // 4. GET /api/social/accounts/:id/analytics (Telemetry & Content List)
-router.get("/social/accounts/:id/analytics", requireAuth, async (req: Request, res: Response): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const accountId = parseInt(rawId, 10);
+router.get(
+  "/social/accounts/:id/analytics",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId!;
+    const userRole = authReq.user?.role;
+    const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const accountId = parseInt(rawId, 10);
 
-  if (isNaN(accountId)) {
-    res.status(400).json({ error: "Invalid social account ID." });
-    return;
-  }
-
-  try {
-    const [account] = await db.select().from(socialAccountsTable).where(eq(socialAccountsTable.id, accountId)).limit(1);
-    if (!account) {
-      res.status(404).json({ error: "Social account not found." });
+    if (isNaN(accountId)) {
+      res.status(400).json({ error: "Invalid social account ID." });
       return;
     }
 
-    const snapshots = await db
-      .select()
-      .from(socialMetricSnapshotsTable)
-      .where(eq(socialMetricSnapshotsTable.socialAccountId, accountId))
-      .orderBy(socialMetricSnapshotsTable.snapshotDate)
-      .limit(90);
+    try {
+      const [account] = await db
+        .select()
+        .from(socialAccountsTable)
+        .where(eq(socialAccountsTable.id, accountId))
+        .limit(1);
+      if (!account) {
+        res.status(404).json({ error: "Social account not found." });
+        return;
+      }
 
-    const content = await db
-      .select()
-      .from(socialContentTable)
-      .where(eq(socialContentTable.socialAccountId, accountId))
-      .orderBy(desc(socialContentTable.publishedAt))
-      .limit(20);
+      if (account.userId !== userId && userRole !== "brand" && userRole !== "admin") {
+        res.status(403).json({
+          error: "Forbidden. You do not have permission to view this account's analytics.",
+        });
+        return;
+      }
 
-    const [latestSnapshot] = snapshots.length > 0 ? [snapshots[snapshots.length - 1]] : [null];
+      const snapshots = await db
+        .select()
+        .from(socialMetricSnapshotsTable)
+        .where(eq(socialMetricSnapshotsTable.socialAccountId, accountId))
+        .orderBy(socialMetricSnapshotsTable.snapshotDate)
+        .limit(90);
 
-    res.json({
-      account: {
-        id: account.id,
-        platform: account.platform,
-        username: account.username,
-        displayName: account.displayName,
-        profileUrl: account.profileUrl,
-        avatarUrl: account.avatarUrl,
-        verificationStatus: account.verificationStatus,
-        lastSyncedAt: account.lastSyncedAt ? account.lastSyncedAt.toISOString() : null,
-      },
-      currentMetrics: {
-        followers: latestSnapshot?.followers || 0,
-        following: latestSnapshot?.following ?? null,
-        totalContent: latestSnapshot?.totalContent || 0,
-        totalViews: latestSnapshot?.totalViews || "0",
-        avgViews: latestSnapshot?.avgViews || 0,
-        avgLikes: latestSnapshot?.avgLikes || 0,
-        avgComments: latestSnapshot?.avgComments || 0,
-        engagementRate: latestSnapshot?.engagementRate || "0.00",
-      },
-      historicalSnapshots: snapshots.map((s) => ({
-        id: s.id,
-        date: s.snapshotDate.toISOString(),
-        followers: s.followers,
-        totalViews: s.totalViews,
-        engagementRate: s.engagementRate,
-        avgViews: s.avgViews,
-      })),
-      recentContent: content.map((c) => ({
-        id: c.id,
-        externalContentId: c.externalContentId,
-        contentType: c.contentType,
-        caption: c.caption,
-        permalink: c.permalink,
-        thumbnailUrl: c.thumbnailUrl,
-        publishedAt: c.publishedAt ? c.publishedAt.toISOString() : null,
-        views: c.views,
-        likes: c.likes,
-        comments: c.comments,
-        shares: c.shares,
-      })),
-    });
-  } catch (error) {
-    console.error("[GET SOCIAL ANALYTICS ERROR]", error);
-    res.status(500).json({ error: "Failed to retrieve social analytics data." });
+      const content = await db
+        .select()
+        .from(socialContentTable)
+        .where(eq(socialContentTable.socialAccountId, accountId))
+        .orderBy(desc(socialContentTable.publishedAt))
+        .limit(20);
+
+      const [latestSnapshot] = snapshots.length > 0 ? [snapshots[snapshots.length - 1]] : [null];
+
+      res.json({
+        account: {
+          id: account.id,
+          platform: account.platform,
+          username: account.username,
+          displayName: account.displayName,
+          profileUrl: account.profileUrl,
+          avatarUrl: account.avatarUrl,
+          verificationStatus: account.verificationStatus,
+          lastSyncedAt: account.lastSyncedAt ? account.lastSyncedAt.toISOString() : null,
+        },
+        currentMetrics: {
+          followers: latestSnapshot?.followers || 0,
+          following: latestSnapshot?.following ?? null,
+          totalContent: latestSnapshot?.totalContent || 0,
+          totalViews: latestSnapshot?.totalViews || "0",
+          avgViews: latestSnapshot?.avgViews || 0,
+          avgLikes: latestSnapshot?.avgLikes || 0,
+          avgComments: latestSnapshot?.avgComments || 0,
+          engagementRate: latestSnapshot?.engagementRate || "0.00",
+        },
+        historicalSnapshots: snapshots.map((s) => ({
+          id: s.id,
+          date: s.snapshotDate.toISOString(),
+          followers: s.followers,
+          totalViews: s.totalViews,
+          engagementRate: s.engagementRate,
+          avgViews: s.avgViews,
+        })),
+        recentContent: content.map((c) => ({
+          id: c.id,
+          externalContentId: c.externalContentId,
+          contentType: c.contentType,
+          caption: c.caption,
+          permalink: c.permalink,
+          thumbnailUrl: c.thumbnailUrl,
+          publishedAt: c.publishedAt ? c.publishedAt.toISOString() : null,
+          views: c.views,
+          likes: c.likes,
+          comments: c.comments,
+          shares: c.shares,
+        })),
+      });
+    } catch (error) {
+      console.error("[GET SOCIAL ANALYTICS ERROR]", error);
+      res.status(500).json({ error: "Failed to retrieve social analytics data." });
+    }
   }
-});
+);
 
 // 5. DELETE /api/social/:platform/disconnect (Deliberate Disconnect & Credential Erasure)
-router.delete("/social/:platform/disconnect", requireAuth, requireRole(["influencer"]), async (req: Request, res: Response): Promise<void> => {
-  const authReq = req as AuthenticatedRequest;
-  const userId = authReq.userId!;
-  const platformRaw = req.params.platform;
-  const platform = (Array.isArray(platformRaw) ? platformRaw[0] : platformRaw).toLowerCase();
+router.delete(
+  "/social/:platform/disconnect",
+  requireAuth,
+  requireRole(["influencer"]),
+  async (req: Request, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId!;
+    const platformRaw = req.params.platform;
+    const platform = (Array.isArray(platformRaw) ? platformRaw[0] : platformRaw).toLowerCase();
 
-  try {
-    const [account] = await db
-      .select()
-      .from(socialAccountsTable)
-      .where(and(eq(socialAccountsTable.userId, userId), eq(socialAccountsTable.platform, platform as any)))
-      .limit(1);
+    try {
+      const [account] = await db
+        .select()
+        .from(socialAccountsTable)
+        .where(
+          and(
+            eq(socialAccountsTable.userId, userId),
+            eq(socialAccountsTable.platform, platform as any)
+          )
+        )
+        .limit(1);
 
-    if (!account) {
-      res.status(404).json({ error: `No connected '${platform}' account found.` });
-      return;
+      if (!account) {
+        res.status(404).json({ error: `No connected '${platform}' account found.` });
+        return;
+      }
+
+      // 1. Permanently delete encrypted tokens (credential destruction)
+      await db.delete(socialTokensTable).where(eq(socialTokensTable.socialAccountId, account.id));
+
+      // 2. Mark account status as DISCONNECTED (retaining account record for historical analytics & attribution)
+      await db
+        .update(socialAccountsTable)
+        .set({
+          verificationStatus: "DISCONNECTED",
+          updatedAt: new Date(),
+        })
+        .where(eq(socialAccountsTable.id, account.id));
+
+      // Historical media (social_content) and metric snapshots (social_metric_snapshots) are deliberately RETAINED
+
+      await logAuditEvent({
+        userId,
+        action: "OAUTH_ACCOUNT_DISCONNECTED",
+        details: JSON.stringify({ platform, username: account.username, credentialErased: true }),
+      });
+
+      res.json({
+        success: true,
+        message: `Successfully disconnected ${platform} account @${account.username}. OAuth credentials erased; historical metrics retained.`,
+      });
+    } catch (error) {
+      console.error("[DISCONNECT SOCIAL ERROR]", error);
+      res.status(500).json({ error: "Failed to disconnect social account." });
     }
-
-    // 1. Permanently delete encrypted tokens (credential destruction)
-    await db.delete(socialTokensTable).where(eq(socialTokensTable.socialAccountId, account.id));
-
-    // 2. Mark account status as DISCONNECTED (retaining account record for historical analytics & attribution)
-    await db
-      .update(socialAccountsTable)
-      .set({
-        verificationStatus: "DISCONNECTED",
-        updatedAt: new Date(),
-      })
-      .where(eq(socialAccountsTable.id, account.id));
-
-    // Historical media (social_content) and metric snapshots (social_metric_snapshots) are deliberately RETAINED
-
-    await logAuditEvent({
-      userId,
-      action: "OAUTH_ACCOUNT_DISCONNECTED",
-      details: JSON.stringify({ platform, username: account.username, credentialErased: true }),
-    });
-
-    res.json({ success: true, message: `Successfully disconnected ${platform} account @${account.username}. OAuth credentials erased; historical metrics retained.` });
-  } catch (error) {
-    console.error("[DISCONNECT SOCIAL ERROR]", error);
-    res.status(500).json({ error: "Failed to disconnect social account." });
   }
-});
+);
 
 // 6. POST /api/social/:platform/sync
-router.post("/social/:platform/sync", requireAuth, requireRole(["influencer"]), async (req: Request, res: Response): Promise<void> => {
-  const authReq = req as AuthenticatedRequest;
-  const userId = authReq.userId!;
-  const platformRaw = req.params.platform;
-  const platform = (Array.isArray(platformRaw) ? platformRaw[0] : platformRaw).toLowerCase();
+router.post(
+  "/social/:platform/sync",
+  requireAuth,
+  requireRole(["influencer"]),
+  async (req: Request, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId!;
+    const platformRaw = req.params.platform;
+    const platform = (Array.isArray(platformRaw) ? platformRaw[0] : platformRaw).toLowerCase();
 
-  try {
-    const [account] = await db
-      .select()
-      .from(socialAccountsTable)
-      .where(and(eq(socialAccountsTable.userId, userId), eq(socialAccountsTable.platform, platform as any)))
-      .limit(1);
+    try {
+      const [account] = await db
+        .select()
+        .from(socialAccountsTable)
+        .where(
+          and(
+            eq(socialAccountsTable.userId, userId),
+            eq(socialAccountsTable.platform, platform as any)
+          )
+        )
+        .limit(1);
 
-    if (!account) {
-      res.status(404).json({ error: `No connected '${platform}' account found to sync.` });
-      return;
+      if (!account) {
+        res.status(404).json({ error: `No connected '${platform}' account found to sync.` });
+        return;
+      }
+
+      if (account.verificationStatus === "DISCONNECTED") {
+        res.status(400).json({
+          error: `Cannot sync disconnected ${platform} account @${account.username}. Re-authorization required.`,
+        });
+        return;
+      }
+
+      const result = await socialSyncService.syncSocialAccount(account.id);
+      res.json(result);
+    } catch (error: any) {
+      console.error("[SYNC SOCIAL ERROR]", error);
+      res
+        .status(500)
+        .json({ error: error.message || "Failed to synchronize social account data." });
     }
-
-    if (account.verificationStatus === "DISCONNECTED") {
-      res.status(400).json({ error: `Cannot sync disconnected ${platform} account @${account.username}. Re-authorization required.` });
-      return;
-    }
-
-    const result = await socialSyncService.syncSocialAccount(account.id);
-    res.json(result);
-  } catch (error: any) {
-    console.error("[SYNC SOCIAL ERROR]", error);
-    res.status(500).json({ error: error.message || "Failed to synchronize social account data." });
   }
-});
+);
 
 // 7. POST /api/social/privacy/gdpr-delete-user-data (Full Right-To-Be-Forgotten Privacy Erasure)
-router.post("/social/privacy/gdpr-delete-user-data", requireAuth, async (req: Request, res: Response): Promise<void> => {
-  const authReq = req as AuthenticatedRequest;
-  const userId = authReq.userId!;
+router.post(
+  "/social/privacy/gdpr-delete-user-data",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId!;
 
-  try {
-    const userAccounts = await db
-      .select()
-      .from(socialAccountsTable)
-      .where(eq(socialAccountsTable.userId, userId));
+    try {
+      const userAccounts = await db
+        .select()
+        .from(socialAccountsTable)
+        .where(eq(socialAccountsTable.userId, userId));
 
-    for (const acc of userAccounts) {
-      // Full cascading hard deletion of account, tokens, snapshots, and media content for privacy compliance
-      await db.delete(socialAccountsTable).where(eq(socialAccountsTable.id, acc.id));
+      for (const acc of userAccounts) {
+        // Full cascading hard deletion of account, tokens, snapshots, and media content for privacy compliance
+        await db.delete(socialAccountsTable).where(eq(socialAccountsTable.id, acc.id));
+      }
+
+      await logAuditEvent({
+        userId,
+        action: "PRIVACY_DATA_ERASURE",
+        details: JSON.stringify({ count: userAccounts.length }),
+      });
+
+      res.json({
+        success: true,
+        message: `Successfully deleted all social account data and history for user.`,
+      });
+    } catch (error) {
+      console.error("[GDPR DELETE ERROR]", error);
+      res.status(500).json({ error: "Failed to process privacy data erasure." });
     }
-
-    await logAuditEvent({
-      userId,
-      action: "PRIVACY_DATA_ERASURE",
-      details: JSON.stringify({ count: userAccounts.length }),
-    });
-
-    res.json({ success: true, message: `Successfully deleted all social account data and history for user.` });
-  } catch (error) {
-    console.error("[GDPR DELETE ERROR]", error);
-    res.status(500).json({ error: "Failed to process privacy data erasure." });
   }
-});
+);
 
 export default router;

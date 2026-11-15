@@ -5,7 +5,7 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { CampaignStatus } from './campaignStatus';
+import type { CampaignStatus } from "./campaignStatus";
 
 export interface Campaign {
   id: number;

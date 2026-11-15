@@ -11,15 +11,57 @@ router.get("/ai/suggestions", async (req: Request, res: Response): Promise<void>
   const { type } = req.query as { type?: string };
 
   const suggestions = [
-    { id: 1, type: "audience", title: "Your audience is strongest in India", body: "62% of your engaged followers are based in India, peaking between 7PM-10PM IST. Consider scheduling content during this window.", confidence: 94, action: "Optimize posting schedule →" },
-    { id: 2, type: "timing", title: "Post between 6PM and 8PM for maximum reach", body: "Data from your last 90 days shows 3.4x higher engagement when you post in the early evening window.", confidence: 91, action: "Schedule next post →" },
-    { id: 3, type: "match", title: "This creator matches 92% with your campaign", body: "Based on audience demographics, engagement patterns, and category alignment, @maya_creates is an ideal fit for your Summer Collection campaign.", confidence: 92, action: "View profile →" },
-    { id: 4, type: "growth", title: "Reels drive 2.8x more follower growth", body: "Your Reels content averages 2.8x more new followers per post vs static images. Increasing Reel frequency could add 3,200 followers this month.", confidence: 88, action: "Create a Reel →" },
-    { id: 5, type: "revenue", title: "You could earn $2,400 more this month", body: "3 active campaigns match your niche and audience. Applying to all three within the next 48 hours maximizes your booking rate.", confidence: 95, action: "Browse campaigns →" },
-    { id: 6, type: "engagement", title: "Engagement drops after 5 posts per week", body: "Your audience shows fatigue signals when post frequency exceeds 5/week. Quality over quantity is the pattern here.", confidence: 89, action: "Adjust frequency →" },
+    {
+      id: 1,
+      type: "audience",
+      title: "Your audience is strongest in India",
+      body: "62% of your engaged followers are based in India, peaking between 7PM-10PM IST. Consider scheduling content during this window.",
+      confidence: 94,
+      action: "Optimize posting schedule →",
+    },
+    {
+      id: 2,
+      type: "timing",
+      title: "Post between 6PM and 8PM for maximum reach",
+      body: "Data from your last 90 days shows 3.4x higher engagement when you post in the early evening window.",
+      confidence: 91,
+      action: "Schedule next post →",
+    },
+    {
+      id: 3,
+      type: "match",
+      title: "This creator matches 92% with your campaign",
+      body: "Based on audience demographics, engagement patterns, and category alignment, @maya_creates is an ideal fit for your Summer Collection campaign.",
+      confidence: 92,
+      action: "View profile →",
+    },
+    {
+      id: 4,
+      type: "growth",
+      title: "Reels drive 2.8x more follower growth",
+      body: "Your Reels content averages 2.8x more new followers per post vs static images. Increasing Reel frequency could add 3,200 followers this month.",
+      confidence: 88,
+      action: "Create a Reel →",
+    },
+    {
+      id: 5,
+      type: "revenue",
+      title: "You could earn $2,400 more this month",
+      body: "3 active campaigns match your niche and audience. Applying to all three within the next 48 hours maximizes your booking rate.",
+      confidence: 95,
+      action: "Browse campaigns →",
+    },
+    {
+      id: 6,
+      type: "engagement",
+      title: "Engagement drops after 5 posts per week",
+      body: "Your audience shows fatigue signals when post frequency exceeds 5/week. Quality over quantity is the pattern here.",
+      confidence: 89,
+      action: "Adjust frequency →",
+    },
   ];
 
-  const filtered = type ? suggestions.filter(s => s.type === type) : suggestions;
+  const filtered = type ? suggestions.filter((s) => s.type === type) : suggestions;
   res.json(filtered);
 });
 
@@ -83,8 +125,14 @@ router.post("/ai/generate", requireAuth, async (req: Request, res: Response): Pr
     const userId = (req as Request & { userId: string | number }).userId;
 
     // 3. Fetch User & Influencer Data from Database
-    const [user] = await db.select().from(userTable).where(eq(userTable.id, String(userId)));
-    const [influencer] = await db.select().from(influencersTable).where(eq(influencersTable.userId, String(userId)));
+    const [user] = await db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.id, String(userId)));
+    const [influencer] = await db
+      .select()
+      .from(influencersTable)
+      .where(eq(influencersTable.userId, String(userId)));
 
     const activeCampaigns = await db.select().from(campaignsTable).limit(3);
 
@@ -95,7 +143,7 @@ router.post("/ai/generate", requireAuth, async (req: Request, res: Response): Pr
         category: influencer?.category || "Lifestyle & Fashion",
         country: influencer?.country || "US",
         followers: influencer?.followers || 125000,
-        platforms: influencer?.platforms || ["instagram", "tiktok", "youtube"],
+        platforms: influencer?.platforms || ["instagram", "youtube"],
         isVerified: influencer?.isVerified ?? true,
       },
       performance: {
@@ -116,7 +164,7 @@ router.post("/ai/generate", requireAuth, async (req: Request, res: Response): Pr
     };
 
     // 5. Generate LLM Insights (with OpenAI or resilient fallback)
-    const result = await llmService.generate(prompt.trim(), context, language || 'en');
+    const result = await llmService.generate(prompt.trim(), context, language || "en");
 
     // 6. Return Structured Response
     res.json(result);

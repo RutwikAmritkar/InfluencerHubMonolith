@@ -18,10 +18,16 @@ export const messagesTable = pgTable("messages", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const insertConversationSchema = createInsertSchema(conversationsTable).omit({ id: true, createdAt: true });
+export const insertConversationSchema = createInsertSchema(conversationsTable).omit({
+  id: true,
+  createdAt: true,
+});
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type Conversation = typeof conversationsTable.$inferSelect;
 
-export const insertMessageSchema = createInsertSchema(messagesTable).omit({ id: true, createdAt: true });
+export const insertMessageSchema = createInsertSchema(messagesTable).omit({
+  id: true,
+  createdAt: true,
+});
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messagesTable.$inferSelect;

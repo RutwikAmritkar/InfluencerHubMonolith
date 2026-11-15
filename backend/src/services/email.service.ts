@@ -1,3 +1,5 @@
+import { logger } from "../lib/logger.js";
+
 interface SendEmailOptions {
   to: string;
   subject: string;
@@ -6,8 +8,14 @@ interface SendEmailOptions {
 }
 
 // In-memory store for development test inspection
-let devLatestResetLink: { email: string; url: string; token: string; timestamp: number } | null = null;
-let devLatestVerificationLink: { email: string; url: string; token: string; timestamp: number } | null = null;
+let devLatestResetLink: { email: string; url: string; token: string; timestamp: number } | null =
+  null;
+let devLatestVerificationLink: {
+  email: string;
+  url: string;
+  token: string;
+  timestamp: number;
+} | null = null;
 
 export function getLatestDevResetLink() {
   return devLatestResetLink;
@@ -23,13 +31,44 @@ export function clearDevEmailStore() {
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
+  const fromAddress = process.env.EMAIL_FROM || "CreatorsBrand <notifications@creatorsbrand.in>";
+
+  // 1. Resend API Integration (Preferred cloud transactional provider)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text,
+        }),
+      });
+
+      if (res.ok) {
+        logger.info({ to: options.to }, "[EMAIL SERVICE] Dispatched via Resend");
+        return true;
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        logger.error({ error: errJson, to: options.to }, "[EMAIL SERVICE RESEND ERROR]");
+      }
+    } catch (error) {
+      logger.error({ error, to: options.to }, "[EMAIL SERVICE RESEND EXCEPTION]");
+    }
+  }
+
+  // 2. SMTP Transport Integration
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
-  const fromAddress = process.env.EMAIL_FROM || "InfluencerHub <noreply@influencerhub.com>";
 
-  // If real SMTP credentials are present, attempt sending real email via optional nodemailer package
   if (smtpHost && smtpUser && smtpPass) {
     try {
       const nodemailerModule = await import("nodemailer" as any).catch(() => null);
@@ -52,33 +91,44 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
           text: options.text,
         });
 
-        console.log(`[EMAIL SERVICE] Email successfully dispatched to ${options.to} via SMTP.`);
+        logger.info({ to: options.to }, "[EMAIL SERVICE] Dispatched via SMTP");
         return true;
       }
     } catch (error) {
-      console.error(`[EMAIL SERVICE ERROR] Failed to send email via SMTP to ${options.to}:`, error);
+      logger.error(
+        { error, to: options.to },
+        "[EMAIL SERVICE ERROR] Failed to send email via SMTP"
+      );
     }
   }
 
-  // Development Fallback Logging
-  console.log("-------------------------------------------------------");
-  console.log(`[EMAIL SERVICE DEV LOG]`);
-  console.log(`TO: ${options.to}`);
-  console.log(`SUBJECT: ${options.subject}`);
-  console.log(`TEXT: ${options.text}`);
-  console.log("-------------------------------------------------------");
+  // Development Fallback Logging (non-production only)
+  if (process.env.NODE_ENV !== "production") {
+    logger.debug(
+      { to: options.to, subject: options.subject },
+      "[EMAIL SERVICE] Dev fallback logged"
+    );
+  }
   return true;
 }
 
-export async function sendPasswordResetEmail({ email, url, token }: { email: string; url: string; token: string }): Promise<void> {
+export async function sendPasswordResetEmail({
+  email,
+  url,
+  token,
+}: {
+  email: string;
+  url: string;
+  token: string;
+}): Promise<void> {
   const clientBase = process.env.CLIENT_URL || "http://localhost:5000";
   const resetUrl = `${clientBase}/reset-password?token=${encodeURIComponent(token)}`;
 
   // Save to dev store for automated test inspection
   devLatestResetLink = { email, url: resetUrl, token, timestamp: Date.now() };
 
-  const subject = "Reset your InfluencerHub password";
-  const text = `A password reset was requested for your InfluencerHub account. Click the following link to reset your password: ${resetUrl}\n\nThis link is valid for a limited time. If you did not request a password reset, please ignore this email.`;
+  const subject = "Reset your CreatorsBrand password";
+  const text = `A password reset was requested for your CreatorsBrand account. Click the following link to reset your password: ${resetUrl}\n\nThis link is valid for a limited time. If you did not request a password reset, please ignore this email.`;
   const html = `
     <!DOCTYPE html>
     <html>
@@ -99,9 +149,9 @@ export async function sendPasswordResetEmail({ email, url, token }: { email: str
       </head>
       <body>
         <div class="container">
-          <div class="logo">Influencer<span class="logo-accent">Hub</span></div>
+          <div class="logo">Creators<span class="logo-accent">Brand</span></div>
           <h1>Reset your password</h1>
-          <p>We received a request to reset the password for your InfluencerHub account (<strong>${email}</strong>). Click the button below to set up a new password:</p>
+          <p>We received a request to reset the password for your CreatorsBrand account (<strong>${email}</strong>). Click the button below to set up a new password:</p>
           <div class="btn-container">
             <a href="${resetUrl}" class="btn" target="_blank">Reset Password</a>
           </div>
@@ -109,7 +159,7 @@ export async function sendPasswordResetEmail({ email, url, token }: { email: str
           <p class="url-fallback">${resetUrl}</p>
           <p>This password reset link is valid for a limited time and can only be used once. If you did not request a password reset, you can safely ignore this email.</p>
           <div class="footer">
-            &copy; InfluencerHub Inc. All rights reserved. • Secure Password Reset
+            &copy; CreatorsBrand. All rights reserved.
           </div>
         </div>
       </body>
@@ -119,13 +169,21 @@ export async function sendPasswordResetEmail({ email, url, token }: { email: str
   await sendEmail({ to: email, subject, text, html });
 }
 
-export async function sendVerificationEmailService({ email, url, token }: { email: string; url: string; token: string }): Promise<void> {
+export async function sendVerificationEmailService({
+  email,
+  url,
+  token,
+}: {
+  email: string;
+  url: string;
+  token: string;
+}): Promise<void> {
   devLatestVerificationLink = { email, url, token, timestamp: Date.now() };
 
   const verifyUrl = url.includes("token=") ? url : `${url}?token=${encodeURIComponent(token)}`;
 
-  const subject = "Verify your InfluencerHub email address";
-  const text = `Welcome to InfluencerHub! Please verify your email address by clicking the link below: ${verifyUrl}`;
+  const subject = "Verify your CreatorsBrand email address";
+  const text = `Welcome to CreatorsBrand! Please verify your email address by clicking the link below: ${verifyUrl}`;
   const html = `
     <!DOCTYPE html>
     <html>
@@ -144,7 +202,7 @@ export async function sendVerificationEmailService({ email, url, token }: { emai
       </head>
       <body>
         <div class="container">
-          <div class="logo">Influencer<span class="logo-accent">Hub</span></div>
+          <div class="logo">Creators<span class="logo-accent">Brand</span></div>
           <h1>Verify your email</h1>
           <p>Please click the button below to verify your email address and complete your signup:</p>
           <div class="btn-container">

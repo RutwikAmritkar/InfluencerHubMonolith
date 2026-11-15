@@ -26,11 +26,23 @@ async function runOAuthIntegrationTests() {
   try {
     const authUrl = await provider.getAuthorizationUrl(testState);
 
-    assert(authUrl.startsWith(`${INSTAGRAM_AUTH_HOST}/oauth/authorize`), "1a. Authorization URL uses direct Instagram OAuth host (www.instagram.com/oauth/authorize)");
+    assert(
+      authUrl.startsWith(`${INSTAGRAM_AUTH_HOST}/oauth/authorize`),
+      "1a. Authorization URL uses direct Instagram OAuth host (www.instagram.com/oauth/authorize)"
+    );
     assert(authUrl.includes("client_id="), "1b. Authorization URL contains client_id parameter");
-    assert(authUrl.includes("redirect_uri="), "1c. Authorization URL contains redirect_uri parameter");
-    assert(authUrl.includes("response_type=code"), "1d. Authorization URL specifies response_type=code");
-    assert(authUrl.includes(`state=${testState}`), "1e. Authorization URL preserves CSRF state parameter");
+    assert(
+      authUrl.includes("redirect_uri="),
+      "1c. Authorization URL contains redirect_uri parameter"
+    );
+    assert(
+      authUrl.includes("response_type=code"),
+      "1d. Authorization URL specifies response_type=code"
+    );
+    assert(
+      authUrl.includes(`state=${testState}`),
+      "1e. Authorization URL preserves CSRF state parameter"
+    );
     assert(
       authUrl.includes("scope=instagram_business_basic%2Cinstagram_business_manage_insights") ||
         authUrl.includes("instagram_business_basic"),
@@ -50,16 +62,29 @@ async function runOAuthIntegrationTests() {
     const clean2 = rawCodeWithQuery.replace(/#_$/, "").replace(/#.*$/, "").trim();
     const clean3 = rawCodeWithSpaces.replace(/#_$/, "").replace(/#.*$/, "").trim();
 
-    assert(clean1 === "AQD1234567890abcdef", "2a. Trailing '#_' fragment appended by Instagram OAuth redirect is safely stripped");
-    assert(clean2 === "AQD1234567890abcdef", "2b. Trailing generic '#' fragment is safely stripped");
-    assert(clean3 === "AQD1234567890abcdef", "2c. Leading and trailing whitespace are safely trimmed");
+    assert(
+      clean1 === "AQD1234567890abcdef",
+      "2a. Trailing '#_' fragment appended by Instagram OAuth redirect is safely stripped"
+    );
+    assert(
+      clean2 === "AQD1234567890abcdef",
+      "2b. Trailing generic '#' fragment is safely stripped"
+    );
+    assert(
+      clean3 === "AQD1234567890abcdef",
+      "2c. Leading and trailing whitespace are safely trimmed"
+    );
   } catch (e: any) {
     assert(false, `2. Code sanitization test failed: ${e.message}`);
   }
 
   // 3. OAuth Cancellation & Error Callback Parameter Validation
   try {
-    const errorQuery = { error: "access_denied", error_reason: "user_denied", error_description: "Permissions error" };
+    const errorQuery = {
+      error: "access_denied",
+      error_reason: "user_denied",
+      error_description: "Permissions error",
+    };
     const hasError = !!(errorQuery.error || errorQuery.error_reason);
     assert(hasError, "3a. Callback detects access_denied / user_denied error parameters");
   } catch (e: any) {
@@ -81,7 +106,10 @@ async function runOAuthIntegrationTests() {
       missingStateRejected = true;
     }
 
-    assert(missingCodeRejected, "4a. Callback rejects request missing authorization code parameter");
+    assert(
+      missingCodeRejected,
+      "4a. Callback rejects request missing authorization code parameter"
+    );
     assert(missingStateRejected, "4b. Callback rejects request missing CSRF state parameter");
   } catch (e: any) {
     assert(false, `4. Missing parameter rejection test failed: ${e.message}`);

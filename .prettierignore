@@ -1,0 +1,11 @@
+dist
+node_modules
+pnpm-lock.yaml
+.git
+uploads
+test-results
+backend/uploads
+frontend/dist
+database/drizzle
+coverage
+

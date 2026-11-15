@@ -22,7 +22,10 @@ async function runAuthUnitTests() {
   }
 
   // 1. Better Auth instance verification
-  assert(typeof auth === "object" && typeof auth.api === "object", "1. Better Auth instance initialized with Drizzle adapter");
+  assert(
+    typeof auth === "object" && typeof auth.api === "object",
+    "1. Better Auth instance initialized with Drizzle adapter"
+  );
 
   // 2. Audit Logging test
   try {
@@ -32,8 +35,15 @@ async function runAuthUnitTests() {
       details: JSON.stringify({ test: true }),
     });
 
-    const logs = await db.select().from(auditLogsTable).where(eq(auditLogsTable.action, testAction)).limit(1);
-    assert(logs.length > 0 && logs[0].action === testAction, "2. Security audit event persisted successfully to audit_logs table");
+    const logs = await db
+      .select()
+      .from(auditLogsTable)
+      .where(eq(auditLogsTable.action, testAction))
+      .limit(1);
+    assert(
+      logs.length > 0 && logs[0].action === testAction,
+      "2. Security audit event persisted successfully to audit_logs table"
+    );
   } catch (e: any) {
     assert(false, `2. Audit log test failed: ${e.message}`);
   }
@@ -45,14 +55,26 @@ async function runAuthUnitTests() {
 
   const isRoleAllowed = (userRole: string, allowedRoles: string[]) => {
     const normUser = userRole === "creator" ? "influencer" : userRole;
-    const normAllowed = allowedRoles.map(r => r === "creator" ? "influencer" : r);
+    const normAllowed = allowedRoles.map((r) => (r === "creator" ? "influencer" : r));
     return normAllowed.includes(normUser);
   };
 
-  assert(isRoleAllowed(influencerUser.role, ["influencer"]), "3a. Influencer role granted access to influencer endpoints");
-  assert(!isRoleAllowed(influencerUser.role, ["brand"]), "3b. Influencer role denied access to brand-only endpoints");
-  assert(isRoleAllowed(brandUser.role, ["brand"]), "3c. Brand role granted access to brand endpoints");
-  assert(!isRoleAllowed(brandUser.role, ["influencer"]), "3d. Brand role denied access to creator-only endpoints");
+  assert(
+    isRoleAllowed(influencerUser.role, ["influencer"]),
+    "3a. Influencer role granted access to influencer endpoints"
+  );
+  assert(
+    !isRoleAllowed(influencerUser.role, ["brand"]),
+    "3b. Influencer role denied access to brand-only endpoints"
+  );
+  assert(
+    isRoleAllowed(brandUser.role, ["brand"]),
+    "3c. Brand role granted access to brand endpoints"
+  );
+  assert(
+    !isRoleAllowed(brandUser.role, ["influencer"]),
+    "3d. Brand role denied access to creator-only endpoints"
+  );
   assert(isRoleAllowed(adminUser.role, ["admin"]), "3e. Admin granted access to admin endpoints");
 
   console.log(`\nAuth Integration Test Results: ${passed} Passed, ${failed} Failed.\n`);

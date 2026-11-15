@@ -5,7 +5,7 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { RegisterInputRole } from './registerInputRole';
+import type { RegisterInputRole } from "./registerInputRole";
 
 export interface RegisterInput {
   email: string;

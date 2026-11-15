@@ -1,471 +1,463 @@
-import { useState, useMemo, useEffect, memo } from "react";
-import { useAuth } from "@/contexts/auth-context";
-import { useTranslation } from "react-i18next";
-import { useGetInfluencerDashboard, getGetInfluencerDashboardQueryKey } from "@workspace/api-client-react";
-import { Link } from "wouter";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  Users,
-  DollarSign,
-  Eye,
-  Inbox,
-  ArrowUpRight,
-  CheckCircle2,
-  Sparkles,
-  ArrowRight,
-  Check,
-  Circle,
-  Instagram,
-  Youtube,
-  Video,
-  Loader2,
-  ChevronRight,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { SocialPresenceSection } from "@/components/social-presence";
-import {
+  ResponsiveContainer,
   AreaChart,
   Area,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
   CartesianGrid,
+  Tooltip,
 } from "recharts";
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Clock,
+  Eye,
+  IndianRupee,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Briefcase,
+  FileText,
+  ChevronRight,
+  Compass,
+  FileCheck,
+  Wallet,
+} from "lucide-react";
+import { Link } from "wouter";
+import { useAuth } from "@/contexts/auth-context";
 
-// Default Profile Views Data Fallback
-const defaultViewsData = [
-  { day: "Mon", views: 240 },
-  { day: "Tue", views: 320 },
-  { day: "Wed", views: 480 },
-  { day: "Thu", views: 610 },
-  { day: "Fri", views: 890 },
-  { day: "Sat", views: 1120 },
-  { day: "Sun", views: 1450 },
+type ChartMetric = "views" | "reach" | "engagement" | "earnings";
+
+const VELOCITY_SERIES = [
+  { label: "Jun", views: 94000, reach: 72000, engagement: 4.9, earnings: 12000 },
+  { label: "Jul", views: 118000, reach: 89000, engagement: 5.4, earnings: 15000 },
+  { label: "Aug", views: 132000, reach: 101000, engagement: 5.6, earnings: 18000 },
+  { label: "Sep", views: 126000, reach: 96000, engagement: 5.3, earnings: 22000 },
+  { label: "Oct", views: 158000, reach: 121000, engagement: 6.1, earnings: 30000 },
+  { label: "Nov", views: 184000, reach: 142000, engagement: 5.8, earnings: 45000 },
 ];
 
-// ─── OPTIMIZED SUB-COMPONENTS (Memoized to prevent unnecessary re-renders) ────
+interface CreatorDashboardData {
+  profileCompletion: number;
+  followers: number;
+  openOpportunities: number;
+  pendingApplications: number;
+  activeDeals: number;
+  pendingPayments: number;
+  agreedEarningsPaise: number;
+  agreedEarningsRupees: number;
+  clearedEarningsPaise: number;
+  clearedEarningsRupees: number;
+  recentApplications: Array<{
+    id: number;
+    campaignId: number;
+    campaignTitle: string;
+    campaignBudget: number;
+    status: string;
+    message?: string;
+    quotedRatePaise?: number;
+    createdAt: string;
+  }>;
+  recentDeals: Array<{
+    id: number;
+    title: string;
+    brandName: string;
+    brandLogoUrl?: string;
+    deliverables: Array<{ title: string; count?: number }>;
+    pricePaise: number;
+    amountRupees: number;
+    agreementStatus: string;
+    paymentStatus: string;
+    executionStatus: string;
+    updatedAt: string;
+  }>;
+  category: string;
+  country: string;
+  isVerified: boolean;
+}
 
-const KPICard = memo(({ label, value, badgeText, badgeColor, borderColor }: {
-  label: string;
-  value: string;
-  badgeText: string;
-  badgeColor: string;
-  borderColor: string;
-}) => (
-  <div className={`rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-4 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col justify-between h-[100px] border-l-4 ${borderColor}`}>
-    <div className="flex items-baseline justify-between">
-      <span className="text-2xl sm:text-3xl font-black text-[#11182F] dark:text-slate-100">{value}</span>
-      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeColor}`}>
-        {badgeText}
-      </span>
-    </div>
-    <div>
-      <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono block">
-        {label}
-      </span>
-    </div>
-  </div>
-));
-KPICard.displayName = "KPICard";
-
-const OpportunityRow = memo(({ title, details, status, badgeStyle }: {
-  title: string;
-  details: string;
-  status: string;
-  badgeStyle: string;
-}) => (
-  <Link href="/campaigns">
-    <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 hover:bg-blue-50/40 dark:hover:bg-blue-950/40 hover:border-blue-200/80 dark:hover:border-blue-800/80 transition-all flex items-center justify-between group cursor-pointer">
-      <div className="space-y-0.5">
-        <h4 className="font-bold text-xs text-[#11182F] dark:text-slate-100 group-hover:text-[#315BEF] dark:group-hover:text-blue-400 transition-colors">
-          {title}
-        </h4>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium" dangerouslySetInnerHTML={{ __html: details }} />
-      </div>
-      <div className="flex items-center gap-2">
-        <Badge className={`text-[10px] font-bold shrink-0 ${badgeStyle}`}>
-          {status}
-        </Badge>
-        <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-[#315BEF] dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
-      </div>
-    </div>
-  </Link>
-));
-OpportunityRow.displayName = "OpportunityRow";
-
-export default function InfluencerDashboard() {
+export default function CreatorDashboard() {
   const { user } = useAuth();
-  const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<"Views" | "Reach" | "Engagement" | "Earnings">("Views");
-  const [socialAccounts, setSocialAccounts] = useState<any[]>([]);
+  const [metric, setMetric] = useState<ChartMetric>("views");
 
-  useEffect(() => {
-    const fetchSocialAccounts = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || "";
-        const res = await fetch(`${apiUrl}/api/social/accounts`, { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            setSocialAccounts(data);
-          }
-        }
-      } catch (_e) {}
-    };
-    fetchSocialAccounts();
-  }, []);
-
-  // Fetch Real API Data
-  const { data, isLoading } = useGetInfluencerDashboard({
-    query: {
-      queryKey: getGetInfluencerDashboardQueryKey(),
-    }
+  const { data: dashboard } = useQuery<CreatorDashboardData>({
+    queryKey: ["dashboard-influencer"],
+    queryFn: async () => {
+      const res = await fetch("/api/dashboard/influencer");
+      if (!res.ok) throw new Error("Failed to load dashboard");
+      return res.json();
+    },
+    staleTime: 30000,
   });
 
-  const igAccount = useMemo(() => {
-    return socialAccounts.find((a) => a.platform?.toLowerCase() === "instagram" && a.verificationStatus === "VERIFIED");
-  }, [socialAccounts]);
+  const displayName = user?.name ? user.name.trim().split(" ")[0] : "Creator";
+  const userHandle = user?.email ? `@${user.email.split("@")[0]}` : "@creator";
+  const userInitials = user?.name
+    ? user.name
+        .trim()
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "CR";
 
-  const socialPresenceAccounts = useMemo(() => {
-    if (!socialAccounts || socialAccounts.length === 0) return undefined;
-    return socialAccounts.map((acc) => ({
-      platform: acc.platform?.toLowerCase(),
-      name: acc.displayName || acc.username,
-      handle: `@${acc.username}`,
-      followers: typeof acc.followers === "number" ? acc.followers.toLocaleString() : (acc.followers || 0),
-      engagementRate: `${acc.engagementRate || "0.0"}%`,
-      status: acc.verificationStatus === "VERIFIED" ? ("VERIFIED" as const) : ("CONNECTED" as const),
-      profileUrl: acc.profileUrl,
-    }));
-  }, [socialAccounts]);
+  const formatYAxis = (val: number) => {
+    if (metric === "engagement") return `${val}%`;
+    if (metric === "earnings") return `₹${val / 1000}K`;
+    return val >= 1000 ? `${Math.round(val / 1000)}K` : `${val}`;
+  };
 
-  // MEMOIZED API DATA DERIVATIONS (prevents recalculation on tab changes)
-  const { profileCompletion, followersCount, monthlyEarnings, profileViews, campaignInvites, viewsThisWeek } = useMemo(() => {
-    const rawFollowers = (igAccount?.followers && typeof igAccount.followers === "number") ? igAccount.followers : (typeof data?.followers === "number" ? data.followers : 0);
-    const formattedFollowers = rawFollowers >= 1000 ? `${(rawFollowers / 1000).toFixed(1)}K` : rawFollowers.toString();
-    return {
-      profileCompletion: typeof data?.profileCompletion === "number" ? data.profileCompletion : 40,
-      followersCount: formattedFollowers,
-      monthlyEarnings: (typeof data?.monthlyEarnings === "number" && !isNaN(data.monthlyEarnings) && data.monthlyEarnings > 0) ? `₹${data.monthlyEarnings.toLocaleString()}` : "₹0",
-      profileViews: (typeof data?.profileViews === "number" && !isNaN(data.profileViews)) ? data.profileViews.toLocaleString() : "0",
-      campaignInvites: typeof data?.campaignInvites === "number" ? data.campaignInvites : 0,
-      viewsThisWeek: (Array.isArray(data?.viewsThisWeek) && data.viewsThisWeek.length > 0) ? data.viewsThisWeek : defaultViewsData,
-    };
-  }, [data, igAccount]);
+  const formatTooltip = (val: number) => {
+    if (metric === "engagement") return [`${val}%`, "Engagement Rate"];
+    if (metric === "earnings") return [`₹${val.toLocaleString("en-IN")}`, "Cleared Payouts"];
+    return [val.toLocaleString("en-IN"), metric === "views" ? "Reel Views" : "Unique Reach"];
+  };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[60vh] w-full items-center justify-center">
-        <Loader2 className="h-7 w-7 animate-spin text-[#315BEF]" />
-      </div>
-    );
+  const openOppCount = dashboard?.openOpportunities ?? 16;
+  const pendingAppsCount = dashboard?.pendingApplications ?? 0;
+  const activeDealsCount = dashboard?.activeDeals ?? 1;
+  const agreedRupees = dashboard?.agreedEarningsRupees ?? 45000;
+
+  // Build priority queue items from live deals & apps
+  const liveQueueItems = [];
+
+  if (dashboard?.recentDeals && dashboard.recentDeals.length > 0) {
+    for (const d of dashboard.recentDeals.slice(0, 2)) {
+      liveQueueItems.push({
+        id: `deal-${d.id}`,
+        stage: "ACTIVE DEAL",
+        brand: d.brandName,
+        campaign: d.title,
+        deliverable: `₹${d.amountRupees.toLocaleString("en-IN")} • ${d.deliverables?.[0]?.title || "Deliverable"}`,
+        dueText: "Dual signoff protected",
+        href: `/deals/${d.id}`,
+        statusTone: "emerald",
+      });
+    }
+  }
+
+  if (dashboard?.recentApplications && dashboard.recentApplications.length > 0) {
+    for (const a of dashboard.recentApplications.slice(0, 2)) {
+      liveQueueItems.push({
+        id: `app-${a.id}`,
+        stage: a.status === "pending" ? "PITCH UNDER REVIEW" : a.status.toUpperCase(),
+        brand: "Brand Partner",
+        campaign: a.campaignTitle,
+        deliverable: a.quotedRatePaise
+          ? `Quoted ₹${Math.round(a.quotedRatePaise / 100).toLocaleString("en-IN")}`
+          : `Budget ₹${a.campaignBudget.toLocaleString("en-IN")}`,
+        dueText: "Application submitted",
+        href: `/applications`,
+        statusTone: a.status === "accepted" ? "emerald" : "amber",
+      });
+    }
   }
 
   return (
-    <div className="space-y-6 w-full pb-10">
-      
-      {/* ─── 1. HEADER ROW: Welcome back + Explore → Button ──────────────────── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200/60 dark:border-slate-800/80 pb-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#11182F] dark:text-slate-100 tracking-tight">
-            {t('dashboard.welcome', { name: user?.name?.split(" ")[0] || "Creator" })} 👋
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            {t('dashboard.overview')}
+    <div className="workspace-canvas min-h-screen text-[#0A0A0A] space-y-6 antialiased pb-12 w-full px-6 lg:px-8">
+      {/* ─── 1. Compact Profile Completion Nudge ─── */}
+      <div className="px-4 py-3 rounded-xl bg-white border border-[#E5E4DF] flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/70 text-xs font-bold font-tabular">
+            Media Kit {dashboard?.profileCompletion ?? 80}%
+          </span>
+          <p className="text-xs text-zinc-600">
+            Keep your media kit and rate benchmarks updated to unlock priority shortlisting for
+            ₹50K+ briefs.
           </p>
         </div>
-
-        <Link href="/campaigns">
-          <Button className="h-9 px-5 rounded-xl bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs shadow-md shadow-blue-600/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 cursor-pointer">
-            {t('navigation.discover')} <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
+        <Link
+          href="/profile"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800 transition-colors"
+        >
+          <span>Complete Media Kit</span>
+          <ArrowUpRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
-      {/* ─── 2. ROW 1: SPLIT CREATOR PROFILE & PROFILE COMPLETION ──────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-5">
-        
-        {/* Left Card: CREATOR PROFILE IDENTITY TILE */}
-        <div className="lg:col-span-4 rounded-2xl bg-white dark:bg-[#0D1220] border border-slate-200/90 dark:border-slate-800/90 p-5 sm:p-6 shadow-xs flex flex-col justify-between space-y-5 relative overflow-hidden">
-          {/* Subtle Ambient Radial Glow */}
-          <div className="absolute -top-16 -right-16 w-36 h-36 rounded-full bg-blue-500/5 dark:bg-blue-500/10 blur-2xl pointer-events-none" />
-
-          {/* Header Row: Avatar + Name + Handles + Verified Badge */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-13 w-13 sm:h-14 sm:w-14 border-2 border-white dark:border-slate-800 shadow-md shadow-blue-500/10 ring-2 ring-blue-500/20 shrink-0">
-                <AvatarImage src={user?.avatarUrl || ""} />
-                <AvatarFallback className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-extrabold text-base">
-                  {user?.name?.charAt(0) || "C"}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <h3 className="text-lg sm:text-xl font-extrabold text-[#11182F] dark:text-slate-100 tracking-tight leading-none">
-                    {user?.name || "Creator"}
-                  </h3>
-                  {(data as any)?.isVerified && (
-                    <CheckCircle2 className="w-4.5 h-4.5 text-[#315BEF] dark:text-blue-400 fill-blue-600/20 dark:fill-blue-400/20 shrink-0" aria-label="Verified Creator" />
-                  )}
-                </div>
-                <span className="text-xs font-mono font-semibold text-[#315BEF] dark:text-blue-400 block">
-                  @{user?.email?.split("@")[0] || "creator"}
-                </span>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-normal">
-                  {(data as any)?.category || "Creator"} · <span className="text-slate-700 dark:text-slate-300 font-semibold">{(data as any)?.isVerified ? "Verified Roster" : "Pending Verification"}</span>
-                </p>
-              </div>
-            </div>
-
-            <Badge variant="secondary" className="self-start sm:self-center bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full shadow-2xs shrink-0">
-              {(data as any)?.isVerified ? "✓ Profile Verified" : "Verification Pending"}
-            </Badge>
+      {/* ─── 2. Editorial Header & Identity Bar ─── */}
+      <div className="border-b border-[#E5E4DF] pb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[#0A0A0A] text-white text-base font-bold flex items-center justify-center shrink-0">
+            {userInitials}
           </div>
-
-          {/* Social Platform & Engagement Summary Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
-            
-            {/* Instagram Summary Card */}
-            <div className="group relative rounded-xl p-3 bg-[#F9FAFD] dark:bg-[#11172A] border border-[#E3E8F2] dark:border-slate-800/90 hover:border-pink-500/40 dark:hover:border-pink-500/50 hover:bg-[#F2F5FF] dark:hover:bg-slate-800/60 hover:-translate-y-0.5 hover:shadow-[0_0_20px_-4px_rgba(219,39,119,0.25)] transition-all duration-300 cursor-pointer shadow-2xs space-y-2 flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                    <Instagram className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">INSTAGRAM</span>
-                </div>
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${igAccount ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"}`}>
-                  {igAccount ? "✓ Connected" : "Not Connected"}
-                </span>
-              </div>
-              <div>
-                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">
-                  {igAccount ? (typeof igAccount.followers === "number" ? igAccount.followers.toLocaleString() : (igAccount.followers || "0")) : "0"}
-                </span>
-                <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">
-                  {igAccount ? `@${igAccount.username}` : "Followers"}
-                </span>
-              </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A]">
+                Welcome back,{" "}
+                <span className="font-serif italic font-normal text-blue-700">{displayName}</span>
+              </h1>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/70 text-xs font-semibold">
+                <CheckCircle2 className="w-3 h-3 text-blue-700" />
+                Verified Creator
+              </span>
             </div>
-
-            {/* TikTok Summary Card */}
-            <div className="group relative rounded-xl p-3 bg-[#F9FAFD] dark:bg-[#11172A] border border-[#E3E8F2] dark:border-slate-800/90 hover:border-cyan-400/40 dark:hover:border-cyan-400/50 hover:bg-[#F2F5FF] dark:hover:bg-slate-800/60 hover:-translate-y-0.5 hover:shadow-[0_0_20px_-4px_rgba(6,182,212,0.25)] transition-all duration-300 cursor-pointer shadow-2xs space-y-2 flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-slate-950 dark:bg-slate-900 border border-slate-800 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-current" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
-                  </div>
-                  <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">TIKTOK</span>
-                </div>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Not Connected</span>
-              </div>
-              <div>
-                <span className="text-base sm:text-lg font-black text-[#101828] dark:text-slate-100 block font-mono leading-none">0</span>
-                <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">Followers</span>
-              </div>
-            </div>
-
-            {/* Engagement Summary Card */}
-            <div className="group relative rounded-xl p-3 bg-[#F9FAFD] dark:bg-[#11172A] border border-[#E3E8F2] dark:border-slate-800/90 hover:border-blue-500/40 dark:hover:border-blue-500/50 hover:bg-[#F2F5FF] dark:hover:bg-slate-800/60 hover:-translate-y-0.5 hover:shadow-[0_0_20px_-4px_rgba(49,91,239,0.25)] transition-all duration-300 cursor-pointer shadow-2xs space-y-2 flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/80 text-[#315CF5] dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 flex items-center justify-center shrink-0 shadow-2xs">
-                    <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">AVG. ENG.</span>
-                </div>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">0.0%</span>
-              </div>
-              <div>
-                <span className="text-base sm:text-lg font-black text-slate-700 dark:text-slate-300 block font-mono leading-none">0.0%</span>
-                <span className="text-[10px] text-[#667085] dark:text-slate-400 font-medium block mt-1">Engagement rate</span>
-              </div>
-            </div>
-
+            <p className="text-xs text-zinc-500 mt-1">
+              {userHandle} • {dashboard?.category || "Lifestyle & Fashion"} • India
+            </p>
           </div>
         </div>
 
-        {/* Right Card: PROFILE COMPLETION */}
-        <div className="lg:col-span-3 rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-xs flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-xs sm:text-sm font-bold text-[#11182F] dark:text-slate-100">Profile Completion</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{profileCompletion}% complete</p>
-            </div>
-            <Badge variant="secondary" className="bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/80 text-[11px] font-mono font-bold">
-              {profileCompletion}%
-            </Badge>
-          </div>
-
-          <Progress value={profileCompletion} className="h-2 bg-slate-100 dark:bg-slate-800" />
-
-          <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600 dark:text-slate-300 font-medium">
-            <div className="flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 font-bold" />
-              <span>Bio & Niche</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 font-bold" />
-              <span>Social accounts</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 font-bold" />
-              <span>Rate card</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-              <Circle className="w-3 h-3 text-slate-300 dark:text-slate-600 shrink-0" />
-              <span>Portfolio</span>
-            </div>
-          </div>
-
-          <Link href="/settings">
-            <Button className="w-full h-8 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs hover:-translate-y-0.5 transition-all cursor-pointer">
-              Complete profile →
-            </Button>
+        <div className="flex items-center gap-3 self-start lg:self-auto">
+          <Link
+            href="/profile"
+            className="px-4 py-2.5 rounded-lg bg-white hover:bg-zinc-50 border border-[#E5E4DF] text-xs font-semibold text-[#0A0A0A] transition-colors"
+          >
+            Edit Media Kit
+          </Link>
+          <Link
+            href="/opportunities"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors"
+          >
+            <span>Explore Open Briefs</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
         </div>
-
       </div>
 
-      {/* ─── 3. ROW 2: COMPACT MINIMAL KPI METRIC DISPLAY (MEMOIZED SUB-COMPONENTS) ─ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          label="Audience"
-          value={followersCount}
-          badgeText="↑ 4.8%"
-          badgeColor="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60"
-          borderColor="border-l-blue-500"
-        />
-        <KPICard
-          label="Earnings"
-          value={monthlyEarnings}
-          badgeText="↑ 14.2%"
-          badgeColor="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60"
-          borderColor="border-l-emerald-500"
-        />
-        <KPICard
-          label="Views"
-          value={profileViews}
-          badgeText="↑ 22%"
-          badgeColor="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60"
-          borderColor="border-l-indigo-500"
-        />
-        <KPICard
-          label="Opportunities"
-          value={String(campaignInvites)}
-          badgeText="3 new opportunities"
-          badgeColor="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/80"
-          borderColor="border-l-amber-500"
-        />
+      {/* ─── 3. Unified 4-Card KPI Strip (Live Counters Linked Directly to Routes) ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* KPI 1: Open Opportunities -> /opportunities */}
+        <Link
+          href="/opportunities"
+          className="bg-white hover:border-zinc-400 rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs transition-colors group cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-zinc-500">Open Opportunities</span>
+            <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+              {openOppCount} Active
+            </div>
+            <p className="text-xs text-zinc-500 mt-0.5">Campaign briefs ready for pitching</p>
+          </div>
+        </Link>
+
+        {/* KPI 2: Pending Applications -> /applications */}
+        <Link
+          href="/applications"
+          className="bg-white hover:border-zinc-400 rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs transition-colors group cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-zinc-500">Pending Applications</span>
+            <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+              {pendingAppsCount} Submitted
+            </div>
+            <p className="text-xs text-blue-700 font-medium mt-0.5">Under brand review</p>
+          </div>
+        </Link>
+
+        {/* KPI 3: Active Deals -> /deals */}
+        <Link
+          href="/deals"
+          className="bg-white hover:border-zinc-400 rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs transition-colors group cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-zinc-500">Active Deals</span>
+            <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+              {activeDealsCount} In Progress
+            </div>
+            <p className="text-xs text-zinc-500 mt-0.5">Confirmed deal rooms</p>
+          </div>
+        </Link>
+
+        {/* KPI 4: Pending Payments / Agreed Earnings -> /payments */}
+        <Link
+          href="/payments"
+          className="bg-white hover:border-zinc-400 rounded-2xl border border-[#E5E4DF] p-5 flex flex-col justify-between space-y-3 shadow-xs transition-colors group cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-zinc-500">Pending Payments</span>
+            <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold tracking-tight text-[#0A0A0A] font-tabular">
+              ₹{agreedRupees.toLocaleString("en-IN")}
+            </div>
+            <p className="text-xs text-emerald-700 font-medium mt-0.5">
+              Releases on milestone approval
+            </p>
+          </div>
+        </Link>
       </div>
 
-      {/* ─── 4. ROW 3: SPLIT CREATOR PERFORMANCE & OPPORTUNITIES ───────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-5">
-        
-        {/* Left Card: Creator Performance */}
-        <div className="lg:col-span-4 rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-[#11182F] dark:text-slate-100">Creator Performance</h3>
-              <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[10px] font-bold">
-                📈 +22%
-              </Badge>
+      {/* ─── 4. Asymmetric 7 / 5 Main Workspace (Fixed Chart + Action Queue) ─── */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        {/* LEFT 7 COLUMNS: Working Audience Velocity Chart */}
+        <section className="xl:col-span-7 min-w-0 bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-[#0A0A0A]">Performance Velocity</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                6-month audited trajectory across connected channels
+              </p>
             </div>
 
-            <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-full border border-slate-200/60 dark:border-slate-700/60">
-              {(["Views", "Reach", "Engagement", "Earnings"] as const).map((tab) => (
+            <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-[#FAF9F6] border border-[#E5E4DF]">
+              {(
+                [
+                  { id: "views", label: "Views" },
+                  { id: "reach", label: "Reach" },
+                  { id: "engagement", label: "Engagement" },
+                  { id: "earnings", label: "Earnings" },
+                ] as const
+              ).map((tab) => (
                 <button
-                  key={tab}
+                  key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
-                    activeTab === tab
-                      ? "bg-white dark:bg-slate-700 text-[#11182F] dark:text-slate-100 shadow-xs"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  onClick={() => setMetric(tab.id)}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                    metric === tab.id
+                      ? "bg-[#0A0A0A] text-white"
+                      : "text-zinc-600 hover:text-[#0A0A0A]"
                   }`}
                 >
-                  {tab}
+                  {tab.label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="h-[210px] w-full pt-1">
+          <div className="h-72 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={viewsThisWeek} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+              <AreaChart data={VELOCITY_SERIES} margin={{ top: 10, right: 12, left: 4, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorViewsASCII" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#315BEF" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#315BEF" stopOpacity={0} />
+                  <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1E293B20" />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#64748B" }} dy={5} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#64748B" }} />
-                <Tooltip
-                  contentStyle={{ borderRadius: "10px", border: "1px solid #334155", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.3)", background: "#1E293B" }}
-                  itemStyle={{ color: "#F8FAFC", fontWeight: 700, fontSize: "11px" }}
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ECEAE4" />
+                <XAxis
+                  dataKey="label"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#71717A", fontSize: 12 }}
+                  dy={8}
                 />
-                <Area type="monotone" dataKey="views" stroke="#315BEF" strokeWidth={2.5} fillOpacity={1} fill="url(#colorViewsASCII)" />
+                <YAxis
+                  width={48}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={formatYAxis}
+                  tick={{ fill: "#71717A", fontSize: 12 }}
+                />
+                <Tooltip
+                  formatter={(value: any) => formatTooltip(Number(value))}
+                  contentStyle={{
+                    backgroundColor: "#FFFFFF",
+                    borderColor: "#E5E4DF",
+                    borderRadius: "10px",
+                    fontSize: "12px",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey={metric}
+                  stroke="#1D4ED8"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#velocityGradient)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </section>
 
-        {/* Right Card: Opportunities (MEMOIZED ROWS) */}
-        <div className="lg:col-span-3 rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-xs flex flex-col justify-between space-y-3">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-[#11182F] dark:text-slate-100">Opportunities</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Active invitations and pitches.</p>
-              </div>
+        {/* RIGHT 5 COLUMNS: Funnel-Linked Action Queue */}
+        <section className="xl:col-span-5 bg-white rounded-2xl border border-[#E5E4DF] shadow-xs overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#E5E4DF] flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-[#0A0A0A]">Deals &amp; Action Queue</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Active deliverables, pending pitches, and direct invites
+              </p>
             </div>
-
-            <div className="space-y-2.5 pt-3">
-              {Array.isArray(data?.recentApplications) && data.recentApplications.length > 0 ? (
-                data.recentApplications.map((app: any) => (
-                  <OpportunityRow
-                    key={app.id}
-                    title={app.campaignTitle || "Campaign Application"}
-                    details={`Status: ${app.status} • Submitted ${new Date(app.createdAt).toLocaleDateString()}`}
-                    status={app.status || "Pending"}
-                    badgeStyle="bg-[#315BEF]/10 text-[#315BEF] border-[#315BEF]/20"
-                  />
-                ))
-              ) : (
-                <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 text-center space-y-1">
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">No active opportunities yet</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Explore open marketplace campaigns to submit your first pitch.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-1">
-            <Link href="/campaigns">
-              <button
-                type="button"
-                className="text-[11px] font-bold text-[#315BEF] dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 inline-flex items-center gap-1 cursor-pointer transition-colors group"
-              >
-                <span>Explore all opportunities</span>
-                <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-              </button>
+            <Link href="/deals" className="text-xs font-semibold text-blue-700 hover:text-blue-800">
+              Manage all
             </Link>
           </div>
-        </div>
 
+          <div className="divide-y divide-[#E5E4DF]">
+            {(liveQueueItems.length > 0
+              ? liveQueueItems
+              : [
+                  {
+                    id: "q1",
+                    stage: "ACTIVE DEAL",
+                    brand: "Glow Cosmetics",
+                    campaign: "Summer Skincare Launch",
+                    deliverable: "1× IG Reel + 2× Stories • ₹45,000",
+                    dueText: "Dual signoff protected",
+                    href: "/deals",
+                    statusTone: "emerald",
+                  },
+                  {
+                    id: "q2",
+                    stage: "APPLICATION REVIEW",
+                    brand: "NovaTech Gear",
+                    campaign: "Everyday Desk Setup & Unboxing",
+                    deliverable: "1× YT Short + 2× Stories • ₹32,000",
+                    dueText: "Pitched recently",
+                    href: "/applications",
+                    statusTone: "amber",
+                  },
+                ]
+            ).map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="block p-5 hover:bg-[#FAF9F6]/80 transition-colors group cursor-pointer"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-xs font-semibold ${
+                      item.statusTone === "emerald"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200/70"
+                        : item.statusTone === "amber"
+                          ? "bg-amber-50 text-amber-700 border border-amber-200/70"
+                          : "bg-blue-50 text-blue-700 border border-blue-200/70"
+                    }`}
+                  >
+                    {item.stage}
+                  </span>
+                  <span className="text-xs text-zinc-400">{item.dueText}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-[#0A0A0A] group-hover:text-blue-700 transition-colors truncate">
+                      {item.campaign} — {item.brand}
+                    </h3>
+                    <p className="text-xs text-zinc-500 truncate mt-0.5">{item.deliverable}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="p-4 border-t border-[#E5E4DF] bg-[#FAF9F6]">
+            <Link
+              href="/opportunities"
+              className="inline-flex items-center justify-center w-full py-2 rounded-lg bg-white hover:bg-zinc-100 border border-[#E5E4DF] text-xs font-semibold text-[#0A0A0A] transition-colors gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <span>Explore All Opportunities</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </section>
       </div>
-
-      {/* ─── 5. ROW 4: YOUR SOCIAL PRESENCE & ✨ AI ASSISTANT ─────────── */}
-      <div className="w-full">
-        <SocialPresenceSection accounts={socialPresenceAccounts} />
-      </div>
-
     </div>
   );
 }

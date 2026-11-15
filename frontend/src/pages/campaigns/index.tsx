@@ -1,13 +1,30 @@
 import { useListCampaigns } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Megaphone, Calendar, Users, Briefcase, Plus, Filter, Loader2, ArrowRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Search,
+  Megaphone,
+  Calendar,
+  Users,
+  Briefcase,
+  Plus,
+  Filter,
+  Loader2,
+  ArrowRight,
+  Lock,
+  CheckCircle2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { useState, useMemo } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
@@ -17,49 +34,60 @@ const defaultCampaignsList = [
     id: 1,
     title: "Summer Beauty Campaign",
     brandName: "Glow Cosmetics",
-    brandLogoUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=150&auto=format&fit=crop",
-    description: "Seeking beauty & lifestyle creators to showcase our new SPF Glow Lotion during the summer season.",
-    budget: 5000,
+    brandLogoUrl:
+      "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=150&auto=format&fit=crop",
+    description:
+      "Seeking beauty & lifestyle creators to showcase our new SPF Glow Lotion during the summer season.",
+    budget: 50000,
     platform: "instagram",
     status: "active",
     deadline: "2026-09-01",
     applicationsCount: 8,
+    escrowStatus: "Terms Confirmed",
   },
   {
     id: 2,
     title: "Tech Launch 2026",
     brandName: "NovaTech",
-    brandLogoUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=150&auto=format&fit=crop",
-    description: "Looking for tech review creators to unbox and review our new ergonomic wireless ANC headphones.",
-    budget: 12500,
+    brandLogoUrl:
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=150&auto=format&fit=crop",
+    description:
+      "Looking for tech review creators to unbox and review our new ergonomic wireless ANC headphones.",
+    budget: 125000,
     platform: "youtube",
     status: "active",
     deadline: "2026-09-15",
     applicationsCount: 12,
+    escrowStatus: "Milestone Locked",
   },
   {
     id: 3,
     title: "Fall Apparel Drop",
     brandName: "UrbanFit",
-    brandLogoUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=150&auto=format&fit=crop",
-    description: "Streetwear and activewear fashion influencers wanted to style our upcoming autumn collection.",
-    budget: 18000,
-    platform: "tiktok",
+    brandLogoUrl:
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=150&auto=format&fit=crop",
+    description:
+      "Streetwear and activewear fashion influencers wanted to style our upcoming autumn collection.",
+    budget: 180000,
+    platform: "instagram",
     status: "active",
     deadline: "2026-10-01",
     applicationsCount: 15,
+    escrowStatus: "Terms Confirmed",
   },
   {
     id: 4,
     title: "Organic Snack Rollout",
     brandName: "FreshBite",
-    brandLogoUrl: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=150&auto=format&fit=crop",
+    brandLogoUrl:
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=150&auto=format&fit=crop",
     description: "Health & wellness creators for a national grocery retail snack campaign.",
-    budget: 7080,
+    budget: 70000,
     platform: "instagram",
     status: "active",
     deadline: "2026-09-20",
     applicationsCount: 6,
+    escrowStatus: "Signoff Pending",
   },
 ];
 
@@ -68,7 +96,7 @@ export default function Campaigns() {
   const { t } = useTranslation();
   const [status, setStatus] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
-  
+
   const { data: apiCampaigns, isLoading } = useListCampaigns({
     status: status !== "all" ? status : undefined,
     brandId: user?.role === "brand" ? user.id : undefined,
@@ -81,142 +109,172 @@ export default function Campaigns() {
     return defaultCampaignsList;
   }, [apiCampaigns]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200';
-      case 'completed': return 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200';
-      case 'paused': return 'bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border-amber-200';
-      case 'draft': return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200';
-      default: return 'bg-slate-100 dark:bg-slate-800 text-slate-600';
-    }
-  };
-
   return (
-    <div className="space-y-8 w-full pb-12 text-slate-900 dark:text-slate-100">
-      
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
+    <div className="workspace-canvas space-y-8 pb-16 antialiased text-[#0A0A0A] dark:text-[#FAF9F6]">
+      {/* ─── 1. EDITORIAL HEADER ───────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-[#E5E4DF] dark:border-white/10">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
-            {t('campaigns.title')}
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8] block mb-1">
+            Commercial Marketplace
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white">
+            Campaign Pipeline &amp;{" "}
+            <span className="font-serif italic font-normal text-[#1D4ED8]">Deal Vaults</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-            {user?.role === "brand" ? t('campaigns.title') : t('campaigns.title')}
+          <p className="text-xs sm:text-sm text-[#52525B] dark:text-slate-400 font-normal mt-1">
+            Pre-funded briefs with milestone-gated payment contracts and verified deliverables.
           </p>
         </div>
+
         {user?.role === "brand" && (
           <Link href="/campaigns/create">
-            <Button className="h-9 px-4 bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer">
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              {t('campaigns.createCampaign')}
+            <Button className="h-10 px-5 rounded-lg bg-[#0A0A0A] hover:bg-slate-800 text-white text-xs font-semibold shadow-xs cursor-pointer inline-flex items-center gap-2 transition-all">
+              <Plus className="w-4 h-4 text-white" />
+              <span>{t("campaigns.createCampaign")}</span>
             </Button>
           </Link>
         )}
       </div>
 
-      {/* Filter Controller Bar */}
-      <div className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center gap-3 w-full">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
-          <Input 
-            placeholder="Search campaigns by title, brand, or niche..." 
-            className="pl-9 h-10 border-slate-200/80 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-xs rounded-xl"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        
-        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-full sm:w-[160px] h-10 border-slate-200/80 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 text-xs rounded-xl font-medium">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white dark:bg-[#11172A] border-slate-200 dark:border-slate-800">
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              {user?.role === "brand" && <SelectItem value="draft">Drafts</SelectItem>}
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* ─── 2. SEARCH & FILTER CONTROLLER ─────────────────────────────────── */}
+      <div className="bg-white dark:bg-[#11172A] border border-[#E5E4DF] dark:border-white/10 rounded-xl p-3 sm:p-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#52525B]" />
+            <Input
+              placeholder="Search campaigns by title, brand, or deliverable niche..."
+              className="pl-9 h-10 border-[#E5E4DF] dark:border-slate-700 bg-[#FAF9F6] dark:bg-slate-800/60 text-[#0A0A0A] dark:text-white placeholder:text-slate-400 text-xs rounded-lg"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-          <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl cursor-pointer">
-            <Filter className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-full sm:w-[160px] h-10 border-[#E5E4DF] dark:border-slate-700 bg-[#FAF9F6] dark:bg-slate-800/60 text-xs rounded-lg font-medium text-[#0A0A0A] dark:text-white">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl glass-dropdown">
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="active">Active Production</SelectItem>
+                {user?.role === "brand" && <SelectItem value="draft">Drafts</SelectItem>}
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 shrink-0 border-[#E5E4DF] dark:border-slate-700 rounded-lg cursor-pointer hover:bg-[#F2F1EC]"
+            >
+              <Filter className="h-4 w-4 text-[#52525B]" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Campaigns List */}
+      {/* ─── 3. CAMPAIGNS ROSTER ───────────────────────────────────────────── */}
       {isLoading ? (
         <div className="flex h-64 w-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#315BEF]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#1D4ED8]" />
         </div>
       ) : campaigns?.length ? (
         <div className="grid gap-4 w-full">
           {campaigns.map((campaign) => (
             <Link key={campaign.id} href={`/campaigns/${campaign.id}`}>
-              <Card className="rounded-2xl bg-white dark:bg-[#11172A] border border-slate-200/80 dark:border-slate-800/80 shadow-xs hover:shadow-md transition-all cursor-pointer group overflow-hidden text-slate-900 dark:text-slate-100">
-                <CardContent className="p-0">
-                  <div className="flex flex-col sm:flex-row">
-                    <div className="p-5 sm:p-6 flex-1 space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-3">
-                          {campaign.brandLogoUrl ? (
-                            <img src={campaign.brandLogoUrl} className="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 object-cover" alt="Logo" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-[#315BEF] dark:text-blue-400 flex items-center justify-center font-bold text-sm">
-                              {campaign.brandName.charAt(0)}
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{campaign.brandName}</p>
-                            <h3 className="text-base sm:text-lg font-bold group-hover:text-[#315BEF] dark:group-hover:text-blue-400 transition-colors">{campaign.title}</h3>
+              <div className="bg-white dark:bg-[#11172A] border border-[#E5E4DF] dark:border-white/10 rounded-xl shadow-xs hover:border-[#0A0A0A] transition-all cursor-pointer group overflow-hidden">
+                <div className="flex flex-col sm:flex-row">
+                  {/* Left Main Content */}
+                  <div className="p-5 sm:p-6 flex-1 space-y-3">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex items-center gap-3">
+                        {campaign.brandLogoUrl ? (
+                          <img
+                            src={campaign.brandLogoUrl}
+                            className="w-10 h-10 rounded-lg border border-[#E5E4DF] object-cover shrink-0"
+                            alt="Logo"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-[#0A0A0A] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                            {campaign.brandName?.charAt(0) || "B"}
                           </div>
-                        </div>
-                        <Badge variant="outline" className={`text-[10px] font-bold ${getStatusColor(campaign.status)}`}>
-                          {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 max-w-3xl leading-relaxed">
-                        {campaign.description}
-                      </p>
-                      
-                      <div className="flex flex-wrap gap-4 sm:gap-6 text-xs pt-1">
-                        <div className="flex items-center gap-1.5">
-                          <Briefcase className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                          <span className="font-bold text-[#11182F] dark:text-slate-100">{formatCurrency(campaign.budget)}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Users className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                          <span className="font-bold capitalize text-slate-700 dark:text-slate-300">{campaign.platform}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                          <span className="text-slate-500 dark:text-slate-400">Deadline: <strong className="text-slate-700 dark:text-slate-300">{new Date(campaign.deadline).toLocaleDateString()}</strong></span>
+                        )}
+                        <div>
+                          <p className="text-xs font-semibold text-[#52525B] dark:text-slate-400">
+                            {campaign.brandName}
+                          </p>
+                          <h3 className="text-base font-bold text-[#0A0A0A] dark:text-white group-hover:text-[#1D4ED8] transition-colors">
+                            {campaign.title}
+                          </h3>
                         </div>
                       </div>
+
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#059669] border border-emerald-200 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
+                        {campaign.escrowStatus || "Terms Confirmed"}
+                      </span>
                     </div>
-                    
-                    <div className="bg-slate-50/80 dark:bg-slate-800/40 p-5 sm:w-48 flex sm:flex-col justify-between items-center sm:items-end border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-800">
-                      <div className="text-left sm:text-right">
-                        <div className="text-xl sm:text-2xl font-black text-[#315BEF] dark:text-blue-400">{campaign.applicationsCount || 0}</div>
-                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono mt-0.5">Applicants</div>
+
+                    <p className="text-xs text-[#52525B] dark:text-slate-300 line-clamp-2 max-w-3xl leading-relaxed">
+                      {campaign.description}
+                    </p>
+
+                    <div className="flex flex-wrap gap-5 text-xs pt-1 text-[#52525B] dark:text-slate-400">
+                      <div className="flex items-center gap-1.5">
+                        <Lock className="h-3.5 w-3.5 text-[#059669]" />
+                        <span className="font-bold text-[#0A0A0A] dark:text-white font-tabular">
+                          {formatCurrency(campaign.budget)} Budget
+                        </span>
                       </div>
-                      <Button size="sm" className="h-8 px-3 rounded-xl bg-[#315BEF] hover:bg-blue-600 text-white font-bold text-xs shadow-2xs group-hover:translate-x-0.5 transition-transform">
-                        Details →
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-[#52525B]" />
+                        <span className="capitalize font-medium text-[#0A0A0A] dark:text-white">
+                          {campaign.platform}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-[#52525B]" />
+                        <span>
+                          Deadline:{" "}
+                          <strong className="text-[#0A0A0A] dark:text-white font-medium">
+                            {new Date(campaign.deadline).toLocaleDateString()}
+                          </strong>
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+
+                  {/* Right Action / Ledger Box */}
+                  <div className="bg-[#FAF9F6] dark:bg-slate-900/60 p-5 sm:w-52 flex sm:flex-col justify-between items-center sm:items-end border-t sm:border-t-0 sm:border-l border-[#E5E4DF] dark:border-white/10">
+                    <div className="text-left sm:text-right">
+                      <div className="text-2xl font-bold text-[#0A0A0A] dark:text-white font-tabular">
+                        {campaign.applicationsCount || 0}
+                      </div>
+                      <div className="text-xs text-[#52525B] font-medium mt-0.5">
+                        Vetted Applicants
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="h-8 px-4 rounded-lg bg-[#0A0A0A] hover:bg-slate-800 text-white font-semibold text-xs shadow-xs transition-colors"
+                    >
+                      View Details
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </Link>
           ))}
         </div>
       ) : (
-        <div className="text-center py-24 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-[#11172A] w-full">
-          <Megaphone className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1">No campaigns found</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Try adjusting your filters or search terms.</p>
+        <div className="text-center py-24 border border-[#E5E4DF] dark:border-white/10 rounded-xl bg-white dark:bg-[#11172A] w-full">
+          <Megaphone className="h-10 w-10 text-[#52525B]/40 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-[#0A0A0A] dark:text-white mb-1">
+            No campaigns active
+          </h3>
+          <p className="text-xs text-[#52525B]">
+            Launch a new campaign brief to begin accepting vetted creator applications.
+          </p>
         </div>
       )}
     </div>

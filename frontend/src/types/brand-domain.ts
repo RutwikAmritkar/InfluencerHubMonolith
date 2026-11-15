@@ -6,7 +6,7 @@
 export type UserRole = "influencer" | "brand" | "admin" | "agency";
 
 export interface SocialAccountLink {
-  platform: "instagram" | "tiktok" | "youtube" | "twitter" | "facebook" | "linkedin";
+  platform: "instagram" | "youtube" | "twitter" | "facebook" | "linkedin";
   handle: string;
   url: string;
   followerCount?: number;
@@ -32,7 +32,7 @@ export interface BrandIdentity {
 // 2. CREATOR PREFERENCES
 export interface CreatorPreferences {
   preferredCategories: string[];
-  preferredPlatforms: Array<"instagram" | "tiktok" | "youtube" | "twitter" | "facebook">;
+  preferredPlatforms: Array<"instagram" | "youtube" | "twitter" | "facebook">;
   preferredCreatorSizes: Array<"nano" | "micro" | "mid" | "macro" | "mega">; // nano <10k, micro 10k-50k, mid 50k-250k, macro 250k-1M, mega 1M+
   preferredAudienceAge: Array<"18-24" | "25-34" | "35-44" | "45+">;
   preferredAudienceGender: "all" | "female_predominant" | "male_predominant";
@@ -47,8 +47,12 @@ export interface CampaignPreferences {
   typicalCampaignBudgetMax: number;
   typicalCreatorPayoutMin: number;
   typicalCreatorPayoutMax: number;
-  primaryObjectives: Array<"brand_awareness" | "conversions" | "content_creation" | "event_coverage" | "app_installs">;
-  preferredContentFormats: Array<"reels" | "shorts" | "unboxing" | "dedicated_video" | "story_frames" | "sponsored_post">;
+  primaryObjectives: Array<
+    "brand_awareness" | "conversions" | "content_creation" | "event_coverage" | "app_installs"
+  >;
+  preferredContentFormats: Array<
+    "reels" | "shorts" | "unboxing" | "dedicated_video" | "story_frames" | "sponsored_post"
+  >;
 }
 
 // 4. VERIFICATION STATUS

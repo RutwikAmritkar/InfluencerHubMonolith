@@ -30,7 +30,11 @@ async function runTests() {
   };
 
   const res1 = await socialVerificationService.verifyAccount(validInsta);
-  assert((res1.status === "VERIFIED" || res1.status === "SUBMITTED") && res1.verificationType === "PROFILE_EXISTS", "Valid Instagram handle returns status VERIFIED/SUBMITTED and PROFILE_EXISTS");
+  assert(
+    (res1.status === "VERIFIED" || res1.status === "SUBMITTED") &&
+      res1.verificationType === "PROFILE_EXISTS",
+    "Valid Instagram handle returns status VERIFIED/SUBMITTED and PROFILE_EXISTS"
+  );
 
   // Test 2: Invalid Instagram URL
   const invalidInstaUrl: SocialAccount = {
@@ -45,7 +49,10 @@ async function runTests() {
   };
 
   const res2 = await socialVerificationService.verifyAccount(invalidInstaUrl);
-  assert(res2.status === "FAILED" && typeof res2.errorMessage === "string", "Invalid domain Instagram URL returns status FAILED with errorMessage");
+  assert(
+    res2.status === "FAILED" && typeof res2.errorMessage === "string",
+    "Invalid domain Instagram URL returns status FAILED with errorMessage"
+  );
 
   // Test 3: YouTube Channel Verification
   const validYt: SocialAccount = {
@@ -61,7 +68,11 @@ async function runTests() {
   };
 
   const res3 = await socialVerificationService.verifyAccount(validYt);
-  assert((res3.status === "VERIFIED" || res3.status === "SUBMITTED") && res3.verificationType === "PROFILE_EXISTS", "Valid YouTube channel URL returns status VERIFIED/SUBMITTED");
+  assert(
+    (res3.status === "VERIFIED" || res3.status === "SUBMITTED") &&
+      res3.verificationType === "PROFILE_EXISTS",
+    "Valid YouTube channel URL returns status VERIFIED/SUBMITTED"
+  );
 
   // Test 4: Facebook Account Verification (Independent Platform)
   const validFb: SocialAccount = {
@@ -77,7 +88,11 @@ async function runTests() {
   };
 
   const res4 = await socialVerificationService.verifyAccount(validFb);
-  assert((res4.status === "VERIFIED" || res4.status === "SUBMITTED") && res4.verificationType === "PROFILE_EXISTS", "Explicit Facebook account verifies independently");
+  assert(
+    (res4.status === "VERIFIED" || res4.status === "SUBMITTED") &&
+      res4.verificationType === "PROFILE_EXISTS",
+    "Explicit Facebook account verifies independently"
+  );
 
   // Test 5: TikTok Handle Verification
   const validTikTok: SocialAccount = {
@@ -93,7 +108,10 @@ async function runTests() {
   };
 
   const res5 = await socialVerificationService.verifyAccount(validTikTok);
-  assert(res5.status === "VERIFIED" || res5.status === "SUBMITTED", "Valid TikTok handle returns status VERIFIED/SUBMITTED");
+  assert(
+    res5.status === "VERIFIED" || res5.status === "SUBMITTED",
+    "Valid TikTok handle returns status VERIFIED/SUBMITTED"
+  );
 
   // Test 6: Invalid Handle with spaces
   const invalidHandle: SocialAccount = {

@@ -1,4 +1,10 @@
-import { db, socialAccountsTable, socialTokensTable, socialMediaInsightsTable, socialContentTable } from "@workspace/db";
+import {
+  db,
+  socialAccountsTable,
+  socialTokensTable,
+  socialMediaInsightsTable,
+  socialContentTable,
+} from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { decryptSocialToken } from "../integrations/social/token-crypto";
 import { instagramDataPipelineService } from "../services/instagram-data-pipeline.service";
@@ -28,7 +34,9 @@ async function runLiveMetaIntegrationRunner() {
   console.log("1. Checking Meta Backend Environment Variables:");
   console.log(`   INSTAGRAM_CLIENT_ID    : ${process.env.INSTAGRAM_CLIENT_ID || "NOT SET"}`);
   console.log(`   INSTAGRAM_REDIRECT_URI : ${process.env.INSTAGRAM_REDIRECT_URI || "NOT SET"}`);
-  console.log(`   INSTAGRAM_CLIENT_SECRET: ${process.env.INSTAGRAM_CLIENT_SECRET ? "LOADED (MASKED)" : "NOT SET"}`);
+  console.log(
+    `   INSTAGRAM_CLIENT_SECRET: ${process.env.INSTAGRAM_CLIENT_SECRET ? "LOADED (MASKED)" : "NOT SET"}`
+  );
 
   if (!process.env.INSTAGRAM_CLIENT_ID || !process.env.INSTAGRAM_CLIENT_SECRET) {
     console.error("\n❌ Live test blocked: Missing Meta backend credentials in backend/.env.");
@@ -39,7 +47,9 @@ async function runLiveMetaIntegrationRunner() {
   const [account] = await db
     .select()
     .from(socialAccountsTable)
-    .where(and(eq(socialAccountsTable.userId, testUserId), eq(socialAccountsTable.platform, "instagram")))
+    .where(
+      and(eq(socialAccountsTable.userId, testUserId), eq(socialAccountsTable.platform, "instagram"))
+    )
     .limit(1);
 
   if (!account) {
@@ -67,7 +77,11 @@ async function runLiveMetaIntegrationRunner() {
   // 4. Decrypt token internally in memory
   let rawToken: string;
   try {
-    rawToken = decryptSocialToken(tokenRec.accessTokenEncrypted, tokenRec.tokenIv, tokenRec.tokenAuthTag);
+    rawToken = decryptSocialToken(
+      tokenRec.accessTokenEncrypted,
+      tokenRec.tokenIv,
+      tokenRec.tokenAuthTag
+    );
     results["Token Security"] = { name: "Token Security", status: "PASS" };
   } catch (err: any) {
     results["Token Security"] = {
@@ -110,7 +124,9 @@ async function runLiveMetaIntegrationRunner() {
     console.log(`\n4. Media Data (Meta Graph API /v20.0/me/media):`);
     console.log(`   ✓ Media Items Count   : ${mediaList.length}`);
     if (mediaList.length === 0) {
-      console.log(`   ℹ Note: Connected account reported totalContent = 0. Empty media response handled gracefully.`);
+      console.log(
+        `   ℹ Note: Connected account reported totalContent = 0. Empty media response handled gracefully.`
+      );
     }
 
     results["Media API"] = { name: "Media API", status: "PASS" };
@@ -131,9 +147,13 @@ async function runLiveMetaIntegrationRunner() {
   let accountInsights: any[] = [];
   try {
     accountInsights = await provider.probeAccountInsights(rawToken, account.externalAccountId);
-    console.log(`\n5. Account Insights Probing (Meta Graph API /v20.0/${account.externalAccountId}/insights):`);
+    console.log(
+      `\n5. Account Insights Probing (Meta Graph API /v20.0/${account.externalAccountId}/insights):`
+    );
     for (const item of accountInsights) {
-      console.log(`   - Metric '${item.metric}': accepted=${item.accepted}, value=${item.value}, period=${item.period}${item.error ? `, error=${item.error}` : ""}`);
+      console.log(
+        `   - Metric '${item.metric}': accepted=${item.accepted}, value=${item.value}, period=${item.period}${item.error ? `, error=${item.error}` : ""}`
+      );
     }
 
     results["Account Insights API"] = { name: "Account Insights API", status: "PASS" };
@@ -143,7 +163,8 @@ async function runLiveMetaIntegrationRunner() {
       status: "FAIL",
       endpoint: `/${account.externalAccountId}/insights`,
       errorMessage: err.message,
-      likelyCause: "Missing instagram_business_manage_insights permission or non-professional account.",
+      likelyCause:
+        "Missing instagram_business_manage_insights permission or non-professional account.",
       recommendedAction: "Verify Instagram Professional Account status.",
     };
   }
@@ -152,8 +173,14 @@ async function runLiveMetaIntegrationRunner() {
   if (mediaList.length > 0) {
     try {
       const firstMedia = mediaList[0];
-      const mediaInsights = await provider.probeMediaInsights(rawToken, firstMedia.externalContentId, firstMedia.contentType);
-      console.log(`\n6. Media Insights Probing (Meta Graph API /v20.0/${firstMedia.externalContentId}/insights):`);
+      const mediaInsights = await provider.probeMediaInsights(
+        rawToken,
+        firstMedia.externalContentId,
+        firstMedia.contentType
+      );
+      console.log(
+        `\n6. Media Insights Probing (Meta Graph API /v20.0/${firstMedia.externalContentId}/insights):`
+      );
       for (const item of mediaInsights) {
         console.log(`   - Metric '${item.metric}': accepted=${item.accepted}, value=${item.value}`);
       }
@@ -187,13 +214,16 @@ async function runLiveMetaIntegrationRunner() {
     console.log(`   ✓ Persisted Insights Count  : ${persistedInsights.length}`);
     results["Database persistence"] = { name: "Database persistence", status: "PASS" };
   } catch (err: any) {
-    results["Database persistence"] = { name: "Database persistence", status: "FAIL", errorMessage: err.message };
+    results["Database persistence"] = {
+      name: "Database persistence",
+      status: "FAIL",
+      errorMessage: err.message,
+    };
   }
 
   // 10. Additional System Verification Checks
   results["Error handling"] = { name: "Error handling", status: "PASS" };
   results["Duplicate protection"] = { name: "Duplicate protection", status: "PASS" };
-
 
   // 10. Generate Final Verification Matrix Report
   console.log("\n=================================================");

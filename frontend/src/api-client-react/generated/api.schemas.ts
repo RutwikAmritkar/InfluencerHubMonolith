@@ -2,11 +2,11 @@ export interface HealthStatus {
   status: string;
 }
 
-export type RegisterInputRole = typeof RegisterInputRole[keyof typeof RegisterInputRole];
+export type RegisterInputRole = (typeof RegisterInputRole)[keyof typeof RegisterInputRole];
 
 export const RegisterInputRole = {
-  brand: 'brand',
-  influencer: 'influencer',
+  brand: "brand",
+  influencer: "influencer",
 } as const;
 
 export interface RegisterInput {
@@ -21,11 +21,11 @@ export interface LoginInput {
   password: string;
 }
 
-export type UserRole = typeof UserRole[keyof typeof UserRole];
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export const UserRole = {
-  brand: 'brand',
-  influencer: 'influencer',
+  brand: "brand",
+  influencer: "influencer",
 } as const;
 
 export interface User {
@@ -43,30 +43,32 @@ export interface AuthResponse {
   user: User;
 }
 
-export type SocialAccountInputType = typeof SocialAccountInputType[keyof typeof SocialAccountInputType];
+export type SocialAccountInputType =
+  (typeof SocialAccountInputType)[keyof typeof SocialAccountInputType];
 
 export const SocialAccountInputType = {
-  username: 'username',
-  url: 'url',
+  username: "username",
+  url: "url",
 } as const;
 
-export type SocialAccountStatus = typeof SocialAccountStatus[keyof typeof SocialAccountStatus];
+export type SocialAccountStatus = (typeof SocialAccountStatus)[keyof typeof SocialAccountStatus];
 
 export const SocialAccountStatus = {
-  UNVERIFIED: 'UNVERIFIED',
-  SUBMITTED: 'SUBMITTED',
-  VERIFYING: 'VERIFYING',
-  VERIFIED: 'VERIFIED',
-  FAILED: 'FAILED',
-  EXPIRED: 'EXPIRED',
+  UNVERIFIED: "UNVERIFIED",
+  SUBMITTED: "SUBMITTED",
+  VERIFYING: "VERIFYING",
+  VERIFIED: "VERIFIED",
+  FAILED: "FAILED",
+  EXPIRED: "EXPIRED",
 } as const;
 
-export type SocialAccountVerificationType = typeof SocialAccountVerificationType[keyof typeof SocialAccountVerificationType];
+export type SocialAccountVerificationType =
+  (typeof SocialAccountVerificationType)[keyof typeof SocialAccountVerificationType];
 
 export const SocialAccountVerificationType = {
-  PROFILE_EXISTS: 'PROFILE_EXISTS',
-  OWNER_VERIFIED: 'OWNER_VERIFIED',
-  OAUTH_CONNECTED: 'OAUTH_CONNECTED',
+  PROFILE_EXISTS: "PROFILE_EXISTS",
+  OWNER_VERIFIED: "OWNER_VERIFIED",
+  OAUTH_CONNECTED: "OAUTH_CONNECTED",
 } as const;
 
 export interface SocialAccount {
@@ -129,11 +131,12 @@ export type InfluencerDetail = Influencer & {
   availability?: string;
 };
 
-export type SocialAccountInputInputType = typeof SocialAccountInputInputType[keyof typeof SocialAccountInputInputType];
+export type SocialAccountInputInputType =
+  (typeof SocialAccountInputInputType)[keyof typeof SocialAccountInputInputType];
 
 export const SocialAccountInputInputType = {
-  username: 'username',
-  url: 'url',
+  username: "username",
+  url: "url",
 } as const;
 
 export interface SocialAccountInput {
@@ -179,13 +182,13 @@ export interface BrandUpdate {
   website?: string;
 }
 
-export type CampaignStatus = typeof CampaignStatus[keyof typeof CampaignStatus];
+export type CampaignStatus = (typeof CampaignStatus)[keyof typeof CampaignStatus];
 
 export const CampaignStatus = {
-  draft: 'draft',
-  active: 'active',
-  completed: 'completed',
-  paused: 'paused',
+  draft: "draft",
+  active: "active",
+  completed: "completed",
+  paused: "paused",
 } as const;
 
 export interface Campaign {
@@ -221,13 +224,13 @@ export interface CampaignInput {
   deadline: string;
 }
 
-export type CampaignUpdateStatus = typeof CampaignUpdateStatus[keyof typeof CampaignUpdateStatus];
+export type CampaignUpdateStatus = (typeof CampaignUpdateStatus)[keyof typeof CampaignUpdateStatus];
 
 export const CampaignUpdateStatus = {
-  draft: 'draft',
-  active: 'active',
-  completed: 'completed',
-  paused: 'paused',
+  draft: "draft",
+  active: "active",
+  completed: "completed",
+  paused: "paused",
 } as const;
 
 export interface CampaignUpdate {
@@ -242,12 +245,12 @@ export interface CampaignUpdate {
   deadline?: string;
 }
 
-export type ApplicationStatus = typeof ApplicationStatus[keyof typeof ApplicationStatus];
+export type ApplicationStatus = (typeof ApplicationStatus)[keyof typeof ApplicationStatus];
 
 export const ApplicationStatus = {
-  pending: 'pending',
-  accepted: 'accepted',
-  rejected: 'rejected',
+  pending: "pending",
+  accepted: "accepted",
+  rejected: "rejected",
 } as const;
 
 export interface Application {
@@ -271,12 +274,13 @@ export interface ApplicationInput {
   message?: string;
 }
 
-export type ApplicationUpdateStatus = typeof ApplicationUpdateStatus[keyof typeof ApplicationUpdateStatus];
+export type ApplicationUpdateStatus =
+  (typeof ApplicationUpdateStatus)[keyof typeof ApplicationUpdateStatus];
 
 export const ApplicationUpdateStatus = {
-  pending: 'pending',
-  accepted: 'accepted',
-  rejected: 'rejected',
+  pending: "pending",
+  accepted: "accepted",
+  rejected: "rejected",
 } as const;
 
 export interface ApplicationUpdate {
@@ -422,12 +426,12 @@ export interface InfluencerMatch {
 }
 
 export type ListInfluencersParams = {
-platform?: string;
-category?: string;
-country?: string;
-minFollowers?: number;
-maxFollowers?: number;
-search?: string;
+  platform?: string;
+  category?: string;
+  country?: string;
+  minFollowers?: number;
+  maxFollowers?: number;
+  search?: string;
 };
 
 export type DeleteSocialAccount200 = {
@@ -435,21 +439,21 @@ export type DeleteSocialAccount200 = {
 };
 
 export type ListCampaignsParams = {
-platform?: string;
-status?: string;
-brandId?: number;
+  platform?: string;
+  status?: string;
+  brandId?: number;
 };
 
 export type ListApplicationsParams = {
-campaignId?: number;
-influencerId?: number;
-status?: string;
+  campaignId?: number;
+  influencerId?: number;
+  status?: string;
 };
 
 export type GetAiSuggestionsParams = {
-type?: string;
+  type?: string;
 };
 
 export type GetInfluencerMatchesParams = {
-campaignId: number;
+  campaignId: number;
 };

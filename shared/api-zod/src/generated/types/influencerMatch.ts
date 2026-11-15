@@ -5,7 +5,7 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { Influencer } from './influencer';
+import type { Influencer } from "./influencer";
 
 export interface InfluencerMatch {
   influencer: Influencer;

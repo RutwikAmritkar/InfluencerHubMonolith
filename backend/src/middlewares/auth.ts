@@ -1,7 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { auth } from "../auth/index";
 import { logAuditEvent } from "../auth/audit";
-import { db, session as sessionTable, user as userTable } from "@workspace/db";
+import {
+  db,
+  session as sessionTable,
+  user as userTable,
+  influencersTable,
+  brandsTable,
+} from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 export interface AuthenticatedUser {
@@ -10,11 +16,34 @@ export interface AuthenticatedUser {
   name: string;
   role: "influencer" | "creator" | "brand" | "admin";
   avatarUrl?: string | null;
+  profileId?: number;
 }
 
 export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
   userId?: string;
+}
+
+async function resolveProfileId(userId: string, role: string): Promise<number | undefined> {
+  try {
+    if (role === "brand") {
+      const [brand] = await db
+        .select({ id: brandsTable.id })
+        .from(brandsTable)
+        .where(eq(brandsTable.userId, userId))
+        .limit(1);
+      return brand?.id;
+    } else {
+      const [inf] = await db
+        .select({ id: influencersTable.id })
+        .from(influencersTable)
+        .where(eq(influencersTable.userId, userId))
+        .limit(1);
+      return inf?.id;
+    }
+  } catch {
+    return undefined;
+  }
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -23,12 +52,20 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       headers: req.headers,
     });
 
-    const sessionToken = req.cookies?.["better-auth.session_token"] || req.headers.authorization?.replace("Bearer ", "");
+    const sessionToken =
+      req.cookies?.["better-auth.session_token"] ||
+      req.headers.authorization?.replace("Bearer ", "");
 
     if (!sessionData && sessionToken) {
-      const [dbSession] = await db.select().from(sessionTable).where(eq(sessionTable.token, sessionToken));
+      const [dbSession] = await db
+        .select()
+        .from(sessionTable)
+        .where(eq(sessionTable.token, sessionToken));
       if (dbSession && new Date(dbSession.expiresAt) > new Date()) {
-        const [dbUser] = await db.select().from(userTable).where(eq(userTable.id, dbSession.userId));
+        const [dbUser] = await db
+          .select()
+          .from(userTable)
+          .where(eq(userTable.id, dbSession.userId));
         if (dbUser) {
           sessionData = {
             session: dbSession as any,
@@ -40,12 +77,14 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
     if (sessionData && sessionData.user) {
       const userRole = (sessionData.user.role as AuthenticatedUser["role"]) || "influencer";
+      const profileId = await resolveProfileId(sessionData.user.id, userRole);
       const authUser: AuthenticatedUser = {
         id: sessionData.user.id,
         email: sessionData.user.email,
         name: sessionData.user.name,
         role: userRole,
         avatarUrl: sessionData.user.image,
+        profileId,
       };
       (req as AuthenticatedRequest).user = authUser;
       (req as AuthenticatedRequest).userId = sessionData.user.id;
@@ -76,7 +115,11 @@ export function requireRole(allowedRoles: ("influencer" | "creator" | "brand" | 
       await logAuditEvent({
         userId: authReq.user.id,
         action: "UNAUTHORIZED_ROLE_ACCESS_ATTEMPT",
-        details: JSON.stringify({ requiredRoles: allowedRoles, actualRole: authReq.user.role, path: req.path }),
+        details: JSON.stringify({
+          requiredRoles: allowedRoles,
+          actualRole: authReq.user.role,
+          path: req.path,
+        }),
       });
       res.status(403).json({
         error: `Forbidden. Role '${authReq.user.role}' is not authorized to access this resource. Required role: ${allowedRoles.join(" or ")}`,
@@ -88,7 +131,11 @@ export function requireRole(allowedRoles: ("influencer" | "creator" | "brand" | 
   };
 }
 
-export async function optionalAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
+export async function optionalAuth(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
   try {
     const sessionData = await auth.api.getSession({
       headers: req.headers,
@@ -96,12 +143,14 @@ export async function optionalAuth(req: Request, _res: Response, next: NextFunct
 
     if (sessionData && sessionData.user) {
       const userRole = (sessionData.user.role as AuthenticatedUser["role"]) || "influencer";
+      const profileId = await resolveProfileId(sessionData.user.id, userRole);
       (req as AuthenticatedRequest).user = {
         id: sessionData.user.id,
         email: sessionData.user.email,
         name: sessionData.user.name,
         role: userRole,
         avatarUrl: sessionData.user.image,
+        profileId,
       };
       (req as AuthenticatedRequest).userId = sessionData.user.id;
     }

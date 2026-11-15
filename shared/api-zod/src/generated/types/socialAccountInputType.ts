@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SocialAccountInputType = typeof SocialAccountInputType[keyof typeof SocialAccountInputType];
-
+export type SocialAccountInputType =
+  (typeof SocialAccountInputType)[keyof typeof SocialAccountInputType];
 
 export const SocialAccountInputType = {
-  username: 'username',
-  url: 'url',
+  username: "username",
+  url: "url",
 } as const;

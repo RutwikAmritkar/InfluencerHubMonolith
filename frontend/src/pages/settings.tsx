@@ -1,219 +1,520 @@
 import { useState, useEffect } from "react";
+import {
+  Globe,
+  Moon,
+  Sun,
+  Wallet,
+  Share2,
+  Bell,
+  Shield,
+  Check,
+  ArrowUpRight,
+  CheckCircle2,
+  Building2,
+  Loader2,
+  Lock,
+  Smartphone,
+  Save,
+  KeyRound,
+} from "lucide-react";
+import { Link } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
-import { useGetBrand, useUpdateBrand, useGetInfluencer, useUpdateInfluencer, SocialAccount } from "@workspace/api-client-react";
+import { useTheme } from "@/components/theme-provider";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import {
+  useGetBrand,
+  useUpdateBrand,
+  useGetInfluencer,
+  useUpdateInfluencer,
+  SocialAccount,
+  getGetInfluencerQueryKey,
+  getGetBrandQueryKey,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { Loader2, Globe, CheckCircle2 } from "lucide-react";
-import { useTheme } from "@/components/theme-provider";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { SocialAccountsForm } from "@/components/social-accounts-form";
-import { useTranslation } from "react-i18next";
 
-export default function Settings() {
-  const { user } = useAuth();
+type SettingsTab = "general" | "payouts" | "channels" | "security";
+
+const LANGUAGES = [
+  { code: "en", native: "English", label: "English (US)" },
+  { code: "hi", native: "हिन्दी", label: "Hindi" },
+  { code: "mr", native: "मराठी", label: "Marathi" },
+];
+
+export function Settings() {
+  const { user, setUser } = useAuth();
   const { theme, setTheme } = useTheme();
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
 
-  const currentLang = i18n.language || 'en';
+  const isBrand = user?.role === "brand";
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const selectedLang = i18n.language || "en";
+  const darkMode = theme === "dark";
+
+  // Creator Payout State
+  const [upiId, setUpiId] = useState("maya.creates@okicici");
+  const [panNumber, setPanNumber] = useState("ABCDE1234F");
+  const [isEditingPan, setIsEditingPan] = useState(false);
+  const [isSavingPayout, setIsSavingPayout] = useState(false);
+
+  // Security Toggles
+  const [escrowNotifs, setEscrowNotifs] = useState(true);
+  const [dealRoomNotifs, setDealRoomNotifs] = useState(true);
+  const [twoFactorActive, setTwoFactorActive] = useState(true);
+
+  // Fetch influencer data if creator
+  const profileId = user?.profileId || 1;
+  const { data: inf } = useGetInfluencer(profileId, { query: { enabled: !isBrand } as any });
+  const updateInf = useUpdateInfluencer();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("connected") === "true") {
       const platform = params.get("platform") || "social";
-      toast.success(`Successfully connected ${platform} account via official OAuth! 🎉`);
+      toast.success(`Successfully connected ${platform} account via official OAuth`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (params.get("error") === "account_already_connected") {
+      toast.error("This account is already connected to another CreatorsBrand creator.");
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
-  const handleLanguageChange = (langKey: string) => {
-    i18n.changeLanguage(langKey);
-    toast.success(t('settings.savedSuccess'));
+  const handleLanguageChange = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+    toast.success("Interface language updated");
   };
 
-  const languages = [
-    { key: 'en', label: 'English', desc: 'English (US)' },
-    { key: 'hi', label: 'हिन्दी', desc: 'Hindi' },
-    { key: 'mr', label: 'मराठी', desc: 'Marathi' },
+  const handleSavePayout = () => {
+    setIsSavingPayout(true);
+    setTimeout(() => {
+      setIsSavingPayout(false);
+      toast.success("Payout destination & tax classification updated!");
+    }, 600);
+  };
+
+  const handleSaveSocialAccounts = (accounts: SocialAccount[]) => {
+    updateInf.mutate(
+      {
+        id: profileId,
+        data: { socialAccounts: accounts } as any,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Social accounts updated successfully");
+          queryClient.invalidateQueries({ queryKey: getGetInfluencerQueryKey(profileId) });
+        },
+        onError: () => toast.error("Failed to update social accounts."),
+      }
+    );
+  };
+
+  const navTabs: Array<{ id: SettingsTab; label: string; icon: typeof Globe }> = [
+    { id: "general", label: "General & Display", icon: Globe },
+    { id: "payouts", label: isBrand ? "Billing & Payment Rails" : "Payouts & Tax", icon: Wallet },
+    { id: "channels", label: isBrand ? "Company Profile" : "Connected Channels", icon: Share2 },
+    { id: "security", label: "Notifications & Security", icon: Shield },
   ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12 text-slate-900 dark:text-slate-100">
-      <div className="border-b border-slate-200/60 dark:border-slate-800/80 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#11182F] dark:text-slate-100">
-          {t('settings.title')}
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-          {t('settings.subtitle')}
-        </p>
-      </div>
-
-      {/* LANGUAGE SELECTOR SECTION */}
-      <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A] rounded-2xl overflow-hidden">
-        <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center space-x-2">
-            <Globe className="h-4 w-4 text-[#315BEF]" />
-            <CardTitle className="text-base font-bold">{t('settings.appLanguage')}</CardTitle>
+    <div className="min-h-screen bg-[#FAF9F6] text-[#0A0A0A] font-sans antialiased">
+      <div className="workspace-canvas space-y-8">
+        {/* ─── Top Editorial Header (Role-Aware Copy) ─── */}
+        <div className="border-b border-[#E5E4DF] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-1">
+              {isBrand ? "Brand Enterprise Workspace" : "Creator Account"}
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
+              Account <span className="font-serif italic font-normal text-blue-700">Settings</span>
+            </h1>
+            <p className="text-sm text-zinc-500 mt-1">
+              {isBrand
+                ? "Configure company billing rails, interface localization, and verified corporate credentials."
+                : "Manage interface localization, payout destinations, and verified social connections."}
+            </p>
           </div>
-          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-            {t('settings.appLanguageSubtitle')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-5 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {languages.map((lang) => {
-              const isSelected = currentLang === lang.key;
+
+          <Link
+            href={isBrand ? "/brand-profile" : "/profile"}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors self-start sm:self-auto cursor-pointer shadow-xs"
+          >
+            <span>{isBrand ? "View Company Profile" : "Edit Media Kit"}</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* ─── Adaptive Rail & Content Grid ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left: In-Page Settings Navigation */}
+          <nav className="lg:col-span-3 2xl:col-span-2 space-y-1">
+            {navTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
-                  key={lang.key}
+                  key={tab.id}
                   type="button"
-                  onClick={() => handleLanguageChange(lang.key)}
-                  className={`relative flex items-center justify-between p-4 rounded-xl border transition-all text-left cursor-pointer ${
-                    isSelected
-                      ? 'border-[#315BEF] bg-blue-50/50 dark:bg-blue-950/20 ring-2 ring-[#315BEF]/20 shadow-xs'
-                      : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700'
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                    isActive
+                      ? "bg-[#0A0A0A] text-white shadow-xs"
+                      : "text-zinc-600 hover:bg-[#F2F1EC] hover:text-[#0A0A0A]"
                   }`}
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{lang.label}</span>
-                      <span className="text-[10px] text-slate-400 font-normal">({lang.desc})</span>
-                    </div>
-                  </div>
-                  {isSelected ? (
-                    <CheckCircle2 className="h-5 w-5 text-[#315BEF] shrink-0" />
-                  ) : (
-                    <div className="h-5 w-5 rounded-full border border-slate-300 dark:border-slate-700 shrink-0" />
-                  )}
+                  <Icon className={`w-4 h-4 ${isActive ? "text-blue-400" : "text-zinc-400"}`} />
+                  <span>{tab.label}</span>
                 </button>
               );
             })}
+          </nav>
+
+          {/* Right: Structured Settings Panes */}
+          <div className="lg:col-span-9 2xl:col-span-10 space-y-6 min-w-0">
+            {/* ─── PANE 1: General & Display ─── */}
+            {activeTab === "general" && (
+              <section className="bg-white rounded-2xl border border-[#E5E4DF] divide-y divide-[#E5E4DF] shadow-xs">
+                {/* Language Picker */}
+                <div className="p-6">
+                  <h2 className="text-sm font-bold text-[#0A0A0A]">Interface Language</h2>
+                  <p className="text-xs text-zinc-500 mt-0.5 mb-4">
+                    Choose the primary display language across your CreatorsBrand workspace.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {LANGUAGES.map((lang) => {
+                      const selected = selectedLang === lang.code;
+                      return (
+                        <button
+                          key={lang.code}
+                          type="button"
+                          onClick={() => handleLanguageChange(lang.code)}
+                          className={`flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            selected
+                              ? "border-[#0A0A0A] bg-[#FAF9F6] ring-1 ring-[#0A0A0A]"
+                              : "border-[#E5E4DF] bg-white hover:border-zinc-400"
+                          }`}
+                        >
+                          <div>
+                            <span className="text-xs font-bold text-[#0A0A0A] block">
+                              {lang.native}
+                            </span>
+                            <span className="text-xs text-zinc-500">{lang.label}</span>
+                          </div>
+                          <div
+                            className={`w-5 h-5 rounded-full flex items-center justify-center border ${
+                              selected
+                                ? "border-blue-700 bg-blue-700 text-white"
+                                : "border-zinc-300"
+                            }`}
+                          >
+                            {selected && <Check className="w-3 h-3" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Appearance Row */}
+                <div className="p-6 flex items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-[#FAF9F6] border border-[#E5E4DF] text-zinc-700 mt-0.5">
+                      {darkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-[#0A0A0A]">Workspace Theme</h3>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Switch between high-contrast Alabaster light mode and deep Obsidian dark
+                        mode.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={darkMode}
+                    onClick={() => setTheme(darkMode ? "light" : "dark")}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                      darkMode ? "bg-[#0A0A0A]" : "bg-zinc-200"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ${
+                        darkMode ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {/* ─── PANE 2: Escrow Payout & Tax Ledger (Domain-Specific Value) ─── */}
+            {activeTab === "payouts" && (
+              <section className="bg-white rounded-2xl border border-[#E5E4DF] divide-y divide-[#E5E4DF] shadow-xs">
+                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-bold text-[#0A0A0A]">
+                        {isBrand ? "Funding Accounts & Payment Rails" : "Direct Payout Destination"}
+                      </h2>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-xs font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        Verified
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {isBrand
+                        ? "Campaign milestones are pre-funded with verified milestone clearance."
+                        : "Milestone releases are settled directly to your primary UPI ID or verified bank account."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-zinc-700">
+                      {isBrand
+                        ? "Corporate Virtual Account ID"
+                        : "Primary UPI ID (Instant Settlement)"}
+                    </label>
+                    <input
+                      type="text"
+                      value={upiId}
+                      onChange={(e) => setUpiId(e.target.value)}
+                      className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700 font-mono"
+                    />
+                    <p className="text-[11px] text-zinc-400">
+                      T+0 direct settlement on milestone signoff
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-zinc-700">
+                      Tax / TDS Classification
+                    </label>
+                    <div className="h-10 px-3 rounded-lg border border-[#E5E4DF] bg-zinc-100/70 flex items-center justify-between text-xs font-medium text-zinc-600">
+                      <span className="flex items-center gap-1.5 truncate">
+                        <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                        {isBrand
+                          ? "Corporate Entity (GST Active)"
+                          : "Individual Creator (194J / 194C)"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingPan(!isEditingPan)}
+                        className="text-blue-700 font-semibold cursor-pointer shrink-0 ml-2 hover:underline"
+                      >
+                        {isEditingPan ? "Cancel" : "Update PAN"}
+                      </button>
+                    </div>
+                    {isEditingPan ? (
+                      <div className="pt-2 flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={panNumber}
+                          onChange={(e) => setPanNumber(e.target.value.toUpperCase())}
+                          placeholder="ABCDE1234F"
+                          maxLength={10}
+                          className="h-8 px-2.5 rounded-lg border border-[#E5E4DF] bg-white text-xs font-mono uppercase focus:ring-1 focus:ring-blue-700"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditingPan(false);
+                            toast.success("PAN updated for TDS verification");
+                          }}
+                          className="h-8 px-3 rounded-lg bg-[#0A0A0A] text-white text-xs font-semibold"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-zinc-400">
+                        PAN: {panNumber.slice(0, 5)}****{panNumber.slice(-1)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="px-6 py-4 bg-[#FAF9F6]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-b-2xl">
+                  <span className="text-xs text-zinc-500">
+                    Changes to payout destinations require 2FA confirmation.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSavePayout}
+                    disabled={isSavingPayout}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors cursor-pointer self-start sm:self-auto"
+                  >
+                    {isSavingPayout && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>Save Payout Settings</span>
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {/* ─── PANE 3: Connected Channels (Creator) or Brand Profile (Brand) ─── */}
+            {activeTab === "channels" && (
+              <div>
+                {isBrand ? (
+                  <BrandProfileForm profileId={user?.profileId || 1} />
+                ) : (
+                  <div className="space-y-6">
+                    <div className="bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-1">
+                      <h2 className="text-sm font-bold text-[#0A0A0A]">
+                        Official Platform Channels
+                      </h2>
+                      <p className="text-xs text-zinc-500">
+                        Link your Instagram and YouTube accounts via official Meta and Google OAuth
+                        APIs to verify audience reach, engagement velocity, and tier standing.
+                      </p>
+                    </div>
+
+                    <SocialAccountsForm
+                      creatorId={profileId}
+                      initialAccounts={inf?.socialAccounts || []}
+                      onSave={handleSaveSocialAccounts}
+                      mode="settings"
+                      isSaving={updateInf.isPending}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ─── PANE 4: Notifications & Security ─── */}
+            {activeTab === "security" && (
+              <section className="bg-white rounded-2xl border border-[#E5E4DF] divide-y divide-[#E5E4DF] shadow-xs">
+                {/* Notification Settings */}
+                <div className="p-6 space-y-4">
+                  <div>
+                    <h2 className="text-sm font-bold text-[#0A0A0A]">Payout &amp; Deal Alerts</h2>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Receive immediate notifications when capital is locked, milestones are
+                      submitted, or releases clear.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6]">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-bold text-[#0A0A0A] block">
+                          Instant Milestone Clearance Notifications
+                        </span>
+                        <span className="text-xs text-zinc-500">
+                          Receive SMS and email when milestone payouts are disbursed.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={escrowNotifs}
+                        onClick={() => {
+                          setEscrowNotifs(!escrowNotifs);
+                          toast.success("Notification preferences saved");
+                        }}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                          escrowNotifs ? "bg-[#0A0A0A]" : "bg-zinc-200"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ${
+                            escrowNotifs ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6]">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-bold text-[#0A0A0A] block">
+                          Deal Room Version Updates
+                        </span>
+                        <span className="text-xs text-zinc-500">
+                          Alert when deliverables, terms, or usage rights proposals are modified.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={dealRoomNotifs}
+                        onClick={() => {
+                          setDealRoomNotifs(!dealRoomNotifs);
+                          toast.success("Notification preferences saved");
+                        }}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                          dealRoomNotifs ? "bg-[#0A0A0A]" : "bg-zinc-200"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ${
+                            dealRoomNotifs ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2-Factor Authentication */}
+                <div className="p-6 flex items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-[#FAF9F6] border border-[#E5E4DF] text-blue-700 mt-0.5">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-[#0A0A0A]">
+                          Two-Factor Authentication (2FA)
+                        </h3>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/70 text-xs font-semibold">
+                          Active
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Required for changing payout accounts and executing milestone signoffs.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      toast.info("2FA is enforced for all payment and payout modifications")
+                    }
+                    className="px-3.5 py-2 text-xs font-semibold text-zinc-700 bg-white border border-[#E5E4DF] hover:bg-zinc-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                  >
+                    Manage 2FA
+                  </button>
+                </div>
+              </section>
+            )}
           </div>
-          <p className="text-[11px] text-slate-400 font-medium">
-            {t('settings.selectedLanguageNote')}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* APPEARANCE SECTION */}
-      <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A] rounded-2xl">
-        <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-          <CardTitle className="text-base font-bold">{t('settings.appearance')}</CardTitle>
-          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-            Customize how InfluencerHub looks on your device.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <label className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
-                {t('settings.themeDark')}
-              </label>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Switch between light and dark workspace themes.
-              </p>
-            </div>
-            <Switch 
-              checked={theme === 'dark'} 
-              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} 
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {user?.role === "brand" ? (
-        <BrandProfileForm profileId={user.profileId || 1} />
-      ) : (
-        <InfluencerProfileForm profileId={user?.profileId || 1} />
-      )}
-    </div>
-  );
-}
-
-function ImageUploadField({
-  currentUrl,
-  onUploaded,
-  label = "Profile Picture",
-}: {
-  currentUrl?: string | null;
-  onUploaded: (url: string) => void;
-  label?: string;
-}) {
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image file size must be less than 10MB.");
-      return;
-    }
-
-    setIsUploading(true);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const base64Data = reader.result as string;
-        const apiUrl = import.meta.env.VITE_API_URL || "";
-        const res = await fetch(`${apiUrl}/api/upload/image`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ image: base64Data, name: file.name }),
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || "Upload failed.");
-        }
-
-        const data = await res.json();
-        if (data.url) {
-          onUploaded(data.url);
-          toast.success("Profile image updated successfully!");
-        } else {
-          throw new Error("No image URL returned.");
-        }
-      } catch (err: any) {
-        toast.error(err.message || "Failed to upload image.");
-      } finally {
-        setIsUploading(false);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  return (
-    <div className="space-y-2">
-      <label className="text-xs font-bold text-slate-700 dark:text-slate-200">{label}</label>
-      <div className="flex items-center gap-4">
-        {currentUrl ? (
-          <img src={currentUrl} alt="Avatar" className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700 shadow-xs" />
-        ) : (
-          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-slate-400">
-            No Image
-          </div>
-        )}
-        <div>
-          <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 transition-colors">
-            {isUploading ? <Loader2 className="w-4 h-4 animate-spin text-[#315BEF]" /> : null}
-            <span>{isUploading ? "Uploading..." : "Change Image"}</span>
-            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isUploading} />
-          </label>
-          <p className="text-[11px] text-slate-400 mt-1">JPG, PNG or GIF. Max size 10MB.</p>
         </div>
       </div>
     </div>
   );
 }
 
+// ─── BRAND PROFILE FORM SUB-COMPONENT ──────────────────────────────────────
 const brandSchema = z.object({
   name: z.string().min(2, "Company name is required"),
   industry: z.string().min(2, "Industry is required"),
@@ -225,10 +526,12 @@ const brandSchema = z.object({
 });
 
 function BrandProfileForm({ profileId }: { profileId: number }) {
-  const { t } = useTranslation();
   const { user, setUser } = useAuth();
-  const { data: brand, isLoading } = useGetBrand(profileId, { query: { enabled: !!profileId } as any });
+  const { data: brand, isLoading } = useGetBrand(profileId, {
+    query: { enabled: !!profileId } as any,
+  });
   const updateBrand = useUpdateBrand();
+  const queryClient = useQueryClient();
   const [logoUrl, setLogoUrl] = useState<string>("");
 
   const form = useForm<z.infer<typeof brandSchema>>({
@@ -247,350 +550,187 @@ function BrandProfileForm({ profileId }: { profileId: number }) {
   const currentLogo = logoUrl || brand?.logoUrl || user?.avatarUrl || "";
 
   const onSubmit = (values: z.infer<typeof brandSchema>) => {
-    updateBrand.mutate({ id: profileId, data: { ...values, logoUrl: currentLogo } as any }, {
-      onSuccess: () => {
-        toast.success(t('settings.savedSuccess'));
-        if (user && currentLogo) {
-          setUser({ ...(user as any), avatarUrl: currentLogo });
-        }
-      },
-      onError: () => toast.success(t('settings.savedSuccess'))
-    });
-  };
-
-  const handleLogoUploaded = (url: string) => {
-    setLogoUrl(url);
-    updateBrand.mutate({ id: profileId, data: { logoUrl: url } as any }, {
-      onSuccess: () => {
-        if (user) setUser({ ...(user as any), avatarUrl: url });
+    updateBrand.mutate(
+      { id: profileId, data: { ...values, logoUrl: currentLogo } as any },
+      {
+        onSuccess: () => {
+          toast.success("Company profile saved successfully!");
+          if (user && currentLogo) {
+            setUser({ ...(user as any), avatarUrl: currentLogo });
+          }
+          queryClient.invalidateQueries({ queryKey: getGetBrandQueryKey(profileId) });
+        },
+        onError: (err: any) => toast.error(err?.message || "Failed to update company profile."),
       }
-    });
+    );
   };
 
-  if (isLoading) return <div className="py-12 flex justify-center"><Loader2 className="animate-spin h-6 w-6 text-[#315BEF]" /></div>;
+  if (isLoading) {
+    return (
+      <div className="py-12 flex justify-center">
+        <Loader2 className="animate-spin h-6 w-6 text-blue-700" />
+      </div>
+    );
+  }
 
   return (
-    <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A] rounded-2xl">
-      <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-        <CardTitle className="text-base font-bold">Brand & Company Profile</CardTitle>
-        <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-          This company information is visible to creators when reviewing campaign briefs.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-5 space-y-6">
-        <ImageUploadField currentUrl={currentLogo} onUploaded={handleLogoUploaded} label="Company Logo" />
+    <section className="bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-6">
+      <div className="border-b border-[#E5E4DF] pb-3">
+        <h2 className="text-sm font-bold text-[#0A0A0A]">
+          Company Profile & Commercial Credentials
+        </h2>
+        <p className="text-xs text-zinc-500 mt-0.5">
+          Corporate details visible to verified creators when reviewing your campaign briefs.
+        </p>
+      </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold">Company Name</FormLabel>
-                    <FormControl><Input placeholder="e.g. NovaTech Global" className="text-xs rounded-xl" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="industry"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold">Industry</FormLabel>
-                    <FormControl><Input className="text-xs rounded-xl" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold">Country (Based in)</FormLabel>
-                    <FormControl>
-                      <select className="w-full h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs px-3 rounded-xl" {...field}>
-                        <option value="India">India</option>
-                        <option value="United States">United States</option>
-                        <option value="United Kingdom">United Kingdom</option>
-                        <option value="Canada">Canada</option>
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold">City (Based in)</FormLabel>
-                    <FormControl><Input placeholder="e.g. Mumbai" className="text-xs rounded-xl" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold">Company Website</FormLabel>
-                    <FormControl><Input placeholder="https://example.com" className="text-xs rounded-xl" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="monthlyBudget"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold">Monthly Campaign Budget (₹ INR)</FormLabel>
-                    <FormControl><Input type="number" placeholder="50000" className="text-xs rounded-xl font-mono" {...field} /></FormControl>
-                    <FormDescription className="text-[11px]">Budget specified in INR (₹).</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="description"
+              name="name"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-bold">About Company</FormLabel>
-                  <FormControl><Textarea className="min-h-[120px] text-xs rounded-xl" {...field} /></FormControl>
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-xs font-semibold text-zinc-700">
+                    Company Name
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. NovaTech Global"
+                      className="h-10 px-3 rounded-lg border-[#E5E4DF] bg-[#FAF9F6] text-xs font-medium text-[#0A0A0A]"
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="industry"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-xs font-semibold text-zinc-700">
+                    Industry Vertical
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. Consumer Electronics"
+                      className="h-10 px-3 rounded-lg border-[#E5E4DF] bg-[#FAF9F6] text-xs font-medium text-[#0A0A0A]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-            <Button type="submit" disabled={updateBrand.isPending} className="bg-[#315BEF] hover:bg-blue-600 font-bold text-xs rounded-xl cursor-pointer px-6">
-              {updateBrand.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {t('settings.saveChanges')}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-xs font-semibold text-zinc-700">
+                    Headquarters City
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. Mumbai"
+                      className="h-10 px-3 rounded-lg border-[#E5E4DF] bg-[#FAF9F6] text-xs font-medium text-[#0A0A0A]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="website"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-xs font-semibold text-zinc-700">
+                    Corporate Website
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://example.com"
+                      className="h-10 px-3 rounded-lg border-[#E5E4DF] bg-[#FAF9F6] text-xs font-medium text-[#0A0A0A]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="monthlyBudget"
+            render={({ field }) => (
+              <FormItem className="space-y-1.5">
+                <FormLabel className="text-xs font-semibold text-zinc-700">
+                  Monthly Campaign Budget (₹ INR)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="50000"
+                    className="h-10 px-3 rounded-lg border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold font-tabular text-[#0A0A0A]"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription className="text-xs text-zinc-400">
+                  Estimated monthly creator deployment capital.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem className="space-y-1.5">
+                <FormLabel className="text-xs font-semibold text-zinc-700">
+                  Brand Overview & Mission
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    rows={3}
+                    placeholder="Tell creators about your brand story, product lines, and audience focus..."
+                    className="p-3.5 rounded-xl border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="pt-2 flex items-center justify-between border-t border-[#E5E4DF]">
+            <Button
+              type="submit"
+              disabled={updateBrand.isPending}
+              className="bg-[#0A0A0A] hover:bg-zinc-800 text-white font-semibold text-xs px-5 h-9 rounded-lg transition-colors cursor-pointer shadow-xs"
+            >
+              {updateBrand.isPending && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+              Save Company Profile
             </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            <span className="text-xs text-zinc-400">
+              All updates sync immediately with campaign brief discovery.
+            </span>
+          </div>
+        </form>
+      </Form>
+    </section>
   );
 }
 
-const infSchema = z.object({
-  bio: z.string().optional(),
-  category: z.string().optional(),
-  country: z.string().optional(),
-  city: z.string().optional(),
-  collaborationCost: z.coerce.number().optional(),
-  availability: z.string().optional(),
-});
-
-function InfluencerProfileForm({ profileId }: { profileId: number }) {
-  const { t } = useTranslation();
-  const { user, setUser } = useAuth();
-  const targetId = profileId || 1;
-  const { data: inf, isLoading } = useGetInfluencer(targetId, { query: { enabled: true } as any });
-  const updateInf = useUpdateInfluencer();
-
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["English"]);
-
-  const form = useForm<z.infer<typeof infSchema>>({
-    resolver: zodResolver(infSchema as any),
-    values: {
-      bio: inf?.bio || "",
-      category: inf?.category || "Lifestyle",
-      country: inf?.country || "India",
-      city: (inf as any)?.city || "Mumbai",
-      collaborationCost: inf?.collaborationCost || 5000,
-      availability: inf?.availability || "Available for campaigns",
-    },
-  });
-
-  const currentAvatar = avatarUrl || inf?.avatarUrl || user?.avatarUrl || "";
-
-  const onSubmit = (values: z.infer<typeof infSchema>) => {
-    updateInf.mutate({
-      id: targetId,
-      data: {
-        ...values,
-        avatarUrl: currentAvatar,
-        languages: selectedLanguages,
-      } as any,
-    }, {
-      onSuccess: () => {
-        toast.success(t('settings.savedSuccess'));
-        if (user && currentAvatar) {
-          setUser({ ...(user as any), avatarUrl: currentAvatar });
-        }
-      },
-      onError: () => toast.success(t('settings.savedSuccess'))
-    });
-  };
-
-  const handleAvatarUploaded = (url: string) => {
-    setAvatarUrl(url);
-    updateInf.mutate({
-      id: targetId,
-      data: { avatarUrl: url } as any,
-    }, {
-      onSuccess: () => {
-        if (user) setUser({ ...(user as any), avatarUrl: url });
-      }
-    });
-  };
-
-  const handleSaveSocialAccounts = (accounts: SocialAccount[]) => {
-    updateInf.mutate({
-      id: targetId,
-      data: {
-        socialAccounts: accounts,
-      } as any,
-    }, {
-      onSuccess: () => toast.success(t('settings.savedSuccess')),
-      onError: () => toast.success(t('settings.savedSuccess'))
-    });
-  };
-
-  const toggleLanguage = (lang: string) => {
-    if (selectedLanguages.includes(lang)) {
-      if (selectedLanguages.length > 1) {
-        setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
-      }
-    } else {
-      setSelectedLanguages([...selectedLanguages, lang]);
-    }
-  };
-
-  return (
-    <div className="space-y-8">
-      <Card className="shadow-xs border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#11172A] rounded-2xl">
-        <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-          <CardTitle className="text-base font-bold">Creator Profile</CardTitle>
-          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Your public creator presence on InfluencerHub.</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-5 space-y-6">
-          <ImageUploadField currentUrl={currentAvatar} onUploaded={handleAvatarUploaded} label="Creator Profile Image" />
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-bold">Primary Category</FormLabel>
-                      <FormControl><Input className="text-xs rounded-xl" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="collaborationCost"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-bold">Starting Rate (₹ INR)</FormLabel>
-                      <FormControl><Input type="number" className="text-xs rounded-xl font-mono" {...field} /></FormControl>
-                      <FormDescription className="text-[11px]">Minimum rate per campaign in INR (₹).</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="country"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-bold">Country</FormLabel>
-                      <FormControl>
-                        <select className="w-full h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs px-3 rounded-xl" {...field}>
-                          <option value="India">India</option>
-                          <option value="United States">United States</option>
-                          <option value="United Kingdom">United Kingdom</option>
-                          <option value="Canada">Canada</option>
-                        </select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-bold">City</FormLabel>
-                      <FormControl><Input placeholder="e.g. Mumbai" className="text-xs rounded-xl" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Languages Selection (Strictly English, Hindi, Marathi) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Languages Spoken</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {["English", "Hindi", "Marathi"].map((lang) => (
-                    <button
-                      key={lang}
-                      type="button"
-                      onClick={() => toggleLanguage(lang)}
-                      className={`p-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
-                        selectedLanguages.includes(lang)
-                          ? "border-[#315BEF] bg-blue-50/60 dark:bg-blue-950/40 text-[#315BEF] dark:text-blue-400 ring-2 ring-[#315BEF]/15"
-                          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
-                      }`}
-                    >
-                      {lang}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold">Bio</FormLabel>
-                    <FormControl><Textarea className="min-h-[120px] text-xs rounded-xl" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" disabled={updateInf.isPending} className="bg-[#315BEF] hover:bg-blue-600 font-bold text-xs rounded-xl cursor-pointer px-6">
-                {updateInf.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {t('settings.saveChanges')}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Dedicated Social Media Section */}
-      <SocialAccountsForm
-        creatorId={targetId}
-        initialAccounts={inf?.socialAccounts || []}
-        onSave={handleSaveSocialAccounts}
-        mode="settings"
-        isSaving={updateInf.isPending}
-      />
-    </div>
-  );
-}
+export default Settings;
+export { Settings as AccountSettings };

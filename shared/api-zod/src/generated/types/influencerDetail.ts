@@ -5,9 +5,9 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { Collaboration } from './collaboration';
-import type { Influencer } from './influencer';
-import type { Review } from './review';
+import type { Collaboration } from "./collaboration";
+import type { Influencer } from "./influencer";
+import type { Review } from "./review";
 
 export type InfluencerDetail = Influencer & {
   portfolio?: string[];

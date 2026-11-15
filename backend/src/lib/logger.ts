@@ -27,6 +27,12 @@ export const logger = pino({
       "INSTAGRAM_CLIENT_SECRET",
       "YOUTUBE_CLIENT_SECRET",
       "GOOGLE_CLIENT_SECRET",
+      "STORAGE_ACCESS_KEY_ID",
+      "STORAGE_SECRET_ACCESS_KEY",
+      "secretAccessKey",
+      "accessKeyId",
+      "uploadUrl",
+      "presignedUrl",
     ],
     censor: "[REDACTED_SECRET]",
   },
@@ -43,63 +49,108 @@ export const logger = pino({
 /**
  * Structured Auth Event Logging Helper
  */
-export function logAuthEvent(event: string, details: { userId?: string; email?: string; role?: string; success: boolean; error?: string; requestId?: string }) {
+export function logAuthEvent(
+  event: string,
+  details: {
+    userId?: string;
+    email?: string;
+    role?: string;
+    success: boolean;
+    error?: string;
+    requestId?: string;
+  }
+) {
   const level = details.success ? "info" : "warn";
-  logger[level]({
-    category: "AUTH",
-    event,
-    userId: details.userId || "anonymous",
-    email: details.email,
-    role: details.role,
-    success: details.success,
-    error: details.error,
-    requestId: details.requestId,
-  }, `[AUTH EVENT] ${event} - ${details.success ? "SUCCESS" : "FAILED"}`);
+  logger[level](
+    {
+      category: "AUTH",
+      event,
+      userId: details.userId || "anonymous",
+      email: details.email,
+      role: details.role,
+      success: details.success,
+      error: details.error,
+      requestId: details.requestId,
+    },
+    `[AUTH EVENT] ${event} - ${details.success ? "SUCCESS" : "FAILED"}`
+  );
 }
 
 /**
  * Structured OAuth Event Logging Helper
  */
-export function logOAuthEvent(event: string, details: { provider: string; userId?: string; state?: string; success: boolean; error?: string; requestId?: string }) {
+export function logOAuthEvent(
+  event: string,
+  details: {
+    provider: string;
+    userId?: string;
+    state?: string;
+    success: boolean;
+    error?: string;
+    requestId?: string;
+  }
+) {
   const level = details.success ? "info" : "warn";
-  logger[level]({
-    category: "OAUTH",
-    event,
-    provider: details.provider,
-    userId: details.userId || "anonymous",
-    success: details.success,
-    error: details.error,
-    requestId: details.requestId,
-  }, `[OAUTH EVENT] ${details.provider.toUpperCase()} ${event} - ${details.success ? "SUCCESS" : "FAILED"}`);
+  logger[level](
+    {
+      category: "OAUTH",
+      event,
+      provider: details.provider,
+      userId: details.userId || "anonymous",
+      success: details.success,
+      error: details.error,
+      requestId: details.requestId,
+    },
+    `[OAUTH EVENT] ${details.provider.toUpperCase()} ${event} - ${details.success ? "SUCCESS" : "FAILED"}`
+  );
 }
 
 /**
  * Structured Social Data Sync Event Logging Helper
  */
-export function logSocialSyncEvent(event: string, details: { platform: string; socialAccountId?: number; username?: string; followers?: number; success: boolean; error?: string }) {
+export function logSocialSyncEvent(
+  event: string,
+  details: {
+    platform: string;
+    socialAccountId?: number;
+    username?: string;
+    followers?: number;
+    success: boolean;
+    error?: string;
+  }
+) {
   const level = details.success ? "info" : "error";
-  logger[level]({
-    category: "SOCIAL_SYNC",
-    event,
-    platform: details.platform,
-    socialAccountId: details.socialAccountId,
-    username: details.username,
-    followers: details.followers,
-    success: details.success,
-    error: details.error,
-  }, `[SOCIAL SYNC] ${details.platform.toUpperCase()} @${details.username || details.socialAccountId} - ${details.success ? "SUCCESS" : "FAILED"}`);
+  logger[level](
+    {
+      category: "SOCIAL_SYNC",
+      event,
+      platform: details.platform,
+      socialAccountId: details.socialAccountId,
+      username: details.username,
+      followers: details.followers,
+      success: details.success,
+      error: details.error,
+    },
+    `[SOCIAL SYNC] ${details.platform.toUpperCase()} @${details.username || details.socialAccountId} - ${details.success ? "SUCCESS" : "FAILED"}`
+  );
 }
 
 /**
  * Structured Database Event Logging Helper
  */
-export function logDatabaseEvent(event: string, details: { action: string; success: boolean; error?: string }) {
+export function logDatabaseEvent(
+  event: string,
+  details: { action: string; success: boolean; error?: string }
+) {
   const level = details.success ? "info" : "error";
-  logger[level]({
-    category: "DATABASE",
-    event,
-    action: details.action,
-    success: details.success,
-    error: details.error,
-  }, `[DATABASE] ${event} - ${details.success ? "OK" : "ERROR"}`);
+  logger[level](
+    {
+      category: "DATABASE",
+      event,
+      action: details.action,
+      success: details.success,
+      error: details.error,
+    },
+    `[DATABASE] ${event} - ${details.success ? "OK" : "ERROR"}`
+  );
 }

@@ -31,7 +31,11 @@ export function encryptSocialToken(plaintextToken: string): EncryptedTokenResult
   };
 }
 
-export function decryptSocialToken(encryptedToken: string, ivHex: string, authTagHex: string): string {
+export function decryptSocialToken(
+  encryptedToken: string,
+  ivHex: string,
+  authTagHex: string
+): string {
   const key = getSecretKey();
   const iv = Buffer.from(ivHex, "hex");
   const authTag = Buffer.from(authTagHex, "hex");

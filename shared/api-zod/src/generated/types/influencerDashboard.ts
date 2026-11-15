@@ -5,8 +5,8 @@
  * Influencer Hub API
  * OpenAPI spec version: 0.1.0
  */
-import type { Application } from './application';
-import type { InfluencerDashboardViewsThisWeekItem } from './influencerDashboardViewsThisWeekItem';
+import type { Application } from "./application";
+import type { InfluencerDashboardViewsThisWeekItem } from "./influencerDashboardViewsThisWeekItem";
 
 export interface InfluencerDashboard {
   profileCompletion: number;

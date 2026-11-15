@@ -38,9 +38,9 @@
     "alreadyHaveAccount": "पहले से खाता है?"
   },
   "onboarding": {
-    "welcome": "InfluencerHub में आपका स्वागत है",
+    "welcome": "CreatorsBrand में आपका स्वागत है",
     "chooseLanguage": "अपनी भाषा चुनें",
-    "languageSubtitle": "InfluencerHub अनुभव के लिए अपनी पसंदीदा भाषा का चयन करें",
+    "languageSubtitle": "CreatorsBrand अनुभव के लिए अपनी पसंदीदा भाषा का चयन करें",
     "continue": "जारी रखें",
     "back": "पीछे",
     "step": "चरण {{total}} का {{current}}",
@@ -65,7 +65,7 @@
     "connectedAccounts": "जुड़े हुए खाते",
     "help": "सहायता और सहायता",
     "appLanguage": "ऐप की भाषा",
-    "appLanguageSubtitle": "पूरे InfluencerHub इंटरफ़ेस में उपयोग की जाने वाली भाषा चुनें",
+    "appLanguageSubtitle": "पूरे CreatorsBrand इंटरफ़ेस में उपयोग की जाने वाली भाषा चुनें",
     "selectedLanguageNote": "वर्तमान में चुनी गई भाषा तुरंत आपके एप्लिकेशन में अपडेट हो जाती है।",
     "themeLight": "लाइट थीम",
     "themeDark": "डार्क थीम",

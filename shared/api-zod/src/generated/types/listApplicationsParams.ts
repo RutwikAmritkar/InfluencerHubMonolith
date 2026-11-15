@@ -7,7 +7,7 @@
  */
 
 export type ListApplicationsParams = {
-campaignId?: number;
-influencerId?: number;
-status?: string;
+  campaignId?: number;
+  influencerId?: number;
+  status?: string;
 };

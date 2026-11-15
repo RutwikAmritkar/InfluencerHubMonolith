@@ -9,7 +9,10 @@ const router: IRouter = Router();
 
 async function formatCampaign(c: typeof campaignsTable.$inferSelect) {
   const brand = await db.select().from(brandsTable).where(eq(brandsTable.id, c.brandId)).limit(1);
-  const [{ total }] = await db.select({ total: count() }).from(applicationsTable).where(eq(applicationsTable.campaignId, c.id));
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(applicationsTable)
+    .where(eq(applicationsTable.campaignId, c.id));
   return {
     id: c.id,
     brandId: c.brandId,
@@ -34,7 +37,10 @@ router.get("/campaigns", async (req, res): Promise<void> => {
 
   const conditions = [];
   if (platform) conditions.push(eq(campaignsTable.platform, platform));
-  if (status) conditions.push(eq(campaignsTable.status, status as "draft" | "active" | "completed" | "paused"));
+  if (status)
+    conditions.push(
+      eq(campaignsTable.status, status as "draft" | "active" | "completed" | "paused")
+    );
   if (brandId) conditions.push(eq(campaignsTable.brandId, parseInt(brandId)));
 
   const rows = await db
@@ -55,7 +61,11 @@ router.post("/campaigns", requireAuth, requireRole(["brand"]), async (req, res):
     return;
   }
 
-  const [brand] = await db.select().from(brandsTable).where(eq(brandsTable.userId, String(userId))).limit(1);
+  const [brand] = await db
+    .select()
+    .from(brandsTable)
+    .where(eq(brandsTable.userId, String(userId)))
+    .limit(1);
   if (!brand) {
     res.status(403).json({ error: "Only brands can create campaigns" });
     return;
@@ -73,7 +83,11 @@ router.get("/campaigns/:id", async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
 
-  const [campaign] = await db.select().from(campaignsTable).where(eq(campaignsTable.id, id)).limit(1);
+  const [campaign] = await db
+    .select()
+    .from(campaignsTable)
+    .where(eq(campaignsTable.id, id))
+    .limit(1);
   if (!campaign) {
     res.status(404).json({ error: "Campaign not found" });
     return;

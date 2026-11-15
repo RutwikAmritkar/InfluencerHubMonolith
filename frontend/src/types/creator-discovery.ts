@@ -10,7 +10,7 @@ export interface CreatorDiscoveryFilters {
   // Creator Level
   categories: string[];
   niches: string[];
-  platforms: Array<"instagram" | "tiktok" | "youtube" | "twitter" | "facebook">;
+  platforms: Array<"instagram" | "youtube" | "twitter" | "facebook">;
   creatorLocations: string[];
   languages: string[];
   creatorTier: Array<"nano" | "micro" | "mid" | "macro" | "mega">;

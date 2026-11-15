@@ -7,5 +7,5 @@
  */
 
 export type GetAiSuggestionsParams = {
-type?: string;
+  type?: string;
 };

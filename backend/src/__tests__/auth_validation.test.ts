@@ -1,6 +1,13 @@
 import { auth } from "../auth/index";
 import { logAuditEvent } from "../auth/audit";
-import { db, user as userTable, influencersTable, brandsTable, auditLogsTable, account as accountTable } from "@workspace/db";
+import {
+  db,
+  user as userTable,
+  influencersTable,
+  brandsTable,
+  auditLogsTable,
+  account as accountTable,
+} from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 async function runFullAuthValidationSuite() {
@@ -28,7 +35,10 @@ async function runFullAuthValidationSuite() {
   let createdUserId = "";
 
   // 1. Better Auth Instance Check
-  assert(typeof auth === "object" && typeof auth.api === "object", "1. Better Auth framework initialized");
+  assert(
+    typeof auth === "object" && typeof auth.api === "object",
+    "1. Better Auth framework initialized"
+  );
 
   // 2. Registration API Test
   try {
@@ -57,14 +67,25 @@ async function runFullAuthValidationSuite() {
 
   // 3. PostgreSQL Database Verification
   try {
-    const [dbUser] = await db.select().from(userTable).where(eq(userTable.id, createdUserId)).limit(1);
+    const [dbUser] = await db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.id, createdUserId))
+      .limit(1);
     assert(Boolean(dbUser), "3a. User is persisted in PostgreSQL 'user' table");
     assert(dbUser.email === testEmail, "3b. Email matches registered email");
     assert(dbUser.role === "influencer", "3c. Selected role is persisted in database");
-    assert(Boolean(dbUser.createdAt) && Boolean(dbUser.updatedAt), "3d. CreatedAt and UpdatedAt timestamps are populated");
+    assert(
+      Boolean(dbUser.createdAt) && Boolean(dbUser.updatedAt),
+      "3d. CreatedAt and UpdatedAt timestamps are populated"
+    );
 
     // Check account credential table
-    const [dbAccount] = await db.select().from(accountTable).where(eq(accountTable.userId, createdUserId)).limit(1);
+    const [dbAccount] = await db
+      .select()
+      .from(accountTable)
+      .where(eq(accountTable.userId, createdUserId))
+      .limit(1);
     assert(Boolean(dbAccount), "3e. Authentication record created in 'account' table");
 
     const passwordVal = dbAccount?.password || "";
@@ -91,7 +112,10 @@ async function runFullAuthValidationSuite() {
     assert(duplicateFailed, "4. Duplicate registration with existing email fails");
 
     const usersWithEmail = await db.select().from(userTable).where(eq(userTable.email, testEmail));
-    assert(usersWithEmail.length === 1, "4b. Database contains exactly one identity for test email");
+    assert(
+      usersWithEmail.length === 1,
+      "4b. Database contains exactly one identity for test email"
+    );
   } catch (e: any) {
     assert(false, `4. Duplicate registration test failed: ${e.message}`);
   }
@@ -139,7 +163,7 @@ async function runFullAuthValidationSuite() {
     assert(auditLogs.length > 0, "7a. Security audit events recorded in audit_logs table");
 
     // Verify passwords are never logged in details
-    const hasPasswordInLogs = auditLogs.some(l => l.details && l.details.includes(testPassword));
+    const hasPasswordInLogs = auditLogs.some((l) => l.details && l.details.includes(testPassword));
     assert(!hasPasswordInLogs, "7b. Plaintext passwords are NEVER logged in audit events");
   } catch (e: any) {
     assert(false, `7. Security audit test failed: ${e.message}`);
@@ -148,13 +172,22 @@ async function runFullAuthValidationSuite() {
   // 8. RBAC Verification
   const isRoleAllowed = (userRole: string, allowedRoles: string[]) => {
     const normUser = userRole === "creator" ? "influencer" : userRole;
-    const normAllowed = allowedRoles.map(r => (r === "creator" ? "influencer" : r));
+    const normAllowed = allowedRoles.map((r) => (r === "creator" ? "influencer" : r));
     return normAllowed.includes(normUser);
   };
 
-  assert(!isRoleAllowed("influencer", ["brand"]), "8a. Creator role denied access to brand-only endpoints");
-  assert(isRoleAllowed("influencer", ["influencer"]), "8b. Creator role granted access to creator endpoints");
-  assert(!isRoleAllowed("brand", ["influencer"]), "8c. Brand role denied access to creator-only endpoints");
+  assert(
+    !isRoleAllowed("influencer", ["brand"]),
+    "8a. Creator role denied access to brand-only endpoints"
+  );
+  assert(
+    isRoleAllowed("influencer", ["influencer"]),
+    "8b. Creator role granted access to creator endpoints"
+  );
+  assert(
+    !isRoleAllowed("brand", ["influencer"]),
+    "8c. Brand role denied access to creator-only endpoints"
+  );
 
   console.log(`\nValidation Suite Results: ${passed} Passed, ${failed} Failed.\n`);
   if (failed > 0) {

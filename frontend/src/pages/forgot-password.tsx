@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
+import { LEGAL_CONFIG } from "@/lib/legal-config";
 import { toast } from "sonner";
 import { Loader2, Mail, ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
 
@@ -52,26 +53,16 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#0D111D] text-white flex flex-col justify-between p-6 sm:p-10 font-sans selection:bg-blue-600 selection:text-white relative overflow-hidden">
-      {/* Background SVG Orbits */}
-      <div className="absolute inset-0 opacity-15 pointer-events-none overflow-hidden">
-        <svg className="w-full h-full text-blue-500" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M-100 200C200 400 400 -100 800 300C1200 700 1600 200 1800 500" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" />
-          <path d="M-200 600C100 200 600 800 1000 400C1400 0 1700 800 1900 600" stroke="currentColor" strokeWidth="1.5" />
-          <circle cx="400" cy="250" r="180" stroke="currentColor" strokeWidth="1" opacity="0.4" />
-          <circle cx="1100" cy="550" r="240" stroke="currentColor" strokeWidth="1" opacity="0.3" />
-        </svg>
-      </div>
-
+    <div className="min-h-screen w-full bg-[#FAF9F6] text-[#0A0A0A] flex flex-col justify-between p-6 sm:p-10 font-sans selection:bg-[#0A0A0A] selection:text-white relative">
       {/* Header */}
-      <header className="relative z-20 flex items-center justify-between w-full max-w-7xl mx-auto">
+      <header className="relative z-20 flex items-center justify-between w-full max-w-5xl mx-auto">
         <Link href="/">
-          <div className="inline-flex items-center gap-3 cursor-pointer group">
-            <div className="h-10 w-10 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-600/30 group-hover:scale-105 transition-transform duration-300">
-              I
+          <div className="inline-flex items-center gap-2.5 cursor-pointer group">
+            <div className="h-9 w-9 bg-[#0A0A0A] text-white rounded-lg flex items-center justify-center font-bold text-lg shadow-xs group-hover:scale-105 transition-transform">
+              CB
             </div>
-            <span className="text-xl font-bold tracking-tight text-white">
-              Influencer<span className="text-blue-500">Hub</span>
+            <span className="text-xl font-extrabold tracking-[-0.03em] text-[#0A0A0A]">
+              Creators<span className="font-serif italic font-normal">Brand</span>
             </span>
           </div>
         </Link>
@@ -83,41 +74,45 @@ export default function ForgotPassword() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="w-full rounded-[24px] bg-[#141A2E]/90 border border-slate-800/80 p-8 sm:p-10 shadow-2xl backdrop-blur-xl text-left space-y-6 ring-1 ring-white/5"
+          className="w-full rounded-xl bg-white border border-[#E5E4DF] p-8 sm:p-10 shadow-xs text-left space-y-6"
         >
           {!isSubmitted ? (
             <>
               <div className="text-center space-y-2">
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl mx-auto border border-blue-500/20 shadow-inner">
-                  <Mail className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-xl bg-[#FAF9F6] text-[#0A0A0A] border border-[#E5E4DF] flex items-center justify-center text-xl mx-auto shadow-xs">
+                  <Mail className="w-5 h-5 text-[#1D4ED8]" />
                 </div>
-                <h1 className="text-3xl font-extrabold text-white tracking-tight">Forgot your password?</h1>
-                <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                  Enter the email address associated with your account and we'll send you a password reset link.
+                <h1 className="text-2xl font-extrabold text-[#0A0A0A] tracking-[-0.03em]">
+                  Reset your <span className="font-serif italic font-normal">password</span>
+                </h1>
+                <p className="text-xs text-[#52525B] leading-relaxed">
+                  Enter your email address and we will dispatch a secure credential reset link.
                 </p>
               </div>
 
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
                 <div className="space-y-1.5">
-                  <label htmlFor="email" className="text-xs text-slate-300 font-medium block">
-                    Email address <span className="text-blue-400">*</span>
+                  <label htmlFor="email" className="text-xs text-[#0A0A0A] font-semibold block">
+                    Account Email Address <span className="text-[#1D4ED8]">*</span>
                   </label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="you@example.com"
-                    className="h-11 bg-slate-950/80 border-slate-800 text-white rounded-xl text-xs focus-visible:ring-blue-500"
+                    className="h-10 bg-[#FAF9F6] border-[#E5E4DF] text-[#0A0A0A] rounded-lg text-xs focus-visible:ring-[#0A0A0A]"
                     {...form.register("email")}
                   />
                   {form.formState.errors.email && (
-                    <span className="text-[11px] text-red-400">{form.formState.errors.email.message}</span>
+                    <span className="text-xs text-rose-600">
+                      {form.formState.errors.email.message}
+                    </span>
                   )}
                 </div>
 
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full text-xs shadow-lg shadow-blue-600/30 cursor-pointer transition-all"
+                  className="w-full h-10 bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold rounded-lg text-xs shadow-xs cursor-pointer transition-colors"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin text-white" />
@@ -133,23 +128,28 @@ export default function ForgotPassword() {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center space-y-5"
             >
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-full bg-[#059669]/10 text-[#059669] border border-[#059669]/20 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-2xl font-extrabold text-white">Check your email</h2>
-                <p className="text-xs text-slate-300 font-medium leading-relaxed">
-                  If an account exists for <span className="text-blue-400 font-bold font-mono">{submittedEmail}</span>, we've sent a password reset link.
+                <h2 className="text-xl font-bold text-[#0A0A0A]">Check your inbox</h2>
+                <p className="text-xs text-[#52525B] leading-relaxed">
+                  If an account exists for{" "}
+                  <span className="text-[#0A0A0A] font-bold font-tabular">{submittedEmail}</span>,
+                  we've dispatched a password reset link.
                 </p>
               </div>
 
-              <div className="p-3.5 bg-slate-950/60 border border-slate-800/80 rounded-xl text-[11px] text-slate-400 text-left space-y-1">
-                <div className="flex items-center gap-1.5 text-blue-400 font-semibold">
+              <div className="p-3.5 bg-[#FAF9F6] border border-[#E5E4DF] rounded-lg text-xs text-[#52525B] text-left space-y-1">
+                <div className="flex items-center gap-1.5 text-[#1D4ED8] font-semibold">
                   <ShieldCheck className="w-4 h-4 shrink-0" />
-                  <span>Security Tip</span>
+                  <span>Security Notice</span>
                 </div>
-                <p>The reset link expires in 1 hour and can only be used once. Please check your spam folder if it doesn't appear shortly.</p>
+                <p>
+                  The reset link expires in 1 hour and can only be used once. Please check your spam
+                  folder if it doesn't appear shortly.
+                </p>
               </div>
 
               <Button
@@ -158,15 +158,18 @@ export default function ForgotPassword() {
                   setIsSubmitted(false);
                   form.reset();
                 }}
-                className="w-full h-10 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-full text-xs cursor-pointer"
+                className="w-full h-10 bg-white border border-[#E5E4DF] hover:bg-[#FAF9F6] text-[#0A0A0A] font-semibold rounded-lg text-xs cursor-pointer shadow-xs"
               >
                 Send another reset email
               </Button>
             </motion.div>
           )}
 
-          <div className="pt-2 text-center border-t border-slate-800/60">
-            <Link href="/login" className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white font-medium cursor-pointer transition-colors">
+          <div className="pt-2 text-center border-t border-[#E5E4DF]">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 text-xs text-[#52525B] hover:text-[#0A0A0A] font-medium cursor-pointer transition-colors"
+            >
               <ArrowLeft className="w-3.5 h-3.5" /> Back to Sign in
             </Link>
           </div>
@@ -174,8 +177,8 @@ export default function ForgotPassword() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-20 w-full max-w-md mx-auto text-center text-[11px] text-slate-500">
-        Protected by 256-bit SSL encryption • InfluencerHub Inc.
+      <footer className="relative z-20 w-full max-w-md mx-auto text-center text-xs text-[#52525B]">
+        Protected by 256-bit SSL encryption • {LEGAL_CONFIG.FULL_LEGAL_STATEMENT}
       </footer>
     </div>
   );
