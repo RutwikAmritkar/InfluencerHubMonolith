@@ -226,7 +226,7 @@ export function MarketplaceIntelligence() {
       <div className="border-b border-[#E5E4DF] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18]">
               {activeRole === "brand" ? "Brand Strategy Engine" : "Creator Growth Engine"}
             </p>
             <span className="text-zinc-300">•</span>
@@ -257,7 +257,7 @@ export function MarketplaceIntelligence() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
             {activeRole === "brand" ? "Brand" : "Creator"}{" "}
-            <span className="font-serif italic font-normal text-blue-700">Intelligence</span>
+            <span className="font-serif italic font-normal text-[#6A0D18]">Intelligence</span>
           </h1>
           <p className="text-sm text-zinc-500 mt-1 max-w-2xl">
             {activeRole === "brand"
@@ -278,7 +278,7 @@ export function MarketplaceIntelligence() {
         <div className="xl:col-span-7 2xl:col-span-8 space-y-6 min-w-0">
           <div className="bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-5">
             <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
-              <Sparkles className="w-4 h-4 text-blue-700" />
+              <Sparkles className="w-4 h-4 text-[#6A0D18]" />
               <span>Ask {activeRole === "brand" ? "Brand" : "Creator"} Intelligence</span>
             </div>
 
@@ -299,7 +299,7 @@ export function MarketplaceIntelligence() {
                     ? "Ask about creator shortlist fit, CPV benchmarks, or milestone pacing..."
                     : "Ask about Reel pacing, brand quote pricing, or counter-proposals..."
                 }
-                className="w-full p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] text-sm text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700 resize-none"
+                className="w-full p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] text-sm text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18] resize-none"
               />
 
               <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
@@ -347,7 +347,7 @@ export function MarketplaceIntelligence() {
           {isGenerating && (
             <div className="p-5 rounded-2xl bg-white border border-[#E5E4DF] shadow-xs space-y-3 animate-pulse">
               <div className="flex items-center gap-2.5 text-xs font-semibold text-[#0A0A0A]">
-                <Loader2 className="w-4 h-4 animate-spin text-blue-700" />
+                <Loader2 className="w-4 h-4 animate-spin text-[#6A0D18]" />
                 <span>Synthesizing real workspace context & market rates...</span>
               </div>
               <div className="space-y-1.5 pl-6 text-xs text-zinc-500 font-medium">
@@ -378,7 +378,7 @@ export function MarketplaceIntelligence() {
             <div className="bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-[#E5E4DF] pb-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-blue-700" />
+                  <Sparkles className="w-4 h-4 text-[#6A0D18]" />
                   <h3 className="text-sm font-bold text-[#0A0A0A]">Intelligence Output</h3>
                 </div>
                 <div className="flex items-center gap-3">
@@ -411,7 +411,7 @@ export function MarketplaceIntelligence() {
                     key={idx}
                     className="flex items-start gap-3 p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF]"
                   >
-                    <span className="w-5 h-5 rounded-full bg-white border border-[#E5E4DF] text-xs font-bold text-blue-700 flex items-center justify-center shrink-0 mt-0.5 font-tabular">
+                    <span className="w-5 h-5 rounded-full bg-white border border-[#E5E4DF] text-xs font-bold text-[#6A0D18] flex items-center justify-center shrink-0 mt-0.5 font-tabular">
                       {idx + 1}
                     </span>
                     <p className="text-xs font-medium text-[#0A0A0A] leading-relaxed">{item}</p>
@@ -428,7 +428,7 @@ export function MarketplaceIntelligence() {
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
               Live Workspace Context
             </span>
-            <span className="text-xs text-blue-700 font-semibold font-tabular">
+            <span className="text-xs text-[#6A0D18] font-semibold font-tabular">
               {activeDeals.length} Deals · {pendingApps.length} Pitches
             </span>
           </div>
@@ -436,12 +436,12 @@ export function MarketplaceIntelligence() {
           {/* Real Deals Card */}
           <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6A0D18]">
                 Active Deals &amp; Terms
               </span>
               <Link
                 href="/deals"
-                className="text-xs font-semibold text-zinc-400 hover:text-blue-700"
+                className="text-xs font-semibold text-zinc-400 hover:text-[#6A0D18]"
               >
                 View all
               </Link>
@@ -460,7 +460,7 @@ export function MarketplaceIntelligence() {
                     >
                       <div className="flex items-center justify-between text-xs font-bold text-[#0A0A0A]">
                         <span className="truncate">{deal.title}</span>
-                        <span className="text-blue-700 font-tabular shrink-0 ml-2">{price}</span>
+                        <span className="text-[#6A0D18] font-tabular shrink-0 ml-2">{price}</span>
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-zinc-500">
                         <span>
@@ -485,7 +485,7 @@ export function MarketplaceIntelligence() {
             <button
               type="button"
               onClick={() => handleRunQuery("Draft a counter-proposal for my pending deal")}
-              className="w-full py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full py-2 rounded-lg bg-[#FDF6F7] hover:bg-[#FBECEF] border border-[#EED8DC] text-[#6A0D18] text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Draft Counter-Proposal</span>
@@ -495,12 +495,12 @@ export function MarketplaceIntelligence() {
           {/* Pending Applications Card */}
           <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6A0D18]">
                 Pitch Pipeline
               </span>
               <Link
                 href={activeRole === "brand" ? "/brand/applications" : "/applications"}
-                className="text-xs font-semibold text-zinc-400 hover:text-blue-700"
+                className="text-xs font-semibold text-zinc-400 hover:text-[#6A0D18]"
               >
                 Manage
               </Link>
@@ -538,7 +538,7 @@ export function MarketplaceIntelligence() {
               onClick={() => handleRunQuery("Summarize my active deliverables & deadlines")}
               className="w-full py-2 rounded-lg bg-[#FAF9F6] hover:bg-[#F2F1EC] border border-[#E5E4DF] text-[#0A0A0A] text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <FileCheck className="w-3.5 h-3.5 text-blue-700" />
+              <FileCheck className="w-3.5 h-3.5 text-[#6A0D18]" />
               <span>Summarize Deliverables &amp; Deadlines</span>
             </button>
           </div>
@@ -546,7 +546,7 @@ export function MarketplaceIntelligence() {
           {/* Rate Card Benchmarking Card */}
           <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6A0D18]">
                 Commercial Benchmarking
               </span>
               <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">

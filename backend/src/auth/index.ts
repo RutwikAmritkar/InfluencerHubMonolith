@@ -1,12 +1,14 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import { admin, bearer } from "better-auth/plugins";
-import { db } from "@workspace/db";
+import { admin, bearer, customSession } from "better-auth/plugins";
+import { db, adminUsersTable, adminRolesTable } from "@workspace/db";
 import * as authSchema from "@workspace/db/schema";
+import { eq, and } from "drizzle-orm";
 import { logAuditEvent } from "./audit";
 import { logger } from "../lib/logger.js";
 
 import { sendPasswordResetEmail, sendVerificationEmailService } from "../services/email.service";
+import { logPlatformActivity } from "../services/activity.service";
 
 const baseURL = process.env.BETTER_AUTH_URL || process.env.SERVER_URL || "http://localhost:3000";
 const secret =
@@ -104,6 +106,36 @@ export const auth = betterAuth({
       adminRole: ["admin"],
     }),
     bearer(),
+    customSession(async ({ user, session }) => {
+      let isAdmin = false;
+      let adminRole: string | null = null;
+      try {
+        const [adminRecord] = await db
+          .select({
+            roleSlug: adminRolesTable.slug,
+          })
+          .from(adminUsersTable)
+          .innerJoin(adminRolesTable, eq(adminRolesTable.id, adminUsersTable.roleId))
+          .where(and(eq(adminUsersTable.userId, user.id), eq(adminUsersTable.isActive, true)))
+          .limit(1);
+
+        if (adminRecord) {
+          isAdmin = true;
+          adminRole = adminRecord.roleSlug;
+        }
+      } catch (err) {
+        logger.error({ err }, "[AUTH] Error checking admin status for session");
+      }
+      return {
+        user: {
+          ...user,
+          role: ((user as any).role as string) || "influencer",
+          isAdmin,
+          adminRole,
+        },
+        session,
+      };
+    }),
   ],
   databaseHooks: {
     user: {
@@ -113,6 +145,15 @@ export const auth = betterAuth({
             userId: user.id,
             action: "USER_REGISTERED",
             details: JSON.stringify({ email: user.email, role: user.role }),
+          });
+          await logPlatformActivity({
+            actorUserId: user.id,
+            actorParty: user.role === "brand" ? "brand" : "creator",
+            eventType: "user.registered",
+            entityType: "user",
+            entityId: user.id,
+            summary: `New ${user.role === "brand" ? "Brand" : "Creator"} account registered: ${user.name || user.email}`,
+            metadata: { email: user.email, role: user.role },
           });
         },
       },
@@ -125,6 +166,14 @@ export const auth = betterAuth({
             action: "LOGIN_SUCCESS",
             ipAddress: session.ipAddress ?? undefined,
             userAgent: session.userAgent ?? undefined,
+          });
+          await logPlatformActivity({
+            actorUserId: session.userId,
+            eventType: "user.login",
+            entityType: "user",
+            entityId: session.userId,
+            summary: "User established active session",
+            metadata: { ipAddress: session.ipAddress, userAgent: session.userAgent },
           });
         },
       },

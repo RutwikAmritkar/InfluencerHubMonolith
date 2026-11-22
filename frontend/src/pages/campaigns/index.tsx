@@ -114,12 +114,12 @@ export default function Campaigns() {
       {/* ─── 1. EDITORIAL HEADER ───────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-[#E5E4DF] dark:border-white/10">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8] block mb-1">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] block mb-1">
             Commercial Marketplace
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white">
             Campaign Pipeline &amp;{" "}
-            <span className="font-serif italic font-normal text-[#1D4ED8]">Deal Vaults</span>
+            <span className="font-serif italic font-normal text-[#6A0D18]">Deal Vaults</span>
           </h1>
           <p className="text-xs sm:text-sm text-[#52525B] dark:text-slate-400 font-normal mt-1">
             Pre-funded briefs with milestone-gated payment contracts and verified deliverables.
@@ -128,7 +128,7 @@ export default function Campaigns() {
 
         {user?.role === "brand" && (
           <Link href="/campaigns/create">
-            <Button className="h-10 px-5 rounded-lg bg-[#0A0A0A] hover:bg-slate-800 text-white text-xs font-semibold shadow-xs cursor-pointer inline-flex items-center gap-2 transition-all">
+            <Button className="h-10 px-5 rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs cursor-pointer inline-flex items-center gap-2 transition-all">
               <Plus className="w-4 h-4 text-white" />
               <span>{t("campaigns.createCampaign")}</span>
             </Button>
@@ -176,7 +176,7 @@ export default function Campaigns() {
       {/* ─── 3. CAMPAIGNS ROSTER ───────────────────────────────────────────── */}
       {isLoading ? (
         <div className="flex h-64 w-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1D4ED8]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#6A0D18]" />
         </div>
       ) : campaigns?.length ? (
         <div className="grid gap-4 w-full">
@@ -203,7 +203,7 @@ export default function Campaigns() {
                           <p className="text-xs font-semibold text-[#52525B] dark:text-slate-400">
                             {campaign.brandName}
                           </p>
-                          <h3 className="text-base font-bold text-[#0A0A0A] dark:text-white group-hover:text-[#1D4ED8] transition-colors">
+                          <h3 className="text-base font-bold text-[#0A0A0A] dark:text-white group-hover:text-[#6A0D18] transition-colors">
                             {campaign.title}
                           </h3>
                         </div>

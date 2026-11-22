@@ -80,10 +80,11 @@ export default function ForgotPassword() {
             <>
               <div className="text-center space-y-2">
                 <div className="w-12 h-12 rounded-xl bg-[#FAF9F6] text-[#0A0A0A] border border-[#E5E4DF] flex items-center justify-center text-xl mx-auto shadow-xs">
-                  <Mail className="w-5 h-5 text-[#1D4ED8]" />
+                  <Mail className="w-5 h-5 text-[#6A0D18]" />
                 </div>
                 <h1 className="text-2xl font-extrabold text-[#0A0A0A] tracking-[-0.03em]">
-                  Reset your <span className="font-serif italic font-normal">password</span>
+                  Reset your{" "}
+                  <span className="font-serif italic font-normal text-[#6A0D18]">password</span>
                 </h1>
                 <p className="text-xs text-[#52525B] leading-relaxed">
                   Enter your email address and we will dispatch a secure credential reset link.
@@ -93,7 +94,7 @@ export default function ForgotPassword() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
                 <div className="space-y-1.5">
                   <label htmlFor="email" className="text-xs text-[#0A0A0A] font-semibold block">
-                    Account Email Address <span className="text-[#1D4ED8]">*</span>
+                    Account Email Address <span className="text-[#6A0D18]">*</span>
                   </label>
                   <Input
                     id="email"
@@ -112,7 +113,7 @@ export default function ForgotPassword() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-10 bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold rounded-lg text-xs shadow-xs cursor-pointer transition-colors"
+                  className="w-full h-10 bg-[#0A0A0A] hover:bg-zinc-800 text-white font-semibold rounded-lg text-xs shadow-xs cursor-pointer transition-colors"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin text-white" />
@@ -142,7 +143,7 @@ export default function ForgotPassword() {
               </div>
 
               <div className="p-3.5 bg-[#FAF9F6] border border-[#E5E4DF] rounded-lg text-xs text-[#52525B] text-left space-y-1">
-                <div className="flex items-center gap-1.5 text-[#1D4ED8] font-semibold">
+                <div className="flex items-center gap-1.5 text-[#6A0D18] font-semibold">
                   <ShieldCheck className="w-4 h-4 shrink-0" />
                   <span>Security Notice</span>
                 </div>

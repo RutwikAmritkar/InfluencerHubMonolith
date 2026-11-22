@@ -168,12 +168,12 @@ export default function ContractedCampaigns() {
       {/* ─── Header & Primary CTA ─── */}
       <div className="border-b border-[#E5E4DF] pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] mb-1">
             Stage 3 of Funnel • Execution Workspace
           </p>
           <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
             Contracted{" "}
-            <span className="font-serif italic font-normal text-blue-700">Campaigns</span>
+            <span className="font-serif italic font-normal text-[#6A0D18]">Campaigns</span>
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
             Manage confirmed brand partnerships, submit milestone drafts, and track deliverable
@@ -183,10 +183,10 @@ export default function ContractedCampaigns() {
 
         <Link
           href="/opportunities"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors self-start sm:self-auto cursor-pointer shadow-xs active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg liquid-burgundy-metal text-xs font-semibold self-start sm:self-auto cursor-pointer shadow-xs active:scale-[0.98]"
         >
           <span>Explore Opportunities</span>
-          <ArrowUpRight className="w-3.5 h-3.5" />
+          <ArrowUpRight className="w-3.5 h-3.5 text-white" />
         </Link>
       </div>
 
@@ -208,9 +208,9 @@ export default function ContractedCampaigns() {
                 const firstInTab = campaigns.find((c) => c.tab === t.id);
                 if (firstInTab) setSelectedId(firstInTab.id);
               }}
-              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === t.id
-                  ? "bg-[#0A0A0A] text-white shadow-xs"
+                  ? "liquid-burgundy-metal font-bold shadow-xs"
                   : "text-zinc-600 hover:text-[#0A0A0A]"
               }`}
             >
@@ -237,7 +237,7 @@ export default function ContractedCampaigns() {
             </span>
           </div>
           <div className="px-3.5 py-2 rounded-xl bg-white border border-[#E5E4DF] flex items-center gap-2 shadow-2xs">
-            <Clock className="w-4 h-4 text-blue-700" />
+            <Clock className="w-4 h-4 text-[#6A0D18]" />
             <span className="text-zinc-500">Final Deadline:</span>
             <span className="font-bold text-[#0A0A0A]">
               {selectedCampaign ? selectedCampaign.deadline : "Nov 24, 2026"}
@@ -263,7 +263,7 @@ export default function ContractedCampaigns() {
                   onClick={() => setSelectedId(camp.id)}
                   className={`bg-white rounded-2xl border transition-all shadow-xs overflow-hidden cursor-pointer ${
                     camp.id === selectedCampaign.id
-                      ? "border-blue-700/60 ring-1 ring-blue-700/20"
+                      ? "border-[#6A0D18]/60 ring-1 ring-[#6A0D18]/20"
                       : "border-[#E5E4DF] hover:border-zinc-400"
                   }`}
                 >
@@ -304,11 +304,13 @@ export default function ContractedCampaigns() {
                           Deliverable Progress ({completedCount} of {camp.deliverables.length}{" "}
                           submitted)
                         </span>
-                        <span className="font-bold text-blue-700 font-tabular">{progressPct}%</span>
+                        <span className="font-bold text-[#6A0D18] font-tabular">
+                          {progressPct}%
+                        </span>
                       </div>
                       <div className="h-2 w-full rounded-full bg-[#F2F1EC] overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-blue-700 transition-all duration-300"
+                          className="h-full rounded-full bg-[#6A0D18] transition-all duration-300"
                           style={{ width: `${progressPct}%` }}
                         />
                       </div>
@@ -327,7 +329,7 @@ export default function ContractedCampaigns() {
                             {del.status === "approved" ? (
                               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                             ) : del.status === "in_review" ? (
-                              <Clock className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+                              <Clock className="w-4 h-4 text-[#6A0D18] shrink-0 mt-0.5" />
                             ) : (
                               <Circle className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
                             )}
@@ -342,7 +344,7 @@ export default function ContractedCampaigns() {
                               Due {del.dueDate}
                             </span>
                             {del.status === "in_review" ? (
-                              <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/70 text-xs font-semibold">
+                              <span className="px-2.5 py-0.5 rounded-md bg-[#FDF6F7] text-[#6A0D18] border border-[#EED8DC] text-xs font-semibold">
                                 Draft Under Review
                               </span>
                             ) : del.status === "approved" ? (
@@ -367,7 +369,7 @@ export default function ContractedCampaigns() {
                               href={del.submittedUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-blue-700 font-semibold shrink-0 hover:underline cursor-pointer"
+                              className="inline-flex items-center gap-1 text-[#6A0D18] font-semibold shrink-0 hover:underline cursor-pointer"
                             >
                               <span>Preview</span>
                               <ExternalLink className="w-3 h-3" />
@@ -387,7 +389,7 @@ export default function ContractedCampaigns() {
                                   }))
                                 }
                                 placeholder="Paste Drive draft link or live Instagram post URL..."
-                                className="w-full h-9 pl-9 pr-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-blue-700"
+                                className="w-full h-9 pl-9 pr-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-[#6A0D18]"
                               />
                             </div>
                             <button
@@ -414,7 +416,7 @@ export default function ContractedCampaigns() {
           <aside className="xl:col-span-5 xl:sticky xl:top-20 bg-white rounded-2xl border border-[#E5E4DF] shadow-xs divide-y divide-[#E5E4DF] min-w-0">
             <div className="p-6 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18]">
                   Contract Brief &amp; Terms
                 </span>
                 <span className="text-xs text-zinc-400 font-tabular">

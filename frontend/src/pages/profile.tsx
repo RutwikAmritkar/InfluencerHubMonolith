@@ -119,7 +119,7 @@ export default function MyProfile() {
       <div className="p-5 rounded-2xl bg-white border border-[#E5E4DF] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#6A0D18] bg-[#FDF6F7] px-2 py-0.5 rounded border border-[#EED8DC]">
               Verified Social Roster
             </span>
             {(isIgVerified || isYtVerified) && (
@@ -145,7 +145,7 @@ export default function MyProfile() {
             onClick={() => setShowVerifyModal(true)}
             className="h-9 px-3 rounded-xl border-[#E5E4DF] bg-white hover:bg-zinc-50 text-xs font-semibold shadow-2xs inline-flex items-center gap-1.5"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
+            <ShieldCheck className="w-3.5 h-3.5 text-[#6A0D18]" />
             <span>Verify Handle</span>
           </Button>
 
@@ -172,19 +172,19 @@ export default function MyProfile() {
 
       {/* Verification Code Active Pill if present */}
       {verificationCode && (
-        <div className="p-3.5 rounded-xl bg-blue-50/40 border border-blue-200/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+        <div className="p-3.5 rounded-xl bg-[#FDF6F7] border border-[#EED8DC] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <KeyRound className="w-4 h-4 text-blue-700 shrink-0" />
+            <KeyRound className="w-4 h-4 text-[#6A0D18] shrink-0" />
             <div>
               <span className="font-semibold text-zinc-800">Your Bio Verification Token: </span>
-              <code className="font-mono font-bold text-blue-800 bg-white px-2 py-0.5 rounded border border-blue-200">
+              <code className="font-mono font-bold text-[#6A0D18] bg-white px-2 py-0.5 rounded border border-[#EED8DC]">
                 {verificationCode}
               </code>
             </div>
           </div>
           <button
             onClick={() => copyCode(verificationCode)}
-            className="text-xs font-bold text-blue-700 hover:underline cursor-pointer inline-flex items-center gap-1"
+            className="text-xs font-bold text-[#6A0D18] hover:underline cursor-pointer inline-flex items-center gap-1"
           >
             <Copy className="w-3 h-3" />
             <span>Copy Token</span>
@@ -194,7 +194,7 @@ export default function MyProfile() {
 
       {/* Studio Mode Switcher */}
       <div className="flex items-center justify-between border-b border-[#E5E4DF] pb-3">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-700">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#6A0D18]">
           <span>Creator Studio</span>
           <span className="text-zinc-300">•</span>
           <span className="text-zinc-500 font-medium normal-case">
@@ -261,7 +261,7 @@ export default function MyProfile() {
               </span>
               {verificationCode ? (
                 <div className="flex items-center justify-between">
-                  <code className="font-mono font-bold text-sm text-blue-700 bg-blue-50 px-2.5 py-1 rounded border border-blue-200">
+                  <code className="font-mono font-bold text-sm text-[#6A0D18] bg-[#FDF6F7] px-2.5 py-1 rounded border border-[#EED8DC]">
                     {verificationCode}
                   </code>
                   <Button
@@ -332,7 +332,7 @@ export default function MyProfile() {
                   placeholder={verifyPlatform === "instagram" ? "@mayachen_tech" : "@techburner"}
                   value={verifyHandle}
                   onChange={(e) => setVerifyHandle(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-lg bg-white border border-[#E5E4DF] text-xs text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20"
+                  className="w-full h-10 px-3.5 rounded-lg bg-white border border-[#E5E4DF] text-xs text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18]"
                 />
               </div>
             </div>

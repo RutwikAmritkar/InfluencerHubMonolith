@@ -398,7 +398,7 @@ export function CreatorPortfolioManager({ profileId }: { profileId?: number }) {
     return (
       <Card className="shadow-xs border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#11172A] rounded-xl p-6">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <Loader2 className="h-6 w-6 animate-spin text-[#6A0D18]" />
         </div>
       </Card>
     );
@@ -410,7 +410,7 @@ export function CreatorPortfolioManager({ profileId }: { profileId?: number }) {
         <div>
           <div className="flex items-center gap-3">
             <CardTitle className="text-lg font-extrabold flex items-center gap-2">
-              <Video className="w-5 h-5 text-blue-600" />
+              <Video className="w-5 h-5 text-[#6A0D18]" />
               <span>Portfolio Videos</span>
             </CardTitle>
 
@@ -431,7 +431,7 @@ export function CreatorPortfolioManager({ profileId }: { profileId?: number }) {
             ) : (
               <Badge
                 variant="outline"
-                className="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-300 font-bold text-xs"
+                className="bg-[#FDF6F7] text-[#6A0D18] border-[#EED8DC] font-bold text-xs"
               >
                 ★ Portfolio Full (9/9)
               </Badge>
@@ -458,7 +458,7 @@ export function CreatorPortfolioManager({ profileId }: { profileId?: number }) {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading || isFull}
-            className="bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs px-4 cursor-pointer"
+            className="bg-[#0A0A0A] hover:bg-zinc-800 text-white font-semibold text-xs rounded-xl shadow-xs px-4 cursor-pointer"
           >
             {isUploading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -473,17 +473,17 @@ export function CreatorPortfolioManager({ profileId }: { profileId?: number }) {
       <CardContent className="pt-6 space-y-6">
         {/* Real-time Upload Progress Bar */}
         {isUploading && (
-          <div className="p-4 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-900 space-y-2">
-            <div className="flex justify-between items-center text-xs font-bold text-blue-900 dark:text-blue-200">
+          <div className="p-4 bg-[#FDF6F7] rounded-xl border border-[#EED8DC] space-y-2">
+            <div className="flex justify-between items-center text-xs font-bold text-[#6A0D18]">
               <span className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <Loader2 className="w-4 h-4 animate-spin text-[#6A0D18]" />
                 {uploadStep}
               </span>
               <span className="font-mono">{uploadProgress}%</span>
             </div>
-            <div className="w-full bg-blue-200 dark:bg-blue-900 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-[#EED8DC] h-2 rounded-full overflow-hidden">
               <div
-                className="bg-blue-600 h-full transition-all duration-300"
+                className="bg-[#6A0D18] h-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -514,7 +514,7 @@ export function CreatorPortfolioManager({ profileId }: { profileId?: number }) {
                 key={item.id}
                 className={`group relative rounded-xl overflow-hidden border bg-slate-50 dark:bg-slate-900 flex flex-col justify-between transition-all ${
                   item.isFeatured
-                    ? "border-blue-600 ring-2 ring-blue-600/20 shadow-md"
+                    ? "border-[#6A0D18] ring-2 ring-[#6A0D18]/20 shadow-md"
                     : "border-slate-200/90 dark:border-slate-800"
                 }`}
               >
@@ -531,7 +531,7 @@ export function CreatorPortfolioManager({ profileId }: { profileId?: number }) {
 
                   {/* Featured Badge Overlay */}
                   {item.isFeatured && (
-                    <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-extrabold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1 z-10">
+                    <div className="absolute top-3 left-3 bg-[#6A0D18] text-white text-xs font-extrabold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1 z-10">
                       <Star className="w-3 h-3 fill-current" />
                       <span>FEATURED</span>
                     </div>
@@ -559,12 +559,12 @@ export function CreatorPortfolioManager({ profileId }: { profileId?: number }) {
                         size="sm"
                         onClick={() => featureMutation.mutate(item.id)}
                         disabled={featureMutation.isPending}
-                        className="h-7 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 px-2 rounded-lg cursor-pointer"
+                        className="h-7 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:text-[#6A0D18] px-2 rounded-lg cursor-pointer"
                       >
                         <Star className="w-3 h-3 mr-1" /> Set Featured
                       </Button>
                     ) : (
-                      <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 flex items-center px-2">
+                      <span className="text-[11px] font-bold text-[#6A0D18] flex items-center px-2">
                         <CheckCircle2 className="w-3 h-3 mr-1" /> Featured
                       </span>
                     )}

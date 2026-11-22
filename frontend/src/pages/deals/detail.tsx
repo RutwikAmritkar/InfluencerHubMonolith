@@ -278,25 +278,74 @@ export default function DealRoomDetail() {
     },
   });
 
-  // Brand Payment Settlement Mutation
+  // Brand Payment Settlement Mutation (Row-locked RBI Route release)
   const settlePaymentMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/deals/${dealId}/payments`, {
+      if (deal?.paymentOrder?.id) {
+        const res = await fetch(`/api/payments/orders/${deal.paymentOrder.id}/release`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to release escrow payout.");
+        }
+        return data;
+      } else {
+        const res = await fetch(`/api/deals/${dealId}/payments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "PAYOUT_RELEASED",
+            utrReference: "UPI-SETTLED-" + Date.now(),
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || "Failed to record payment settlement.");
+        }
+        return res.json();
+      }
+    },
+    onSuccess: (data: any) => {
+      toast.success(data?.message || "Milestone payout settled & released to creator!");
+      queryClient.invalidateQueries({ queryKey: ["deal", dealId] });
+      refetch();
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+
+  // Brand Escrow Funding Mutation (Zero Client-Side Trust)
+  const fundEscrowMutation = useMutation({
+    mutationFn: async () => {
+      const orderRes = await fetch(`/api/payments/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "PAYOUT_RELEASED",
-          utrReference: "UPI-SETTLED-" + Date.now(),
-        }),
+        body: JSON.stringify({ dealId }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to record payment settlement.");
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) {
+        throw new Error(orderData.error || "Failed to initialize escrow order.");
       }
-      return res.json();
+
+      // Simulate capture in test/dev environment
+      const captureRes = await fetch(
+        `/api/payments/orders/${orderData.order.id}/simulate-capture`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      const captureData = await captureRes.json();
+      if (!captureRes.ok) {
+        throw new Error(captureData.error || "Failed to capture escrow deposit.");
+      }
+      return captureData;
     },
     onSuccess: () => {
-      toast.success("Milestone payout settled & released to creator!");
+      toast.success("₹ Escrow deposit successfully secured in RBI-compliant holding!");
       queryClient.invalidateQueries({ queryKey: ["deal", dealId] });
       refetch();
     },
@@ -371,7 +420,7 @@ export default function DealRoomDetail() {
           </p>
           <Button
             onClick={() => setLocation("/deals")}
-            className="w-full bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs rounded-lg"
+            className="w-full liquid-burgundy-metal text-xs font-semibold rounded-lg shadow-xs cursor-pointer"
           >
             Return to Deals
           </Button>
@@ -394,27 +443,27 @@ export default function DealRoomDetail() {
     selectedVersionForView != null && selectedVersionForView !== deal.activeProposal?.version;
 
   return (
-    <div className="workspace-canvas space-y-6 pb-16 antialiased text-[#0A0A0A]">
+    <div className="workspace-canvas space-y-6 pb-16 antialiased text-[#0A0A0A] dark:text-[#F8FAFC]">
       {/* ─── 1. BREADCRUMBS & TOP BAR ─────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-[#E5E4DF]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-[#E5E4DF] dark:border-white/10">
         <div className="flex items-center gap-3">
           <Link
             href="/deals"
-            className="p-2 rounded-xl bg-white border border-[#E5E4DF] text-zinc-500 hover:text-[#0A0A0A] transition-colors shadow-xs"
+            className="p-2 rounded-xl bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC] transition-colors shadow-xs"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985] bg-[#FDF6F7] dark:bg-[#6A0D18]/25 px-2 py-0.5 rounded-md border border-[#EED8DC] dark:border-[#6A0D18]/40">
                 NEGOTIATION ROOM
               </span>
-              <span className="text-xs text-zinc-400">•</span>
-              <span className="text-xs font-semibold text-zinc-500">
+              <span className="text-zinc-400 dark:text-zinc-600">•</span>
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                 {isCreator ? `With ${deal.brandName}` : `With ${deal.influencerName}`}
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0A0A0A] mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC] mt-0.5">
               {deal.title}
             </h1>
           </div>
@@ -426,8 +475,8 @@ export default function DealRoomDetail() {
             className={cn(
               "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
               isConfirmed
-                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                : "bg-blue-50 text-blue-700 border border-blue-200"
+                ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50"
+                : "bg-[#FDF6F7] text-[#6A0D18] border border-[#EED8DC] dark:bg-[#6A0D18]/25 dark:text-[#E87985] dark:border-[#6A0D18]/40"
             )}
           >
             {isConfirmed ? "Terms Confirmed" : "Under Negotiation"}
@@ -440,9 +489,11 @@ export default function DealRoomDetail() {
         {/* ─── LEFT COLUMN (7 COLS): ACTIVE TERMS & DELIVERABLES ─────────────────── */}
         <div className="lg:col-span-7 space-y-6">
           {/* Version Switcher Bar */}
-          <div className="p-4 rounded-2xl bg-white border border-[#E5E4DF] shadow-xs flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 shadow-xs flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#0A0A0A]">Version History:</span>
+              <span className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                Version History:
+              </span>
               <div className="flex items-center gap-1.5 overflow-x-auto">
                 {proposalsHistory.map((p) => {
                   const isCurrentActive = p.version === deal.activeProposal?.version;
@@ -456,8 +507,8 @@ export default function DealRoomDetail() {
                       className={cn(
                         "px-2.5 py-1 rounded-lg text-xs font-bold transition-all font-tabular cursor-pointer",
                         isSelected
-                          ? "bg-[#0A0A0A] text-white shadow-xs"
-                          : "bg-[#F2F1EC] text-zinc-600 hover:text-[#0A0A0A] border border-[#E5E4DF]"
+                          ? "liquid-burgundy-metal font-bold shadow-xs"
+                          : "bg-[#F2F1EC] dark:bg-[#18181E] text-zinc-600 dark:text-zinc-400 hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC] border border-[#E5E4DF] dark:border-white/10"
                       )}
                     >
                       v{p.version} {isCurrentActive && "(Active)"}
@@ -470,7 +521,7 @@ export default function DealRoomDetail() {
             {isViewingHistorical && (
               <button
                 onClick={() => setSelectedVersionForView(null)}
-                className="text-xs font-semibold text-blue-700 hover:underline"
+                className="text-xs font-semibold text-[#6A0D18] dark:text-[#E87985] hover:underline cursor-pointer"
               >
                 Back to Active v{deal.activeProposal?.version}
               </button>
@@ -478,27 +529,27 @@ export default function DealRoomDetail() {
           </div>
 
           {/* Active Version Contract Overview Card */}
-          <div className="p-6 rounded-2xl bg-white border border-[#E5E4DF] shadow-xs space-y-5">
-            <div className="flex items-start justify-between border-b border-[#E5E4DF] pb-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 shadow-xs space-y-5">
+            <div className="flex items-start justify-between border-b border-[#E5E4DF] dark:border-white/10 pb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F2F1EC] text-zinc-700 border border-[#E5E4DF] font-tabular">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F2F1EC] dark:bg-[#18181E] text-zinc-700 dark:text-zinc-300 border border-[#E5E4DF] dark:border-white/10 font-tabular">
                     Version {displayedProposal?.version || 1}
                   </span>
                   <span
                     className={cn(
                       "px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider",
                       displayedProposal?.collabType === "barter"
-                        ? "bg-purple-50 text-purple-700 border border-purple-200"
+                        ? "bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800/50"
                         : displayedProposal?.collabType === "hybrid"
-                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                          : "bg-blue-50 text-blue-700 border border-blue-200"
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50"
+                          : "bg-[#FDF6F7] text-[#6A0D18] border border-[#EED8DC] dark:bg-[#6A0D18]/25 dark:text-[#E87985] dark:border-[#6A0D18]/40"
                     )}
                   >
                     {displayedProposal?.collabType || "paid"}
                   </span>
                 </div>
-                <h3 className="text-base font-bold text-[#0A0A0A] mt-1">
+                <h3 className="text-base font-bold text-[#0A0A0A] dark:text-[#F8FAFC] mt-1">
                   Proposed by{" "}
                   {displayedProposal?.proposedByParty === "brand"
                     ? "Brand Partner"
@@ -508,10 +559,10 @@ export default function DealRoomDetail() {
 
               {/* Compensation */}
               <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">
+                <span className="text-[10px] uppercase font-bold text-zinc-400 dark:text-zinc-500 block tracking-wider">
                   Agreed Payout
                 </span>
-                <span className="text-xl font-bold font-tabular text-[#0A0A0A]">
+                <span className="text-xl font-bold font-tabular text-[#0A0A0A] dark:text-[#F8FAFC]">
                   {displayedProposal?.collabType === "barter"
                     ? "Product Barter"
                     : displayedProposal?.pricePaise
@@ -519,7 +570,7 @@ export default function DealRoomDetail() {
                       : "₹45,000"}
                 </span>
                 {displayedProposal?.collabType === "hybrid" && (
-                  <span className="text-[11px] text-blue-700 block font-semibold">
+                  <span className="text-[11px] text-[#6A0D18] dark:text-[#E87985] block font-semibold">
                     + Product Barter
                   </span>
                 )}
@@ -528,28 +579,30 @@ export default function DealRoomDetail() {
 
             {/* Deliverables Breakdown */}
             <div className="space-y-3">
-              <span className="text-xs font-bold text-[#0A0A0A] uppercase tracking-wider block">
+              <span className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC] uppercase tracking-wider block">
                 Itemized Deliverables ({displayedProposal?.deliverables?.length || 0})
               </span>
 
-              <div className="divide-y divide-[#E5E4DF] rounded-xl border border-[#E5E4DF] overflow-hidden">
+              <div className="divide-y divide-[#E5E4DF] dark:divide-white/10 rounded-xl border border-[#E5E4DF] dark:border-white/10 overflow-hidden">
                 {displayedProposal?.deliverables?.map((deliv: any, idx: number) => (
-                  <div key={idx} className="p-4 bg-[#FAF9F6] space-y-1 text-xs">
-                    <div className="flex items-center justify-between font-bold text-[#0A0A0A]">
+                  <div key={idx} className="p-4 bg-[#FAF9F6] dark:bg-[#18181E] space-y-1 text-xs">
+                    <div className="flex items-center justify-between font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
                       <span>
                         {deliv.count || deliv.quantity || 1}x {deliv.title}
                       </span>
                       {deliv.platform && (
-                        <span className="px-2 py-0.5 rounded-md bg-white border border-[#E5E4DF] text-[10px] text-zinc-600">
+                        <span className="px-2 py-0.5 rounded-md bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 text-[10px] text-zinc-600 dark:text-zinc-400">
                           {deliv.platform}
                         </span>
                       )}
                     </div>
                     {deliv.specs && (
-                      <p className="text-zinc-600 text-[11px]">Specs: {deliv.specs}</p>
+                      <p className="text-zinc-600 dark:text-zinc-400 text-[11px]">
+                        Specs: {deliv.specs}
+                      </p>
                     )}
                     {deliv.publishingRequirement && (
-                      <p className="text-blue-700 text-[11px]">
+                      <p className="text-[#6A0D18] dark:text-[#E87985] text-[11px]">
                         Publishing: {deliv.publishingRequirement}
                       </p>
                     )}
@@ -562,15 +615,15 @@ export default function DealRoomDetail() {
             {(displayedProposal?.collabType === "barter" ||
               displayedProposal?.collabType === "hybrid") &&
               displayedProposal?.barterDetails && (
-                <div className="p-4 rounded-xl bg-blue-50/30 border border-blue-200/60 space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
-                    <Package className="w-4 h-4 text-blue-700" />
+                <div className="p-4 rounded-xl bg-[#FDF6F7] dark:bg-[#6A0D18]/15 border border-[#EED8DC] dark:border-[#6A0D18]/40 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#6A0D18] dark:text-[#E87985]">
+                    <Package className="w-4 h-4 text-[#6A0D18] dark:text-[#E87985]" />
                     <span>Product Barter Package</span>
                   </div>
-                  <p className="text-xs text-zinc-700">
+                  <p className="text-xs text-zinc-700 dark:text-zinc-300">
                     {displayedProposal.barterDetails.productDescription}
                   </p>
-                  <div className="flex flex-wrap gap-3 text-[11px] text-zinc-500 font-medium pt-1">
+                  <div className="flex flex-wrap gap-3 text-[11px] text-zinc-500 dark:text-zinc-400 font-medium pt-1">
                     <span>Quantity: {displayedProposal.barterDetails.quantity}</span>
                     <span>•</span>
                     <span>
@@ -587,35 +640,35 @@ export default function DealRoomDetail() {
 
             {/* Legal & Terms Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 text-center text-xs">
-              <div className="p-3 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF]">
-                <span className="text-[10px] text-zinc-400 block uppercase font-bold">
+              <div className="p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10">
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase font-bold">
                   Revisions
                 </span>
-                <span className="font-bold text-[#0A0A0A]">
+                <span className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
                   {displayedProposal?.revisionCount ?? 1} Rounds
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF]">
-                <span className="text-[10px] text-zinc-400 block uppercase font-bold">
+              <div className="p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10">
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase font-bold">
                   Usage Rights
                 </span>
-                <span className="font-bold text-[#0A0A0A]">
+                <span className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
                   {displayedProposal?.usageRightsDays ?? 30} Days
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF]">
-                <span className="text-[10px] text-zinc-400 block uppercase font-bold">
+              <div className="p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10">
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase font-bold">
                   Exclusivity
                 </span>
-                <span className="font-bold text-[#0A0A0A]">
+                <span className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
                   {displayedProposal?.exclusivityDays ?? 0} Days
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF]">
-                <span className="text-[10px] text-zinc-400 block uppercase font-bold">
+              <div className="p-3 rounded-xl bg-[#FAF9F6] dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10">
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase font-bold">
                   Spark Ads
                 </span>
-                <span className="font-bold text-[#0A0A0A]">
+                <span className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
                   {displayedProposal?.paidAdsPermission ? "Permitted" : "No"}
                 </span>
               </div>
@@ -623,21 +676,25 @@ export default function DealRoomDetail() {
 
             {/* Notes & Cancellation Terms */}
             {(displayedProposal?.notes || displayedProposal?.cancellationTerms) && (
-              <div className="space-y-2 pt-2 text-xs border-t border-[#E5E4DF]">
+              <div className="space-y-2 pt-2 text-xs border-t border-[#E5E4DF] dark:border-white/10">
                 {displayedProposal?.notes && (
                   <div>
-                    <span className="font-bold text-zinc-500 uppercase text-[10px] block">
+                    <span className="font-bold text-zinc-500 dark:text-zinc-400 uppercase text-[10px] block">
                       Creative Notes
                     </span>
-                    <p className="text-zinc-700 mt-0.5">{displayedProposal.notes}</p>
+                    <p className="text-zinc-700 dark:text-zinc-300 mt-0.5">
+                      {displayedProposal.notes}
+                    </p>
                   </div>
                 )}
                 {displayedProposal?.cancellationTerms && (
                   <div>
-                    <span className="font-bold text-zinc-500 uppercase text-[10px] block">
+                    <span className="font-bold text-zinc-500 dark:text-zinc-400 uppercase text-[10px] block">
                       Cancellation Terms
                     </span>
-                    <p className="text-zinc-700 mt-0.5">{displayedProposal.cancellationTerms}</p>
+                    <p className="text-zinc-700 dark:text-zinc-300 mt-0.5">
+                      {displayedProposal.cancellationTerms}
+                    </p>
                   </div>
                 )}
               </div>
@@ -648,15 +705,15 @@ export default function DealRoomDetail() {
         {/* ─── RIGHT COLUMN (5 COLS): BILATERAL SIGNOFF & ACTIVITY ──────────────── */}
         <div className="lg:col-span-5 space-y-6">
           {/* 1. Bilateral Signoff Card */}
-          <div className="p-6 rounded-2xl bg-white border border-[#E5E4DF] shadow-xs space-y-5">
+          <div className="p-6 rounded-2xl bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 shadow-xs space-y-5">
             <div>
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-blue-700" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A]">
+                <ShieldCheck className="w-4 h-4 text-[#6A0D18] dark:text-[#E87985]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A] dark:text-[#F8FAFC]">
                   Bilateral Cryptographic Signoff
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 mt-1">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                 Both parties must independently sign the exact same canonical terms version to
                 activate execution.
               </p>
@@ -665,25 +722,33 @@ export default function DealRoomDetail() {
             {/* Partner Status Indicators */}
             <div className="space-y-3">
               {/* Brand Status */}
-              <div className="p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] flex items-center justify-between text-xs">
+              <div className="p-3.5 rounded-xl border border-[#E5E4DF] dark:border-white/10 bg-[#FAF9F6] dark:bg-[#18181E] flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2.5">
                   <div
                     className={cn(
                       "w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs",
-                      brandApproved ? "bg-emerald-600 text-white" : "bg-zinc-200 text-zinc-600"
+                      brandApproved
+                        ? "bg-emerald-600 text-white"
+                        : "bg-zinc-200 dark:bg-white/10 text-zinc-600 dark:text-zinc-400"
                     )}
                   >
                     {brandApproved ? "✓" : "•"}
                   </div>
                   <div>
-                    <div className="font-bold text-[#0A0A0A]">{deal.brandName}</div>
-                    <div className="text-[10px] text-zinc-500">Brand Signoff</div>
+                    <div className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                      {deal.brandName}
+                    </div>
+                    <div className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      Brand Signoff
+                    </div>
                   </div>
                 </div>
                 <span
                   className={cn(
                     "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md",
-                    brandApproved ? "bg-emerald-50 text-emerald-800" : "bg-zinc-100 text-zinc-600"
+                    brandApproved
+                      ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                      : "bg-zinc-100 text-zinc-600 dark:bg-white/5 dark:text-zinc-400"
                   )}
                 >
                   {brandApproved ? "Executed" : "Pending"}
@@ -691,25 +756,33 @@ export default function DealRoomDetail() {
               </div>
 
               {/* Creator Status */}
-              <div className="p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] flex items-center justify-between text-xs">
+              <div className="p-3.5 rounded-xl border border-[#E5E4DF] dark:border-white/10 bg-[#FAF9F6] dark:bg-[#18181E] flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2.5">
                   <div
                     className={cn(
                       "w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs",
-                      creatorApproved ? "bg-emerald-600 text-white" : "bg-zinc-200 text-zinc-600"
+                      creatorApproved
+                        ? "bg-emerald-600 text-white"
+                        : "bg-zinc-200 dark:bg-white/10 text-zinc-600 dark:text-zinc-400"
                     )}
                   >
                     {creatorApproved ? "✓" : "•"}
                   </div>
                   <div>
-                    <div className="font-bold text-[#0A0A0A]">{deal.influencerName}</div>
-                    <div className="text-[10px] text-zinc-500">Creator Signoff</div>
+                    <div className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                      {deal.influencerName}
+                    </div>
+                    <div className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      Creator Signoff
+                    </div>
                   </div>
                 </div>
                 <span
                   className={cn(
                     "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md",
-                    creatorApproved ? "bg-emerald-50 text-emerald-800" : "bg-zinc-100 text-zinc-600"
+                    creatorApproved
+                      ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                      : "bg-zinc-100 text-zinc-600 dark:bg-white/5 dark:text-zinc-400"
                   )}
                 >
                   {creatorApproved ? "Executed" : "Pending"}
@@ -719,18 +792,18 @@ export default function DealRoomDetail() {
 
             {/* SHA-256 Canonical Hash Pill */}
             {displayedProposal?.termsHash && (
-              <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">
                   Canonical SHA-256 Digest
                 </span>
-                <div className="flex items-center justify-between text-[11px] font-mono text-zinc-700 truncate">
+                <div className="flex items-center justify-between text-[11px] font-mono text-zinc-700 dark:text-zinc-300 truncate">
                   <span className="truncate">{displayedProposal.termsHash}</span>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(displayedProposal.termsHash);
                       toast.info("Canonical hash copied to clipboard.");
                     }}
-                    className="ml-2 text-zinc-400 hover:text-[#0A0A0A] cursor-pointer"
+                    className="ml-2 text-zinc-400 hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC] cursor-pointer"
                   >
                     <Copy className="w-3.5 h-3.5" />
                   </button>
@@ -740,19 +813,19 @@ export default function DealRoomDetail() {
 
             {/* Action Buttons */}
             {!isConfirmed && !isViewingHistorical && (
-              <div className="space-y-2 pt-2 border-t border-[#E5E4DF]">
+              <div className="space-y-2 pt-2 border-t border-[#E5E4DF] dark:border-white/10">
                 {!userHasApproved ? (
                   <Button
                     onClick={() => confirmMutation.mutate()}
                     disabled={confirmMutation.isPending}
-                    className="w-full bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs"
+                    className="w-full liquid-burgundy-metal hover:brightness-110 text-white text-xs font-semibold py-2.5 rounded-xl shadow-md cursor-pointer transition-all"
                   >
                     {confirmMutation.isPending
                       ? "Signing Terms..."
                       : `Accept & Sign Version ${deal.activeProposal?.version}`}
                   </Button>
                 ) : (
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-center text-xs font-semibold text-emerald-800">
+                  <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-center text-xs font-semibold text-emerald-800 dark:text-emerald-300">
                     ✓ You have signed this version. Waiting on partner.
                   </div>
                 )}
@@ -760,7 +833,7 @@ export default function DealRoomDetail() {
                 <Button
                   variant="outline"
                   onClick={openCounterModalPrefilled}
-                  className="w-full text-xs font-semibold rounded-xl border-[#E5E4DF] bg-white hover:bg-[#FAF9F6] shadow-xs"
+                  className="w-full text-xs font-semibold rounded-xl border-[#E5E4DF] dark:border-white/10 bg-white dark:bg-[#18181E] hover:bg-[#FAF9F6] dark:hover:bg-white/[0.08] text-[#0A0A0A] dark:text-[#F8FAFC] shadow-xs cursor-pointer"
                 >
                   Counter-Propose Terms
                 </Button>
@@ -769,83 +842,181 @@ export default function DealRoomDetail() {
 
             {/* Post-Confirmation Execution & Settlement Lifecycle */}
             {isConfirmed && !isViewingHistorical && (
-              <div className="space-y-3 pt-3 border-t border-[#E5E4DF]">
+              <div className="space-y-3.5 pt-3 border-t border-[#E5E4DF] dark:border-white/10">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-[#0A0A0A]">Execution Stage:</span>
-                  <span className="px-2 py-0.5 rounded-md font-semibold text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                    Execution Stage:
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md font-semibold text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50">
                     {deal.executionStatus || "EXECUTION_READY"}
                   </span>
                 </div>
 
-                {/* Creator Content Package Submission */}
-                {userParty === "creator" && deal.executionStatus !== "COMPLETED" && (
-                  <div className="space-y-2">
-                    {deal.executionStatus === "FINAL_CONTENT_SUBMITTED" ? (
-                      <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-center text-xs font-semibold text-blue-900">
-                        ✓ Deliverable package submitted. Awaiting brand review &amp; payout release.
-                      </div>
-                    ) : (
-                      <Button
-                        onClick={() => setShowSubmissionModal(true)}
-                        className="w-full bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs"
-                      >
-                        Submit Deliverable Package
-                      </Button>
-                    )}
+                {/* 1. Dispute State Alert */}
+                {deal.paymentStatus === "DISPUTED" && (
+                  <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-xs text-rose-900 dark:text-rose-300 space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-rose-800 dark:text-rose-200">
+                      <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                      Commercial Dispute Escalated
+                    </div>
+                    <p className="text-[11px] text-rose-700 dark:text-rose-300">
+                      Contractual revision cap reached. Escrow funds and deliverable milestones are
+                      frozen and escalated to Super Admin for commercial resolution.
+                    </p>
                   </div>
                 )}
 
-                {/* Brand Review Actions */}
-                {userParty === "brand" && deal.executionStatus === "FINAL_CONTENT_SUBMITTED" && (
-                  <div className="space-y-2">
-                    <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900">
-                      Deliverable package received. Review content and approve or request revision.
+                {/* 2. Escrow Deposit Stage for Brand */}
+                {deal.paymentStatus !== "HELD_IN_ESCROW" &&
+                  deal.paymentStatus !== "PAYOUT_RELEASED" &&
+                  deal.paymentStatus !== "DISPUTED" && (
+                    <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 space-y-2.5">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-300">
+                        <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        RBI Escrow Deposit Required
+                      </div>
+                      <p className="text-[11px] text-amber-800 dark:text-amber-300/90 leading-relaxed">
+                        {userParty === "brand"
+                          ? "Per platform RBI Route guidelines, project funds must be secured into holding escrow before the creator begins deliverable production."
+                          : "Awaiting Brand escrow deposit. Deliverable production begins once funds are secured in holding escrow."}
+                      </p>
+
+                      {userParty === "brand" && (
+                        <div className="pt-2 border-t border-amber-200 dark:border-amber-800/40 space-y-2">
+                          <div className="text-[11px] text-amber-900 dark:text-amber-200 flex justify-between">
+                            <span>Agreed Creator Fee:</span>
+                            <span className="font-mono font-bold">
+                              ₹
+                              {Math.round(
+                                (deal.activeProposal?.pricePaise || 100000) / 100
+                              ).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                          <Button
+                            onClick={() => fundEscrowMutation.mutate()}
+                            disabled={fundEscrowMutation.isPending}
+                            className="w-full liquid-burgundy-metal text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <ShieldCheck className="w-4 h-4" />
+                            {fundEscrowMutation.isPending
+                              ? "Securing Escrow..."
+                              : "Deposit Escrow via Razorpay Route"}
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        onClick={() => reviewMutation.mutate({ action: "approve" })}
-                        disabled={reviewMutation.isPending}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl"
-                      >
-                        Approve Package
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          reviewMutation.mutate({
-                            action: "request_revision",
-                            notes: "Please adjust ending CTA.",
-                          })
-                        }
-                        disabled={reviewMutation.isPending}
-                        className="text-xs font-semibold rounded-xl border-[#E5E4DF]"
-                      >
-                        Request Revision
-                      </Button>
-                    </div>
+                  )}
+
+                {/* 3. Escrow Secured Badge */}
+                {deal.paymentStatus === "HELD_IN_ESCROW" && (
+                  <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-xs text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span>
+                      Escrow Secured in RBI-Compliant Holding. Funds protected until deliverable
+                      signoff.
+                    </span>
                   </div>
                 )}
+
+                {/* 4. 72-Hour Auto-Release Review SLA Countdown */}
+                {deal.executionStatus === "FINAL_CONTENT_SUBMITTED" &&
+                  deal.paymentOrder?.autoReleaseAt && (
+                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800/50 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-pulse" />
+                        72-Hour Review SLA Active
+                      </div>
+                      <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                        Funds will auto-release to Creator on{" "}
+                        <strong className="font-mono">
+                          {new Date(deal.paymentOrder.autoReleaseAt).toLocaleString("en-IN", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </strong>{" "}
+                        unless a revision is requested within contractual limits.
+                      </p>
+                    </div>
+                  )}
+
+                {/* Creator Content Package Submission */}
+                {userParty === "creator" &&
+                  deal.executionStatus !== "COMPLETED" &&
+                  deal.paymentStatus !== "DISPUTED" && (
+                    <div className="space-y-2">
+                      {deal.executionStatus === "FINAL_CONTENT_SUBMITTED" ? (
+                        <div className="p-3 rounded-xl bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40 text-center text-xs font-semibold text-[#6A0D18] dark:text-[#E87985]">
+                          ✓ Deliverable package submitted. 72-Hour SLA active awaiting brand review.
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => setShowSubmissionModal(true)}
+                          className="w-full liquid-burgundy-metal text-xs font-semibold py-2.5 rounded-xl shadow-xs cursor-pointer"
+                        >
+                          Submit Deliverable Package
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                {/* Brand Review Actions */}
+                {userParty === "brand" &&
+                  deal.executionStatus === "FINAL_CONTENT_SUBMITTED" &&
+                  deal.paymentStatus !== "DISPUTED" && (
+                    <div className="space-y-2">
+                      <div className="p-3 rounded-xl bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40 text-xs text-[#6A0D18] dark:text-[#E87985]">
+                        Deliverable package received. Review submitted files and approve or request
+                        revision.
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          onClick={() => reviewMutation.mutate({ action: "approve" })}
+                          disabled={reviewMutation.isPending}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl cursor-pointer"
+                        >
+                          Approve Package
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            reviewMutation.mutate({
+                              action: "request_revision",
+                              notes: "Please adjust ending CTA.",
+                            })
+                          }
+                          disabled={reviewMutation.isPending}
+                          className="text-xs font-semibold rounded-xl border-[#E5E4DF] dark:border-white/10 dark:text-[#F8FAFC] cursor-pointer"
+                        >
+                          Request Revision
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                 {/* Brand Payment Settlement */}
                 {userParty === "brand" &&
                   deal.executionStatus === "COMPLETED" &&
                   deal.paymentStatus !== "PAYOUT_RELEASED" && (
                     <div className="space-y-2">
-                      <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900">
+                      <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50 text-xs text-emerald-900">
                         Content approved! Release milestone payment settlement to creator.
                       </div>
                       <Button
                         onClick={() => settlePaymentMutation.mutate()}
                         disabled={settlePaymentMutation.isPending}
-                        className="w-full bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs"
+                        className="w-full liquid-burgundy-metal hover:brightness-110 text-white text-xs font-semibold py-2.5 rounded-xl shadow-md cursor-pointer transition-all"
                       >
-                        Release &amp; Settle Payout
+                        {settlePaymentMutation.isPending
+                          ? "Executing Split Transfer..."
+                          : "Release & Settle Payout"}
                       </Button>
                     </div>
                   )}
 
                 {deal.paymentStatus === "PAYOUT_RELEASED" && (
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-center text-xs font-semibold text-emerald-800">
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50 text-center text-xs font-semibold text-emerald-800">
                     ✓ Milestone Payout Settled &amp; Released to Creator
                   </div>
                 )}
@@ -854,10 +1025,10 @@ export default function DealRoomDetail() {
           </div>
 
           {/* 2. Live Deal Activity Timeline */}
-          <div className="p-6 rounded-2xl bg-white border border-[#E5E4DF] shadow-xs space-y-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-700" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A]">
+              <Activity className="w-4 h-4 text-[#6A0D18] dark:text-[#E87985]" />
+              <span className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A] dark:text-[#F8FAFC]">
                 Negotiation Audit Trail
               </span>
             </div>
@@ -865,10 +1036,12 @@ export default function DealRoomDetail() {
             <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
               {deal.activityLogs?.map((log: any) => (
                 <div key={log.id} className="text-xs flex items-start gap-2.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#6A0D18] dark:bg-[#E87985] mt-1.5 shrink-0" />
                   <div className="space-y-0.5 flex-1 min-w-0">
-                    <p className="font-semibold text-[#0A0A0A]">{log.description}</p>
-                    <span className="text-[10px] text-zinc-400 font-tabular">
+                    <p className="font-semibold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                      {log.description}
+                    </p>
+                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-tabular">
                       {new Date(log.createdAt).toLocaleDateString("en-IN", {
                         month: "short",
                         day: "numeric",
@@ -886,15 +1059,15 @@ export default function DealRoomDetail() {
 
       {/* ─── 3. COUNTER-PROPOSAL MODAL (WITH OPTIMISTIC LOCKING) ─────────────────── */}
       <Dialog open={showCounterModal} onOpenChange={setShowCounterModal}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-6 bg-[#FAF9F6] border border-[#E5E4DF] rounded-2xl shadow-2xl antialiased text-[#0A0A0A]">
-          <DialogHeader className="pb-3 border-b border-[#E5E4DF]">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60 w-fit">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-6 bg-[#FAF9F6] dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 rounded-2xl shadow-2xl antialiased text-[#0A0A0A] dark:text-[#F8FAFC]">
+          <DialogHeader className="pb-3 border-b border-[#E5E4DF] dark:border-white/10">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985] bg-[#FDF6F7] dark:bg-[#6A0D18]/25 px-2 py-0.5 rounded-md border border-[#EED8DC] dark:border-[#6A0D18]/40 w-fit">
               OPTIMISTIC COUNTER-PROPOSAL
             </span>
-            <DialogTitle className="text-lg font-bold text-[#0A0A0A] mt-1.5">
+            <DialogTitle className="text-lg font-bold text-[#0A0A0A] dark:text-[#F8FAFC] mt-1.5">
               Submit Counter-Offer (Version {(deal.activeProposal?.version || 1) + 1})
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500">
+            <DialogDescription className="text-xs text-zinc-500 dark:text-zinc-400">
               Proposing revised terms will advance the contract version and notify your partner for
               re-approval.
             </DialogDescription>
@@ -911,8 +1084,8 @@ export default function DealRoomDetail() {
                   className={cn(
                     "py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer",
                     counterCollabType === t
-                      ? "bg-[#0A0A0A] text-white border-[#0A0A0A]"
-                      : "bg-white text-zinc-600 border-[#E5E4DF]"
+                      ? "bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] border-[#0A0A0A] dark:border-white"
+                      : "bg-white dark:bg-[#18181E] text-zinc-600 dark:text-zinc-400 border-[#E5E4DF] dark:border-white/10"
                   )}
                 >
                   {t}
@@ -923,7 +1096,7 @@ export default function DealRoomDetail() {
             {/* Price Field */}
             {(counterCollabType === "paid" || counterCollabType === "hybrid") && (
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                <label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">
                   Proposed Cash Compensation (INR)
                 </label>
                 <div className="relative">
@@ -932,7 +1105,7 @@ export default function DealRoomDetail() {
                     type="number"
                     value={counterPriceINR}
                     onChange={(e) => setCounterPriceINR(e.target.value)}
-                    className="w-full h-9 pl-7 pr-3 rounded-lg bg-white border border-[#E5E4DF] text-xs font-bold text-[#0A0A0A]"
+                    className="w-full h-9 pl-7 pr-3 rounded-lg bg-white dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]"
                   />
                 </div>
               </div>
@@ -941,21 +1114,21 @@ export default function DealRoomDetail() {
             {/* Barter Fields */}
             {(counterCollabType === "barter" || counterCollabType === "hybrid") && (
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                <label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">
                   Barter Goods Description
                 </label>
                 <input
                   type="text"
                   value={counterBarterDesc}
                   onChange={(e) => setCounterBarterDesc(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg bg-white border border-[#E5E4DF] text-xs font-medium text-[#0A0A0A]"
+                  className="w-full h-9 px-3 rounded-lg bg-white dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 text-xs font-medium text-[#0A0A0A] dark:text-[#F8FAFC]"
                 />
               </div>
             )}
 
             {/* Deliverables List */}
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-zinc-500 uppercase">
+              <label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">
                 Deliverables Scope
               </label>
               {counterDeliverables.map((deliv, idx) => (
@@ -969,7 +1142,7 @@ export default function DealRoomDetail() {
                         prev.map((d, i) => (i === idx ? { ...d, title: val } : d))
                       );
                     }}
-                    className="flex-1 h-9 px-3 rounded-lg bg-white border border-[#E5E4DF] text-xs font-medium text-[#0A0A0A]"
+                    className="flex-1 h-9 px-3 rounded-lg bg-white dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 text-xs font-medium text-[#0A0A0A] dark:text-[#F8FAFC]"
                   />
                   <input
                     type="number"
@@ -981,7 +1154,7 @@ export default function DealRoomDetail() {
                         prev.map((d, i) => (i === idx ? { ...d, count } : d))
                       );
                     }}
-                    className="w-16 h-9 px-2 rounded-lg bg-white border border-[#E5E4DF] text-xs font-medium text-[#0A0A0A]"
+                    className="w-16 h-9 px-2 rounded-lg bg-white dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 text-xs font-medium text-[#0A0A0A] dark:text-[#F8FAFC]"
                   />
                 </div>
               ))}
@@ -989,7 +1162,7 @@ export default function DealRoomDetail() {
 
             {/* Notes */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-zinc-500 uppercase">
+              <label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">
                 Negotiation Notes / Counter Justification
               </label>
               <textarea
@@ -997,17 +1170,17 @@ export default function DealRoomDetail() {
                 placeholder="Explain why terms are modified (e.g. additional deliverable requires higher budget)..."
                 value={counterNotes}
                 onChange={(e) => setCounterNotes(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-white border border-[#E5E4DF] text-xs text-[#0A0A0A]"
+                className="w-full p-2.5 rounded-lg bg-white dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 text-xs text-[#0A0A0A] dark:text-[#F8FAFC]"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E5E4DF]">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E5E4DF] dark:border-white/10">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowCounterModal(false)}
-              className="rounded-lg text-xs font-semibold"
+              className="rounded-lg text-xs font-semibold border-[#E5E4DF] dark:border-white/10 text-[#0A0A0A] dark:text-[#F8FAFC]"
             >
               Cancel
             </Button>
@@ -1015,7 +1188,7 @@ export default function DealRoomDetail() {
               size="sm"
               disabled={counterMutation.isPending}
               onClick={() => counterMutation.mutate()}
-              className="rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold"
+              className="rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs"
             >
               {counterMutation.isPending ? "Dispatching..." : "Submit Counter-Offer"}
             </Button>
@@ -1025,19 +1198,19 @@ export default function DealRoomDetail() {
 
       {/* Deliverable Package Submission Modal */}
       <Dialog open={showSubmissionModal} onOpenChange={setShowSubmissionModal}>
-        <DialogContent className="max-w-md bg-[#FAF9F6] border border-[#E5E4DF] rounded-2xl p-6">
+        <DialogContent className="max-w-md bg-[#FAF9F6] dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold text-[#0A0A0A]">
+            <DialogTitle className="text-base font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
               Submit Deliverable Package
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500">
+            <DialogDescription className="text-xs text-zinc-500 dark:text-zinc-400">
               Provide live content URLs or preview drive links for brand review &amp; signoff.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-zinc-500 uppercase">
+              <label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">
                 Content / Video URL *
               </label>
               <input
@@ -1045,12 +1218,12 @@ export default function DealRoomDetail() {
                 placeholder="https://instagram.com/reel/... or https://drive.google.com/..."
                 value={submissionLink}
                 onChange={(e) => setSubmissionLink(e.target.value)}
-                className="w-full h-10 px-3.5 rounded-lg bg-white border border-[#E5E4DF] text-xs text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20"
+                className="w-full h-10 px-3.5 rounded-lg bg-white dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 text-xs text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18] dark:focus:border-[#E87985]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-zinc-500 uppercase">
+              <label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">
                 Notes for Brand
               </label>
               <textarea
@@ -1058,17 +1231,17 @@ export default function DealRoomDetail() {
                 placeholder="Include audio credits, caption draft, or any specific notes for review..."
                 value={submissionNotes}
                 onChange={(e) => setSubmissionNotes(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-white border border-[#E5E4DF] text-xs text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20"
+                className="w-full p-2.5 rounded-lg bg-white dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 text-xs text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18] dark:focus:border-[#E87985]"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E5E4DF]">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E5E4DF] dark:border-white/10">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowSubmissionModal(false)}
-              className="rounded-lg text-xs font-semibold"
+              className="rounded-lg text-xs font-semibold border-[#E5E4DF] dark:border-white/10 text-[#0A0A0A] dark:text-[#F8FAFC]"
             >
               Cancel
             </Button>
@@ -1076,7 +1249,7 @@ export default function DealRoomDetail() {
               size="sm"
               disabled={submissionMutation.isPending}
               onClick={() => submissionMutation.mutate()}
-              className="rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold"
+              className="rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs"
             >
               {submissionMutation.isPending ? "Submitting..." : "Submit Package"}
             </Button>

@@ -254,7 +254,7 @@ export default function Influencers() {
       {/* CREATOR CARDS GRID */}
       {isLoading ? (
         <div className="flex h-64 w-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#6A0D18]" />
         </div>
       ) : influencers?.length ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
@@ -272,10 +272,10 @@ export default function Influencers() {
                   )}
                   {influencer.isVerified && (
                     <div
-                      className="absolute top-3 right-3 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 rounded-full p-0.5 shadow-md"
+                      className="absolute top-3 right-3 bg-white dark:bg-slate-900 text-[#6A0D18] rounded-full p-0.5 shadow-md"
                       title="Verified Creator"
                     >
-                      <CheckCircle2 className="w-4 h-4 fill-blue-600/20 dark:fill-blue-400/20" />
+                      <CheckCircle2 className="w-4 h-4 fill-[#6A0D18]/20" />
                     </div>
                   )}
                 </div>
@@ -284,14 +284,14 @@ export default function Influencers() {
                   {/* Avatar Overlay */}
                   <Avatar className="h-16 w-16 border-4 border-white dark:border-[#11172A] shadow-md absolute -top-8 left-4">
                     <AvatarImage src={influencer.avatarUrl} className="object-cover" />
-                    <AvatarFallback className="text-lg font-extrabold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                    <AvatarFallback className="text-lg font-extrabold bg-[#FDF6F7] text-[#6A0D18]">
                       {influencer.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="mt-10 flex-1 space-y-3">
                     <div>
-                      <h3 className="font-bold text-base text-[#11182F] dark:text-slate-100 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      <h3 className="font-bold text-base text-[#11182F] dark:text-slate-100 leading-tight group-hover:text-[#6A0D18] transition-colors">
                         {influencer.name}
                       </h3>
                       <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -349,7 +349,7 @@ export default function Influencers() {
                         ${influencer.collaborationCost}
                       </strong>
                     </span>
-                    <span className="text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1 font-bold">
+                    <span className="text-[#6A0D18] group-hover:translate-x-0.5 transition-transform flex items-center gap-1 font-bold">
                       View Profile <ArrowUpRight className="h-3.5 w-3.5" />
                     </span>
                   </div>

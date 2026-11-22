@@ -170,7 +170,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
   if (isLoading || !campaign) {
     return (
       <div className="flex h-[calc(100vh-200px)] w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1D4ED8]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#6A0D18]" />
       </div>
     );
   }
@@ -220,9 +220,9 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
         {user?.role === "influencer" && (
           <Dialog open={isApplyOpen} onOpenChange={setIsApplyOpen}>
             <DialogTrigger asChild>
-              <Button className="h-10 px-5 rounded-lg bg-[#0A0A0A] hover:bg-slate-800 text-white font-semibold text-xs shadow-xs cursor-pointer inline-flex items-center gap-2">
+              <Button className="h-10 px-5 rounded-lg liquid-burgundy-metal font-semibold text-xs shadow-xs cursor-pointer inline-flex items-center gap-2">
                 <span>Apply to Campaign</span>
-                <ArrowRight className="w-4 h-4 text-[#1D4ED8]" />
+                <ArrowRight className="w-4 h-4 text-white" />
               </Button>
             </DialogTrigger>
             <DialogContent className="p-6 max-w-lg">
@@ -251,7 +251,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                   Cancel
                 </Button>
                 <Button
-                  className="bg-[#0A0A0A] hover:bg-slate-800 text-white text-xs font-semibold rounded-lg"
+                  className="liquid-burgundy-metal text-xs font-semibold rounded-lg shadow-xs"
                   onClick={handleApply}
                   disabled={createApplication.isPending}
                 >
@@ -364,15 +364,15 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
               >
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border border-[#E5E4DF]">
+                    <Avatar className="h-10 w-10 border border-[rgba(106,13,24,0.42)]">
                       <AvatarImage src={app.influencerAvatarUrl || ""} />
-                      <AvatarFallback className="bg-[#0A0A0A] text-white font-bold text-xs">
+                      <AvatarFallback className="monogram-silver-burgundy text-[#6A0D18] font-bold text-xs">
                         {app.influencerName?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <Link href={`/influencers/${app.influencerId}`}>
-                        <h4 className="font-bold text-xs text-[#0A0A0A] dark:text-white hover:text-[#1D4ED8] transition-colors cursor-pointer">
+                        <h4 className="font-bold text-xs text-[#0A0A0A] dark:text-white hover:text-[#6A0D18] transition-colors cursor-pointer">
                           {app.influencerName}
                         </h4>
                       </Link>
@@ -399,7 +399,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                       </Button>
                       <Button
                         size="sm"
-                        className="h-8 px-4 text-xs font-semibold bg-[#0A0A0A] hover:bg-slate-800 text-white rounded-lg"
+                        className="h-8 px-4 text-xs font-semibold liquid-burgundy-metal rounded-lg shadow-xs"
                         onClick={() => handleUpdateAppStatus(app.id, "accepted")}
                       >
                         Accept &amp; Vault
@@ -421,7 +421,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
         {/* TAB 3: DELIVERABLES */}
         <TabsContent value="deliverables" className="space-y-4">
           <div className="bg-white dark:bg-[#11172A] border border-[#E5E4DF] dark:border-white/10 rounded-xl p-8 text-center space-y-2">
-            <FileCheck className="h-8 w-8 text-[#1D4ED8] mx-auto mb-2" />
+            <FileCheck className="h-8 w-8 text-[#6A0D18] mx-auto mb-2" />
             <h4 className="font-bold text-sm text-[#0A0A0A] dark:text-white">
               Milestone Verification Tracker
             </h4>

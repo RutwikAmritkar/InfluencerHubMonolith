@@ -1,17 +1,29 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, useGetMe, useLogout } from "@workspace/api-client-react";
 
+export type AuthUser = User & {
+  isAdmin?: boolean;
+  adminRole?: string | null;
+  onboardingStep?: string;
+  onboardingStatus?: string;
+  country?: string;
+  state?: string | null;
+  city?: string | null;
+  language?: string;
+  emailVerified?: boolean;
+};
+
 type AuthContextType = {
-  user: User | null;
+  user: AuthUser | null;
   isLoading: boolean;
-  setUser: (user: User | null) => void;
+  setUser: (user: AuthUser | null) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const {

@@ -13,7 +13,7 @@ export default function NotFound() {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.03em] text-[#0A0A0A]">
-              Page <span className="font-serif italic font-normal">Not Found</span>
+              Page <span className="font-serif italic font-normal text-[#6A0D18]">Not Found</span>
             </h1>
             <p className="text-xs text-[#52525B] mt-1.5 max-w-xs mx-auto">
               The requested resource has been relocated or does not exist in the active ledger.
@@ -21,7 +21,7 @@ export default function NotFound() {
           </div>
           <div className="pt-2 w-full">
             <Link href="/">
-              <Button className="w-full h-10 bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold text-xs rounded-lg shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2">
+              <Button className="w-full h-10 bg-[#0A0A0A] hover:bg-zinc-800 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2">
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Return to Workspace</span>
               </Button>

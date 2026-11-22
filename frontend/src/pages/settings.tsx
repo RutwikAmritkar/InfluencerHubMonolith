@@ -138,11 +138,11 @@ export function Settings() {
         {/* ─── Top Editorial Header (Role-Aware Copy) ─── */}
         <div className="border-b border-[#E5E4DF] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] mb-1">
               {isBrand ? "Brand Enterprise Workspace" : "Creator Account"}
             </p>
             <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
-              Account <span className="font-serif italic font-normal text-blue-700">Settings</span>
+              Account <span className="font-serif italic font-normal text-[#6A0D18]">Settings</span>
             </h1>
             <p className="text-sm text-zinc-500 mt-1">
               {isBrand
@@ -153,10 +153,10 @@ export function Settings() {
 
           <Link
             href={isBrand ? "/brand-profile" : "/profile"}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors self-start sm:self-auto cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white hover:bg-zinc-50 border border-[#E5E4DF] text-xs font-semibold text-[#0A0A0A] self-start sm:self-auto cursor-pointer shadow-xs transition-colors"
           >
             <span>{isBrand ? "View Company Profile" : "Edit Media Kit"}</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
+            <ArrowUpRight className="w-3.5 h-3.5 text-zinc-500" />
           </Link>
         </div>
 
@@ -172,13 +172,13 @@ export function Settings() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all text-left cursor-pointer ${
                     isActive
-                      ? "bg-[#0A0A0A] text-white shadow-xs"
+                      ? "liquid-burgundy-metal font-bold shadow-xs text-white"
                       : "text-zinc-600 hover:bg-[#F2F1EC] hover:text-[#0A0A0A]"
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-blue-400" : "text-zinc-400"}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-400"}`} />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -220,7 +220,7 @@ export function Settings() {
                           <div
                             className={`w-5 h-5 rounded-full flex items-center justify-center border ${
                               selected
-                                ? "border-blue-700 bg-blue-700 text-white"
+                                ? "border-[#6A0D18] bg-[#6A0D18] text-white"
                                 : "border-zinc-300"
                             }`}
                           >
@@ -299,7 +299,7 @@ export function Settings() {
                       type="text"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
-                      className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700 font-mono"
+                      className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18] font-mono"
                     />
                     <p className="text-[11px] text-zinc-400">
                       T+0 direct settlement on milestone signoff
@@ -320,7 +320,7 @@ export function Settings() {
                       <button
                         type="button"
                         onClick={() => setIsEditingPan(!isEditingPan)}
-                        className="text-blue-700 font-semibold cursor-pointer shrink-0 ml-2 hover:underline"
+                        className="text-[#6A0D18] font-semibold cursor-pointer shrink-0 ml-2 hover:underline"
                       >
                         {isEditingPan ? "Cancel" : "Update PAN"}
                       </button>
@@ -333,7 +333,7 @@ export function Settings() {
                           onChange={(e) => setPanNumber(e.target.value.toUpperCase())}
                           placeholder="ABCDE1234F"
                           maxLength={10}
-                          className="h-8 px-2.5 rounded-lg border border-[#E5E4DF] bg-white text-xs font-mono uppercase focus:ring-1 focus:ring-blue-700"
+                          className="h-8 px-2.5 rounded-lg border border-[#E5E4DF] bg-white text-xs font-mono uppercase focus:ring-1 focus:ring-[#6A0D18]"
                         />
                         <button
                           type="button"
@@ -362,9 +362,9 @@ export function Settings() {
                     type="button"
                     onClick={handleSavePayout}
                     disabled={isSavingPayout}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors cursor-pointer self-start sm:self-auto"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg liquid-burgundy-metal text-xs font-semibold cursor-pointer self-start sm:self-auto shadow-xs"
                   >
-                    {isSavingPayout && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {isSavingPayout && <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />}
                     <span>Save Payout Settings</span>
                   </button>
                 </div>
@@ -477,7 +477,7 @@ export function Settings() {
                 {/* 2-Factor Authentication */}
                 <div className="p-6 flex items-center justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-[#FAF9F6] border border-[#E5E4DF] text-blue-700 mt-0.5">
+                    <div className="p-2 rounded-lg bg-[#FAF9F6] border border-[#E5E4DF] text-[#6A0D18] mt-0.5">
                       <Lock className="w-4 h-4" />
                     </div>
                     <div>
@@ -485,7 +485,7 @@ export function Settings() {
                         <h3 className="text-sm font-bold text-[#0A0A0A]">
                           Two-Factor Authentication (2FA)
                         </h3>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/70 text-xs font-semibold">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FDF6F7] text-[#6A0D18] border border-[#EED8DC] text-xs font-semibold">
                           Active
                         </span>
                       </div>
@@ -568,7 +568,7 @@ function BrandProfileForm({ profileId }: { profileId: number }) {
   if (isLoading) {
     return (
       <div className="py-12 flex justify-center">
-        <Loader2 className="animate-spin h-6 w-6 text-blue-700" />
+        <Loader2 className="animate-spin h-6 w-6 text-[#6A0D18]" />
       </div>
     );
   }
@@ -717,9 +717,11 @@ function BrandProfileForm({ profileId }: { profileId: number }) {
             <Button
               type="submit"
               disabled={updateBrand.isPending}
-              className="bg-[#0A0A0A] hover:bg-zinc-800 text-white font-semibold text-xs px-5 h-9 rounded-lg transition-colors cursor-pointer shadow-xs"
+              className="liquid-burgundy-metal font-semibold text-xs px-5 h-9 rounded-lg cursor-pointer shadow-xs"
             >
-              {updateBrand.isPending && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+              {updateBrand.isPending && (
+                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin text-white" />
+              )}
               Save Company Profile
             </Button>
             <span className="text-xs text-zinc-400">

@@ -10,12 +10,14 @@ import {
   Loader2,
   User,
   Building2,
+  FileCheck2,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useLogin, useRegister, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LoginPage() {
   const [location, setLocation] = useLocation();
@@ -61,10 +63,8 @@ export default function LoginPage() {
       }
 
       setIsSubmitting(true);
-      const actualPassword = password === "••••••••••••" ? "password123" : password;
-
       loginMutation.mutate(
-        { data: { email: email.trim(), password: actualPassword } as any },
+        { data: { email: email.trim(), password } as any },
         {
           onSuccess: (data: any) => {
             setIsSubmitting(false);
@@ -72,6 +72,12 @@ export default function LoginPage() {
               setUser(data.user);
               queryClient.setQueryData(getGetMeQueryKey(), data);
               toast.success("Welcome back!");
+
+              if (data.user.isAdmin) {
+                setLocation("/admin");
+                return;
+              }
+
               const status = String((data.user as any)?.onboardingStatus || "").toLowerCase();
               const onboardingStep = String((data.user as any)?.onboardingStep || "").toUpperCase();
               const isCompleted =
@@ -145,7 +151,7 @@ export default function LoginPage() {
             setLocation("/login");
             return;
           }
-          // Seamless demo fallback
+          // Fallback user state
           const newUser = {
             id: `usr-${Date.now()}`,
             name: signupName.trim(),
@@ -161,156 +167,173 @@ export default function LoginPage() {
     );
   };
 
-  const quickFillDemo = (role: "creator" | "brand") => {
-    if (role === "creator") {
-      setEmail("maya@influencerhub.demo");
-      setPassword("demo1234");
-    } else {
-      setEmail("nova@influencerhub.demo");
-      setPassword("demo1234");
-    }
-    setStep("password");
-  };
-
   return (
-    <div className="min-h-screen w-full bg-[#FAF9F6] text-[#0A0A0A] grid grid-cols-1 lg:grid-cols-12 antialiased">
-      {/* ─── LEFT PANEL (6 Cols): Editorial Split Showcase (Zero Colliding Cards) ─── */}
-      <div className="hidden lg:flex lg:col-span-6 p-6 bg-[#FAF9F6]">
-        <div className="relative w-full h-full rounded-3xl bg-[#0A0A0A] text-white p-10 xl:p-12 flex flex-col justify-between overflow-hidden">
-          {/* Subtle Ambient Radial Accent (Restrained, non-neon) */}
-          <div
-            className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full opacity-25 blur-3xl"
-            style={{ background: "radial-gradient(circle, #1D4ED8 0%, transparent 70%)" }}
-          />
-
+    <div className="min-h-screen w-full text-[#0A0A0A] dark:text-[#F8FAFC] grid grid-cols-1 lg:grid-cols-12 antialiased relative selection:bg-[#6A0D18] selection:text-white bg-[radial-gradient(circle_at_82%_18%,rgba(106,13,24,0.14)_0%,transparent_48%),radial-gradient(circle_at_20%_85%,rgba(168,40,48,0.10)_0%,transparent_52%),linear-gradient(135deg,#FAF9F6_0%,#F4E9EA_48%,#E7E9EF_100%)] dark:bg-[radial-gradient(circle_at_82%_18%,rgba(106,13,24,0.30)_0%,transparent_50%),radial-gradient(circle_at_20%_85%,rgba(106,13,24,0.20)_0%,transparent_50%),linear-gradient(135deg,#09090B_0%,#121216_50%,#18181E_100%)]">
+      {/* ─── LEFT PANEL (6 Cols): Deep Burgundy Liquid Metal Brand Showcase ─── */}
+      <div className="hidden lg:flex lg:col-span-6 p-6">
+        <div
+          className="relative w-full h-full rounded-3xl text-white p-10 lg:p-12 flex flex-col justify-between overflow-hidden border border-white/25 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.45),0_24px_50px_-12px_rgba(106,13,24,0.42)]"
+          style={{
+            background:
+              "radial-gradient(circle at 20% 15%, rgba(168,40,48,0.55), transparent 55%), linear-gradient(145deg, #8B1524 0%, #6A0D18 52%, #3D060D 100%)",
+          }}
+        >
           {/* Top Brand Mark */}
           <div className="relative z-10 flex items-center justify-between">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+            <Link href="/" className="inline-flex items-center gap-2.5 group">
+              <div className="w-8 h-8 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-white font-bold text-sm shadow-xs backdrop-blur-md">
                 CB
               </div>
               <span className="text-base font-bold tracking-tight text-white">
-                Creators<span className="font-serif italic font-normal text-blue-400">Brand</span>
+                Creators
+                <span className="font-serif italic font-normal text-[#F5D0D5] ml-0.5">Brand</span>
               </span>
             </Link>
 
-            <span className="px-3 py-1 rounded-lg bg-white/10 border border-white/15 text-xs font-medium text-zinc-300">
+            <span className="px-3 py-1 rounded-lg bg-white/12 border border-white/20 text-xs font-semibold text-rose-100 backdrop-blur-md">
               Creator &amp; Brand Portal
             </span>
           </div>
 
-          {/* Center Editorial Statement + Clean Non-Overlapping Glass Cards */}
+          {/* Center Editorial Statement + Translucent Silver-Glass Preview Cards */}
           <div className="relative z-10 my-auto space-y-8 max-w-lg">
             <div className="space-y-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-rose-200/90 block">
+                Direct Commercial Infrastructure • India
+              </span>
               <h2 className="text-4xl xl:text-5xl font-bold tracking-tight leading-[1.12] text-white">
-                Where brands meet{" "}
-                <span className="font-serif italic font-normal text-blue-400">
-                  verified influence.
+                Where creators get paid —{" "}
+                <span className="font-serif italic font-normal text-[#F5D0D5] block sm:inline">
+                  not promised exposure.
                 </span>
               </h2>
-              <p className="text-sm text-zinc-400 leading-relaxed">
+              <p className="text-sm text-rose-100/90 leading-relaxed font-normal">
                 Direct campaign briefs, audited audience telemetry, and milestone-protected
                 payouts—built for India’s creator economy.
               </p>
             </div>
 
-            {/* Structured Stack of 2 Clean Glassmorphism Cards (Zero Overlap) */}
+            {/* Stack of 2 Translucent Silver-Glass Cards */}
             <div className="space-y-3.5">
-              {/* Card 1: Verified Creator Media Kit Pill */}
-              <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] flex items-center justify-between gap-4">
+              {/* Card 1: Versioned Deal Room • v2 */}
+              <div className="p-4 rounded-2xl bg-white/12 backdrop-blur-xl border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                    MC
+                  <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0">
+                    <FileCheck2 className="w-5 h-5 text-rose-100" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-white">Maya</span>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
-                    </div>
-                    <span className="text-xs text-zinc-400 block">
-                      Lifestyle &amp; Skincare • Mumbai • 5.8% Verified ER
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-rose-200 block">
+                      Versioned Deal Room • v2
+                    </span>
+                    <span className="text-xs font-semibold text-white block mt-0.5">
+                      1× IG Reel + 2× Stories • ₹45,000 Agreed
                     </span>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-md bg-white/10 text-xs font-semibold text-white font-tabular shrink-0">
-                  ₹4,500+
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/15 text-white border border-white/25 backdrop-blur-md shrink-0">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+                  Bilateral Signoff Confirmed
                 </span>
               </div>
 
-              {/* Card 2: Milestone Escrow Telemetry */}
-              <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] flex items-center justify-between gap-4">
+              {/* Card 2: Direct Brand Collaborations */}
+              <div className="p-4 rounded-2xl bg-white/12 backdrop-blur-xl border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shrink-0">
-                    <ShieldCheck className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0">
+                    <Building2 className="w-5 h-5 text-rose-100" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-white block">
-                      Summer Skincare Launch
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-rose-200 block">
+                      Direct Brand Collaborations
                     </span>
-                    <span className="text-xs text-zinc-400 block">
-                      1× Instagram Reel + 2× Story Frames
+                    <span className="text-xs font-semibold text-white block mt-0.5">
+                      Paid, Barter &amp; Hybrid Briefs • 0% Agency Markups
                     </span>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-xs text-emerald-400 font-tabular block">₹45,000</span>
-                  <span className="text-xs text-zinc-400 block">Terms Confirmed</span>
-                </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 font-mono shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                  Verified Workspace
+                </span>
               </div>
             </div>
           </div>
 
           {/* Bottom Legal / Tagline */}
-          <div className="relative z-10 flex items-center justify-between text-xs text-zinc-500 pt-4 border-t border-white/10">
+          <div className="relative z-10 flex items-center justify-between text-xs text-rose-200/70 pt-4 border-t border-white/15">
             <span>© 2026 CreatorsBrand</span>
-            <span>Built for creators. Trusted by brands.</span>
+            <span>Direct commercial infrastructure • India</span>
           </div>
         </div>
       </div>
 
-      {/* ─── RIGHT PANEL (6 Cols): Clean Alabaster Sign-In / Sign-Up Form ─── */}
-      <div className="lg:col-span-6 flex flex-col justify-between p-6 sm:p-10 lg:p-14 relative">
-        {/* Top Close / Return to Home */}
-        <div className="flex items-center justify-between">
-          <Link href="/" className="lg:hidden inline-flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#0A0A0A] flex items-center justify-center text-white font-bold text-xs">
+      {/* ─── RIGHT PANEL (6 Cols): Silver-Parchment Gradient Form Panel ─── */}
+      <div className="lg:col-span-6 flex flex-col justify-between p-4 sm:p-8 lg:p-12 relative min-h-screen">
+        {/* Mobile Header Bar (Compact CB brand badge + ThemeToggle + Close Button) */}
+        <div className="lg:hidden flex items-center justify-between w-full max-w-md mx-auto mb-4">
+          <Link href="/" className="inline-flex items-center gap-2 group cursor-pointer">
+            <div className="w-8 h-8 rounded-lg liquid-burgundy-metal flex items-center justify-center text-white font-bold text-xs shadow-xs border border-white/20">
               CB
             </div>
-            <span className="text-sm font-bold text-[#0A0A0A]">CreatorsBrand</span>
+            <span className="text-base font-extrabold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
+              Creators
+              <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985]">
+                Brand
+              </span>
+            </span>
           </Link>
 
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/"
+              aria-label="Back to home"
+              className="w-8 h-8 rounded-xl bg-white/85 dark:bg-[#121216]/85 backdrop-blur-md border border-[rgba(106,13,24,0.30)] dark:border-white/10 hover:border-[#6A0D18] dark:hover:border-[#E87985] hover:bg-white dark:hover:bg-[#18181E] flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-all cursor-pointer shadow-2xs"
+            >
+              <X className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Desktop Top Controls */}
+        <div className="hidden lg:flex items-center justify-end gap-2 w-full max-w-md mx-auto mb-2">
+          <ThemeToggle />
           <Link
             href="/"
             aria-label="Back to home"
-            className="ml-auto w-9 h-9 rounded-lg bg-white border border-[#E5E4DF] hover:bg-zinc-100 flex items-center justify-center text-zinc-600 transition-colors cursor-pointer shadow-2xs"
+            className="w-9 h-9 rounded-xl bg-white/85 dark:bg-[#121216]/85 backdrop-blur-md border border-[rgba(106,13,24,0.30)] dark:border-white/10 hover:border-[#6A0D18] dark:hover:border-[#E87985] hover:bg-white dark:hover:bg-[#18181E] flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-all cursor-pointer shadow-xs"
           >
             <X className="w-4 h-4" />
           </Link>
         </div>
 
-        {/* Centered Form Container */}
-        <div className="w-full max-w-md mx-auto my-auto space-y-6">
+        {/* Centered Silver Liquid Glass Card Container */}
+        <div className="w-full max-w-md mx-auto my-auto rounded-3xl p-7 sm:p-9 space-y-6 liquid-silver-card border border-[rgba(106,13,24,0.35)] dark:border-[#E87985]/30 shadow-xl">
           {!isSignUp ? (
             /* ── SIGN IN PROGRESSIVE FORM ── */
             <>
               <div className="space-y-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985]">
                   Welcome Back
                 </p>
-                <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
                   {step === "email" ? (
                     <>
                       Sign in to your{" "}
-                      <span className="font-serif italic font-normal text-blue-700">workspace</span>
+                      <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985]">
+                        workspace
+                      </span>
                     </>
                   ) : (
                     <>
                       Enter your{" "}
-                      <span className="font-serif italic font-normal text-blue-700">password</span>
+                      <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985]">
+                        password
+                      </span>
                     </>
                   )}
                 </h1>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   {step === "email"
                     ? "Enter your registered email to access your Creator Studio or Brand Dashboard."
                     : `Signing in as ${email}`}
@@ -321,14 +344,14 @@ export default function LoginPage() {
                 {/* Email Input */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-zinc-700">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                       Work or Creator Email
                     </label>
                     {step === "password" && (
                       <button
                         type="button"
                         onClick={() => setStep("email")}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline cursor-pointer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#6A0D18] dark:text-[#E87985] hover:underline cursor-pointer"
                       >
                         <ArrowLeft className="w-3 h-3" />
                         Change email
@@ -342,10 +365,10 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     readOnly={step === "password"}
                     placeholder="name@domain.com"
-                    className={`w-full h-11 px-3.5 rounded-lg border border-[#E5E4DF] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700 transition-colors ${
+                    className={`w-full h-11 px-3.5 rounded-xl border text-sm font-medium focus:outline-none transition-all shadow-2xs ${
                       step === "password"
-                        ? "bg-zinc-100/80 text-zinc-600"
-                        : "bg-white text-[#0A0A0A]"
+                        ? "bg-zinc-100/80 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 border-[#E5E4DF] dark:border-white/10"
+                        : "bg-white/85 dark:bg-[#121216] text-[#0A0A0A] dark:text-[#F8FAFC] border-[#6A0D18]/25 dark:border-white/10 focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-2 focus:ring-[#6A0D18]/15 dark:focus:ring-[#E87985]/20"
                     }`}
                   />
                 </div>
@@ -354,10 +377,12 @@ export default function LoginPage() {
                 {step === "password" && (
                   <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-zinc-700">Password</label>
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                        Password
+                      </label>
                       <Link
                         href="/forgot-password"
-                        className="text-xs font-semibold text-blue-700 hover:underline"
+                        className="text-xs font-semibold text-[#6A0D18] dark:text-[#E87985] hover:underline"
                       >
                         Forgot password?
                       </Link>
@@ -370,13 +395,13 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
-                        className="w-full h-11 pl-3.5 pr-10 rounded-lg border border-[#E5E4DF] bg-white text-sm text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700"
+                        className="w-full h-11 pl-3.5 pr-10 rounded-xl border border-[#6A0D18]/25 dark:border-white/10 bg-white/85 dark:bg-[#121216] text-sm font-medium text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-2 focus:ring-[#6A0D18]/15 dark:focus:ring-[#E87985]/20 shadow-2xs"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? "Hide password" : "Show password"}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4" />
@@ -391,43 +416,25 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-11 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer disabled:opacity-60"
+                  className="w-full h-11 rounded-xl liquid-burgundy-metal text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-60 transition-all hover:brightness-110 text-white"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
                   ) : (
                     <>
                       <span>{step === "email" ? "Continue" : "Sign In to Workspace"}</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4 text-white" />
                     </>
                   )}
                 </button>
               </form>
 
-              {/* Clean Dev / Demo Role Quick-Fill */}
-              <div className="pt-2 border-t border-[#E5E4DF] space-y-2.5">
-                <span className="text-xs text-zinc-400 block">Quick workspace preview:</span>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => quickFillDemo("creator")}
-                    className="py-2 px-3 rounded-lg bg-white hover:bg-zinc-50 border border-[#E5E4DF] text-xs font-semibold text-[#0A0A0A] transition-colors cursor-pointer shadow-2xs"
-                  >
-                    Fill Creator Demo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => quickFillDemo("brand")}
-                    className="py-2 px-3 rounded-lg bg-white hover:bg-zinc-50 border border-[#E5E4DF] text-xs font-semibold text-[#0A0A0A] transition-colors cursor-pointer shadow-2xs"
-                  >
-                    Fill Brand Demo
-                  </button>
-                </div>
-              </div>
-
-              <p className="text-center text-xs text-zinc-500">
+              <p className="text-center text-xs text-zinc-600 dark:text-zinc-400 pt-1">
                 New to CreatorsBrand?{" "}
-                <Link href="/signup" className="font-semibold text-blue-700 hover:underline">
+                <Link
+                  href="/signup"
+                  className="font-semibold text-[#6A0D18] dark:text-[#E87985] hover:underline"
+                >
                   Create a Creator or Brand account
                 </Link>
               </p>
@@ -436,49 +443,51 @@ export default function LoginPage() {
             /* ── SIGN UP REGISTRATION FORM ── */
             <>
               <div className="space-y-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985]">
                   Join CreatorsBrand
                 </p>
-                <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
                   Create your{" "}
-                  <span className="font-serif italic font-normal text-blue-700">account</span>
+                  <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985]">
+                    workspace
+                  </span>
                 </h1>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   Select your role to unlock verified marketplace collaborations.
                 </p>
               </div>
 
               {/* Role Selection Tabs */}
-              <div className="grid grid-cols-2 gap-2.5 p-1 rounded-xl bg-zinc-100 border border-[#E5E4DF]">
+              <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-white/70 dark:bg-[#121216]/70 border border-[rgba(106,13,24,0.20)] dark:border-white/10 shadow-2xs backdrop-blur-md">
                 <button
                   type="button"
                   onClick={() => setSignupRole("influencer")}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     signupRole === "influencer"
-                      ? "bg-white text-[#0A0A0A] shadow-xs"
-                      : "text-zinc-500 hover:text-[#0A0A0A]"
+                      ? "liquid-silver-card border border-[rgba(106,13,24,0.40)] dark:border-[#E87985]/40 text-[#6A0D18] dark:text-[#E87985] font-bold shadow-xs"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC]"
                   }`}
                 >
-                  <User className="w-3.5 h-3.5 text-blue-700" />
+                  <User className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
                   <span>I'm a Creator</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSignupRole("brand")}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     signupRole === "brand"
-                      ? "bg-white text-[#0A0A0A] shadow-xs"
-                      : "text-zinc-500 hover:text-[#0A0A0A]"
+                      ? "liquid-silver-card border border-[rgba(106,13,24,0.40)] dark:border-[#E87985]/40 text-[#6A0D18] dark:text-[#E87985] font-bold shadow-xs"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC]"
                   }`}
                 >
-                  <Building2 className="w-3.5 h-3.5 text-blue-700" />
+                  <Building2 className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
                   <span>I'm a Brand</span>
                 </button>
               </div>
 
               <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                     {signupRole === "influencer" ? "Creator Full Name" : "Company / Brand Name"}
                   </label>
                   <input
@@ -487,12 +496,12 @@ export default function LoginPage() {
                     value={signupName}
                     onChange={(e) => setSignupName(e.target.value)}
                     placeholder={signupRole === "influencer" ? "Maya Sharma" : "Glow Cosmetics"}
-                    className="w-full h-10 px-3.5 rounded-lg border border-[#E5E4DF] bg-white text-xs text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700"
+                    className="w-full h-11 px-3.5 rounded-xl border border-[#6A0D18]/25 dark:border-white/10 bg-white/85 dark:bg-[#121216] text-sm font-medium text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-2 focus:ring-[#6A0D18]/15 dark:focus:ring-[#E87985]/20 shadow-2xs transition-all"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                     Work or Creator Email
                   </label>
                   <input
@@ -501,13 +510,15 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@domain.com"
-                    className="w-full h-10 px-3.5 rounded-lg border border-[#E5E4DF] bg-white text-xs text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700"
+                    className="w-full h-11 px-3.5 rounded-xl border border-[#6A0D18]/25 dark:border-white/10 bg-white/85 dark:bg-[#121216] text-sm font-medium text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-2 focus:ring-[#6A0D18]/15 dark:focus:ring-[#E87985]/20 shadow-2xs transition-all"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700">Password</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                      Password
+                    </label>
                     <div className="relative">
                       <input
                         type={showSignupPassword ? "text" : "password"}
@@ -515,12 +526,12 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full h-10 pl-3 pr-8 rounded-lg border border-[#E5E4DF] bg-white text-xs text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700"
+                        className="w-full h-11 pl-3.5 pr-9 rounded-xl border border-[#6A0D18]/25 dark:border-white/10 bg-white/85 dark:bg-[#121216] text-sm font-medium text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-2 focus:ring-[#6A0D18]/15 dark:focus:ring-[#E87985]/20 shadow-2xs transition-all"
                       />
                       <button
                         type="button"
                         onClick={() => setShowSignupPassword(!showSignupPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
                       >
                         {showSignupPassword ? (
                           <EyeOff className="w-3.5 h-3.5" />
@@ -532,14 +543,16 @@ export default function LoginPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700">Confirm Password</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                      Confirm Password
+                    </label>
                     <input
                       type="password"
                       required
                       value={signupConfirmPassword}
                       onChange={(e) => setSignupConfirmPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full h-10 px-3.5 rounded-lg border border-[#E5E4DF] bg-white text-xs text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700"
+                      className="w-full h-11 px-3.5 rounded-xl border border-[#6A0D18]/25 dark:border-white/10 bg-white/85 dark:bg-[#121216] text-sm font-medium text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-2 focus:ring-[#6A0D18]/15 dark:focus:ring-[#E87985]/20 shadow-2xs transition-all"
                     />
                   </div>
                 </div>
@@ -547,22 +560,25 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-11 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer disabled:opacity-60 mt-1"
+                  className="w-full h-11 rounded-xl liquid-burgundy-metal text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-60 transition-all hover:brightness-110 mt-1 text-white"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
                   ) : (
                     <>
                       <span>Create Account &amp; Continue</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4 text-white" />
                     </>
                   )}
                 </button>
               </form>
 
-              <p className="text-center text-xs text-zinc-500">
+              <p className="text-center text-xs text-zinc-600 dark:text-zinc-400 pt-1">
                 Already have an account?{" "}
-                <Link href="/login" className="font-semibold text-blue-700 hover:underline">
+                <Link
+                  href="/login"
+                  className="font-semibold text-[#6A0D18] dark:text-[#E87985] hover:underline"
+                >
                   Sign in here
                 </Link>
               </p>
@@ -571,14 +587,20 @@ export default function LoginPage() {
         </div>
 
         {/* High-Contrast Footer Links */}
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500 pt-6">
+        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-600 dark:text-zinc-400 pt-6">
           <span>Operated by CreatorsBrand</span>
           <span>•</span>
-          <Link href="/privacy" className="hover:text-[#0A0A0A] transition-colors">
+          <Link
+            href="/privacy"
+            className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+          >
             Privacy Policy
           </Link>
           <span>•</span>
-          <Link href="/terms" className="hover:text-[#0A0A0A] transition-colors">
+          <Link
+            href="/terms"
+            className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+          >
             Terms &amp; Conditions
           </Link>
         </div>

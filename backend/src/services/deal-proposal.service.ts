@@ -301,6 +301,17 @@ export async function proposeNewTermsVersion(
       })
       .where(eq(dealsTable.id, dealId));
 
+    // Proposer approval record
+    const termsHash = computeCanonicalTermsHash(newProposal as any);
+    await tx.insert(dealApprovalsTable).values({
+      dealId,
+      proposalId: newProposal.id,
+      proposalVersion: newVersion,
+      userId,
+      party,
+      termsHash,
+    });
+
     // Log Activity
     await tx.insert(dealActivityTable).values({
       dealId,
@@ -426,8 +437,11 @@ export async function confirmDealTerms(
         )
       );
 
-    const brandConfirmed = allApprovals.some((a) => a.party === "brand");
-    const creatorConfirmed = allApprovals.some((a) => a.party === "creator");
+    const brandConfirmed =
+      allApprovals.some((a) => a.party === "brand") || targetProposal.proposedByParty === "brand";
+    const creatorConfirmed =
+      allApprovals.some((a) => a.party === "creator") ||
+      targetProposal.proposedByParty === "creator";
 
     let newAgreementStatus: string;
     const isBothConfirmed = brandConfirmed && creatorConfirmed;

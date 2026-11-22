@@ -17,6 +17,8 @@ import dealsRouter from "./deals";
 import storageRouter from "./storage";
 import portfolioRouter from "./portfolio";
 import paymentsRouter from "./payments";
+import webhooksRouter from "./webhooks";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -38,5 +40,7 @@ router.use(dealsRouter);
 router.use(storageRouter);
 router.use(portfolioRouter);
 router.use(paymentsRouter);
+router.use(webhooksRouter);
+router.use(adminRouter);
 
 export default router;

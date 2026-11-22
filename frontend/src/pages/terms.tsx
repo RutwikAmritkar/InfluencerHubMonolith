@@ -42,7 +42,7 @@ export default function TermsAndConditions() {
             </Button>
             <Button
               size="sm"
-              className="bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold text-xs rounded-lg px-4 transition-colors shadow-xs"
+              className="bg-[#0A0A0A] hover:bg-zinc-800 text-white font-semibold text-xs rounded-lg px-4 transition-colors shadow-xs"
               asChild
             >
               <Link href="/login">Sign In</Link>
@@ -54,7 +54,7 @@ export default function TermsAndConditions() {
       {/* Hero Section */}
       <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-b border-[#E5E4DF] bg-white">
         <div className="max-w-4xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF9F6] border border-[#E5E4DF] text-[#1D4ED8] text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF9F6] border border-[#E5E4DF] text-[#6A0D18] text-xs font-semibold">
             <FileText className="w-4 h-4" />
             <span>Platform Agreement &amp; Milestone Terms</span>
           </div>
@@ -76,7 +76,7 @@ export default function TermsAndConditions() {
         {/* Section 1: Agreement to Terms */}
         <section className="space-y-4 text-[#52525B]">
           <h2 className="text-xl sm:text-2xl font-bold text-[#0A0A0A] tracking-[-0.02em] flex items-center gap-2 border-b border-[#E5E4DF] pb-3">
-            <span className="text-[#1D4ED8] font-tabular">1.</span> Agreement to Terms
+            <span className="text-[#6A0D18] font-tabular">1.</span> Agreement to Terms
           </h2>
           <p className="text-xs sm:text-sm leading-relaxed">
             By accessing, registering for, or using {LEGAL_CONFIG.PLATFORM_NAME}{" "}
@@ -95,13 +95,13 @@ export default function TermsAndConditions() {
         {/* Section 2: Account Registration & Roles */}
         <section className="space-y-4 text-[#52525B]">
           <h2 className="text-xl sm:text-2xl font-bold text-[#0A0A0A] tracking-[-0.02em] flex items-center gap-2 border-b border-[#E5E4DF] pb-3">
-            <span className="text-[#1D4ED8] font-tabular">2.</span> Account Registration &amp; Roles
+            <span className="text-[#6A0D18] font-tabular">2.</span> Account Registration &amp; Roles
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div className="p-5 rounded-xl bg-white border border-[#E5E4DF] space-y-2 shadow-xs">
               <div className="flex items-center gap-2 text-[#0A0A0A] font-bold text-sm">
-                <Users className="w-4 h-4 text-[#1D4ED8]" />
+                <Users className="w-4 h-4 text-[#6A0D18]" />
                 <span>Creator Accounts</span>
               </div>
               <p className="text-xs text-[#52525B] leading-relaxed">
@@ -127,7 +127,7 @@ export default function TermsAndConditions() {
         {/* Section 3: Milestones & Payout Clearance */}
         <section className="space-y-4 text-[#52525B]">
           <h2 className="text-xl sm:text-2xl font-bold text-[#0A0A0A] tracking-[-0.02em] flex items-center gap-2 border-b border-[#E5E4DF] pb-3">
-            <span className="text-[#1D4ED8] font-tabular">3.</span> Milestone Commitments &amp;
+            <span className="text-[#6A0D18] font-tabular">3.</span> Milestone Commitments &amp;
             Payout Clearance
           </h2>
           <div className="space-y-3 text-xs sm:text-sm leading-relaxed">
@@ -148,7 +148,7 @@ export default function TermsAndConditions() {
         {/* Section 4: Governing Law & Contact */}
         <section className="p-6 rounded-xl bg-white border border-[#E5E4DF] space-y-3 shadow-xs">
           <h3 className="text-base font-bold text-[#0A0A0A] flex items-center gap-2">
-            <Scale className="w-5 h-5 text-[#1D4ED8]" />
+            <Scale className="w-5 h-5 text-[#6A0D18]" />
             <span>Governing Law &amp; Legal Notices</span>
           </h3>
           <p className="text-xs text-[#52525B] leading-relaxed">
@@ -169,7 +169,7 @@ export default function TermsAndConditions() {
               <strong>Support Email:</strong>{" "}
               <a
                 href={`mailto:${LEGAL_CONFIG.CONTACT.SUPPORT_EMAIL}`}
-                className="text-[#1D4ED8] hover:underline font-mono"
+                className="text-[#6A0D18] hover:underline font-mono"
               >
                 {LEGAL_CONFIG.CONTACT.SUPPORT_EMAIL}
               </a>

@@ -9,12 +9,18 @@ export default function DashboardRouter() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (user?.role === "brand") {
+    if (user?.isAdmin) {
+      setLocation("/admin");
+    } else if (user?.role === "brand") {
       setLocation("/dashboard/brand");
     } else {
       setLocation("/dashboard/influencer");
     }
   }, [user, setLocation]);
+
+  if (user?.isAdmin) {
+    return null;
+  }
 
   if (user?.role === "brand") {
     return <BrandDashboard />;

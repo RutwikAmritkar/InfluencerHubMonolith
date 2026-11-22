@@ -165,7 +165,7 @@ export const SocialPresenceSection = memo(({ accounts }: { accounts?: SocialAcco
             <h3 className="text-base sm:text-lg font-extrabold text-[#11182F] dark:text-slate-100 tracking-tight">
               Your Social Presence
             </h3>
-            <Badge className="bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border-blue-200/60 dark:border-blue-800/60 text-xs font-bold">
+            <Badge className="bg-[#FDF6F7] text-[#6A0D18] border-[#EED8DC] text-xs font-bold">
               Real-time Metrics
             </Badge>
           </div>
@@ -178,7 +178,7 @@ export const SocialPresenceSection = memo(({ accounts }: { accounts?: SocialAcco
           <Button
             variant="outline"
             size="sm"
-            className="h-8 px-3.5 border-slate-200 dark:border-slate-700 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-xl cursor-pointer transition-all shadow-xs"
+            className="h-8 px-3.5 border-slate-200 dark:border-slate-700 text-xs font-bold text-[#6A0D18] hover:bg-[#FDF6F7] rounded-xl cursor-pointer transition-all shadow-xs"
           >
             Manage Accounts <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
           </Button>
@@ -236,7 +236,7 @@ export const SocialPresenceSection = memo(({ accounts }: { accounts?: SocialAcco
                       "text-xs font-bold px-2 py-0.5 rounded-full border shadow-2xs shrink-0",
                       acc.status === "VERIFIED"
                         ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/80"
-                        : "bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/80"
+                        : "bg-[#FDF6F7] text-[#6A0D18] border-[#EED8DC]"
                     )}
                   >
                     {acc.status === "VERIFIED" ? "✓ Verified" : "Submitted"}
@@ -282,7 +282,7 @@ export const SocialPresenceSection = memo(({ accounts }: { accounts?: SocialAcco
                       target="_blank"
                       rel="noopener noreferrer"
                       className={cn(
-                        "inline-flex items-center gap-1 font-bold text-xs text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group/link"
+                        "inline-flex items-center gap-1 font-bold text-xs text-slate-700 dark:text-slate-300 hover:text-[#6A0D18] transition-colors group/link"
                       )}
                     >
                       View Profile
@@ -333,7 +333,7 @@ export const SocialPresenceSection = memo(({ accounts }: { accounts?: SocialAcco
                 </div>
 
                 <div className="py-2.5 px-3 rounded-xl bg-slate-100/60 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800/50 text-center">
-                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400 inline-flex items-center gap-1 group-hover:underline">
+                  <span className="text-xs font-bold text-[#6A0D18] inline-flex items-center gap-1 group-hover:underline">
                     <Plus className="w-3.5 h-3.5" /> Connect {theme.name}
                   </span>
                 </div>

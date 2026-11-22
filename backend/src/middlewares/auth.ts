@@ -17,6 +17,8 @@ export interface AuthenticatedUser {
   role: "influencer" | "creator" | "brand" | "admin";
   avatarUrl?: string | null;
   profileId?: number;
+  isAdmin?: boolean;
+  adminRole?: string | null;
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -76,7 +78,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
 
     if (sessionData && sessionData.user) {
-      const userRole = (sessionData.user.role as AuthenticatedUser["role"]) || "influencer";
+      const userRole =
+        ((sessionData.user as any).role as AuthenticatedUser["role"]) || "influencer";
       const profileId = await resolveProfileId(sessionData.user.id, userRole);
       const authUser: AuthenticatedUser = {
         id: sessionData.user.id,
@@ -85,6 +88,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
         role: userRole,
         avatarUrl: sessionData.user.image,
         profileId,
+        isAdmin: Boolean((sessionData.user as any).isAdmin),
+        adminRole: (sessionData.user as any).adminRole ?? null,
       };
       (req as AuthenticatedRequest).user = authUser;
       (req as AuthenticatedRequest).userId = sessionData.user.id;
@@ -142,7 +147,8 @@ export async function optionalAuth(
     });
 
     if (sessionData && sessionData.user) {
-      const userRole = (sessionData.user.role as AuthenticatedUser["role"]) || "influencer";
+      const userRole =
+        ((sessionData.user as any).role as AuthenticatedUser["role"]) || "influencer";
       const profileId = await resolveProfileId(sessionData.user.id, userRole);
       (req as AuthenticatedRequest).user = {
         id: sessionData.user.id,
@@ -151,6 +157,8 @@ export async function optionalAuth(
         role: userRole,
         avatarUrl: sessionData.user.image,
         profileId,
+        isAdmin: Boolean((sessionData.user as any).isAdmin),
+        adminRole: (sessionData.user as any).adminRole ?? null,
       };
       (req as AuthenticatedRequest).userId = sessionData.user.id;
     }

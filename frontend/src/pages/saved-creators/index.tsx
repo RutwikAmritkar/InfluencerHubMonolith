@@ -44,9 +44,9 @@ export default function SavedCreatorsPage() {
 
         <Button
           onClick={handleCreateShortlist}
-          className="bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold text-xs rounded-lg h-9 px-4 cursor-pointer shadow-xs flex items-center gap-1.5 transition-colors"
+          className="liquid-burgundy-metal font-semibold text-xs rounded-lg h-9 px-4 cursor-pointer shadow-xs flex items-center gap-1.5 transition-colors"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5 text-white" />
           <span>New Roster Shortlist</span>
         </Button>
       </div>
@@ -67,7 +67,7 @@ export default function SavedCreatorsPage() {
               <p className="text-xs text-[#52525B] mt-0.5">{activeShortlist.description}</p>
             </div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF9F6] border border-[#E5E4DF] text-xs font-semibold text-[#0A0A0A] font-tabular">
-              <Users className="w-3.5 h-3.5 text-[#1D4ED8]" />
+              <Users className="w-3.5 h-3.5 text-[#6A0D18]" />
               <span>{activeShortlist.creators.length} Creators Shortlisted</span>
             </div>
           </div>
@@ -89,11 +89,11 @@ export default function SavedCreatorsPage() {
                     <div>
                       <div className="flex items-center gap-1.5">
                         <Link href={`/influencers/${item.creatorId}`}>
-                          <h3 className="text-base font-bold text-[#0A0A0A] hover:text-[#1D4ED8] transition-colors cursor-pointer">
+                          <h3 className="text-base font-bold text-[#0A0A0A] hover:text-[#6A0D18] transition-colors cursor-pointer">
                             {item.creatorName}
                           </h3>
                         </Link>
-                        <CheckCircle2 className="w-4 h-4 text-[#1D4ED8]" />
+                        <CheckCircle2 className="w-4 h-4 text-[#6A0D18]" />
                       </div>
                       <p className="text-xs text-[#52525B]">
                         {item.creatorHandle} ·{" "}
@@ -142,9 +142,9 @@ export default function SavedCreatorsPage() {
                     </Link>
                     <Button
                       size="sm"
-                      className="h-8 px-3.5 rounded-lg bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold text-xs cursor-pointer shadow-xs flex items-center gap-1.5 transition-colors"
+                      className="h-8 px-3.5 rounded-lg liquid-burgundy-metal text-xs font-semibold cursor-pointer shadow-xs flex items-center gap-1.5 transition-colors"
                     >
-                      <Send className="w-3.5 h-3.5" />
+                      <Send className="w-3.5 h-3.5 text-white" />
                       <span>Invite to Campaign</span>
                     </Button>
                   </div>
@@ -161,7 +161,7 @@ export default function SavedCreatorsPage() {
             Search verified media kits and add candidate talent to your shortlist roster.
           </p>
           <Link href="/find-creators">
-            <Button className="h-9 px-4 bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold text-xs rounded-lg shadow-xs cursor-pointer transition-colors">
+            <Button className="h-9 px-4 liquid-burgundy-metal text-xs font-semibold rounded-lg shadow-xs cursor-pointer transition-colors">
               Discover Creators
             </Button>
           </Link>

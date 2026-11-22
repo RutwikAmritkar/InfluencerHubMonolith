@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
 import path from "node:path";
 import fs from "node:fs";
 import pinoHttp from "pino-http";
@@ -81,9 +82,38 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(cookieParser());
-app.use(express.json({ limit: "20mb" }));
+app.use(
+  express.json({
+    limit: "20mb",
+    verify: (req: any, _res: Response, buf: Buffer) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+// Security Rate Limiters
+const isTestOrDev = !isProd || process.env.NODE_ENV === "test";
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isTestOrDev ? 2000 : 30, // Relaxed in dev/test, strict in prod
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many authentication requests. Please try again after 15 minutes." },
+});
+
+const paymentsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isTestOrDev ? 2000 : 60, // Relaxed in dev/test, strict in prod
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many payment requests. Please try again after 15 minutes." },
+});
+
+app.use("/api/auth", authLimiter);
+app.use("/api/payments", paymentsLimiter);
 
 const getHealthStatus = async () => {
   const appEnv = (process.env.APP_ENV || process.env.NODE_ENV || "local").toLowerCase();

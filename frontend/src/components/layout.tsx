@@ -24,6 +24,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldAlert,
+  Shield,
   FileText,
   Wallet,
 } from "lucide-react";
@@ -42,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { Badge } from "./ui/badge";
+import { ThemeToggle } from "./theme-toggle";
 
 // Memoized Role-Aware Sidebar Content Component
 const SidebarContent = memo(
@@ -49,12 +51,14 @@ const SidebarContent = memo(
     location,
     role,
     userName,
+    isAdmin = false,
     collapsed = false,
     onItemClick,
   }: {
     location: string;
     role?: string;
     userName?: string;
+    isAdmin?: boolean;
     collapsed?: boolean;
     onItemClick?: () => void;
   }) => {
@@ -167,6 +171,20 @@ const SidebarContent = memo(
 
     return (
       <div className="flex flex-col h-full py-3.5 antialiased font-sans space-y-4">
+        {isAdmin && (
+          <div className={cn(collapsed ? "px-2" : "px-3")}>
+            <Link href="/admin">
+              <div
+                onClick={onItemClick}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl liquid-burgundy-metal text-white text-xs font-bold shadow-xs cursor-pointer border border-[#6A0D18]/30 transition-all hover:scale-[1.01]"
+                title="Admin Control Center"
+              >
+                <Shield className="h-4 w-4 shrink-0 text-white" />
+                {!collapsed && <span className="truncate flex-1">Admin Workspace</span>}
+              </div>
+            </Link>
+          </div>
+        )}
         {activeGroups.map((group) => (
           <div key={group.header}>
             {!collapsed && (
@@ -188,14 +206,18 @@ const SidebarContent = memo(
                         "relative flex items-center rounded-lg text-xs transition-colors cursor-pointer",
                         collapsed ? "justify-center h-10 w-10 mx-auto" : "gap-2.5 px-3 py-2",
                         isActive
-                          ? "bg-[#0A0A0A] text-white font-semibold shadow-xs"
-                          : "text-[#52525B] dark:text-slate-400 font-medium hover:text-[#0A0A0A] dark:hover:text-white hover:bg-[#F2F1EC] dark:hover:bg-slate-800/60"
+                          ? "liquid-burgundy-metal font-semibold"
+                          : "text-[#52525B] dark:text-zinc-400 font-medium hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC] hover:bg-[#F2F1EC] dark:hover:bg-white/[0.06]"
                       )}
                     >
+                      {/* Crisp Top Specular Rim */}
+                      {isActive && (
+                        <span className="pointer-events-none absolute inset-x-2 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                      )}
                       <link.icon
                         className={cn(
                           "h-4 w-4 shrink-0",
-                          isActive ? "text-white" : "text-[#52525B]/70 dark:text-slate-500"
+                          isActive ? "text-white" : "text-[#52525B]/70 dark:text-zinc-400"
                         )}
                       />
                       {!collapsed && <span className="truncate flex-1">{link.label}</span>}
@@ -205,14 +227,14 @@ const SidebarContent = memo(
                             "ml-auto text-[11px] font-bold px-1.5 py-0.5 rounded-md font-tabular",
                             isActive
                               ? "bg-white/20 text-white"
-                              : "bg-blue-50 text-blue-700 border border-blue-200/60"
+                              : "bg-[#FDF6F7] dark:bg-[#6A0D18]/25 text-[#6A0D18] dark:text-[#E87985] border border-[#EED8DC] dark:border-[#6A0D18]/40"
                           )}
                         >
                           {(link as any).badge}
                         </span>
                       )}
                       {collapsed && (link as any).badge && (
-                        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#1D4ED8]" />
+                        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#6A0D18]" />
                       )}
                     </div>
                   </Link>
@@ -234,11 +256,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { t, i18n } = useTranslation();
 
-  // Responsive sidebar collapse: tablet/compact laptop (768 - 1279px) starts collapsed
+  // Automatic mobile drawer close on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location]);
+
+  // Responsive sidebar collapse: tablet/compact laptop starts collapsed on >=1024px, drawer below 1024px
   useEffect(() => {
     const handleResize = () => {
       if (typeof window !== "undefined") {
-        if (window.innerWidth >= 768 && window.innerWidth < 1280) {
+        if (window.innerWidth >= 1024 && window.innerWidth < 1280) {
           setSidebarCollapsed(true);
         } else if (window.innerWidth >= 1280) {
           setSidebarCollapsed(false);
@@ -309,34 +336,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [isCreator]);
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] dark:bg-[#0A0A0A] text-[#0A0A0A] dark:text-[#FAF9F6] flex flex-col font-sans selection:bg-[#1D4ED8] selection:text-white pb-16 md:pb-0 transition-colors antialiased">
+    <div className="min-h-screen bg-[#FAF9F6] dark:bg-[#0A0A0A] text-[#0A0A0A] dark:text-[#FAF9F6] flex flex-col font-sans selection:bg-[#6A0D18] selection:text-white pb-16 lg:pb-0 transition-colors antialiased">
       {/* ─── 1. TOP UTILITY & NAVIGATION BAR ────────────────────────────────── */}
-      <header className="sticky top-0 z-40 w-full bg-[#FAF9F6]/90 dark:bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#E5E4DF] dark:border-white/10 transition-colors">
-        <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full bg-[#FAF9F6]/90 dark:bg-[#09090B]/90 backdrop-blur-md border-b border-[#E5E4DF] dark:border-white/10 transition-colors">
+        <div className="w-full px-3 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-2">
           {/* Left: CB Wordmark + Breadcrumb Context */}
-          <div className="flex items-center gap-3 sm:gap-6">
-            <div className="md:hidden">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="lg:hidden">
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-[#52525B] dark:text-slate-400 -ml-1"
+                    className="h-8 w-8 text-[#52525B] dark:text-zinc-400 -ml-1 cursor-pointer"
                   >
                     <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent
                   side="left"
-                  className="p-0 w-72 bg-[#FAF9F6] dark:bg-[#0A0A0A] border-r border-[#E5E4DF] dark:border-white/10"
+                  className="p-0 w-72 bg-[#F5F4F0]/95 dark:bg-[#0E0E12] border-r border-[#DCDFE6] dark:border-white/10 backdrop-blur-md"
                 >
-                  <div className="flex items-center p-5 border-b border-[#E5E4DF] dark:border-white/10">
-                    <div className="h-7 w-7 rounded-md bg-[#0A0A0A] text-white flex items-center justify-center font-bold text-xs tracking-tighter shadow-xs mr-2.5">
+                  <div className="flex items-center p-5 border-b border-[#DCDFE6] dark:border-white/10">
+                    <div className="h-7 w-7 rounded-md liquid-burgundy-metal text-white flex items-center justify-center font-bold text-xs tracking-tighter shadow-xs mr-2.5">
                       CB
                     </div>
-                    <span className="text-base font-bold tracking-tight text-[#0A0A0A] dark:text-white">
+                    <span className="text-base font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
                       Creators
-                      <span className="font-serif italic font-normal text-[#1D4ED8] ml-0.5">
+                      <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985] ml-0.5">
                         Brand
                       </span>
                     </span>
@@ -346,6 +373,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       location={location}
                       role={user?.role}
                       userName={user?.name}
+                      isAdmin={user?.isAdmin}
                       onItemClick={() => setIsMobileMenuOpen(false)}
                     />
                   </ScrollArea>
@@ -355,20 +383,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
             <Link href="/dashboard">
               <div className="inline-flex items-center gap-2 cursor-pointer group">
-                <div className="h-7 w-7 rounded-md bg-[#0A0A0A] text-white flex items-center justify-center font-bold text-xs tracking-tighter shadow-xs group-hover:bg-[#1D4ED8] transition-colors">
+                <div className="h-7 w-7 rounded-md liquid-burgundy-metal text-white flex items-center justify-center font-bold text-xs tracking-tighter shadow-xs">
                   CB
                 </div>
-                <span className="text-base font-bold tracking-tight text-[#0A0A0A] dark:text-white">
+                <span className="text-base font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
                   Creators
-                  <span className="font-serif italic font-normal text-[#1D4ED8] ml-0.5">Brand</span>
+                  <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985] ml-0.5">
+                    Brand
+                  </span>
                 </span>
               </div>
             </Link>
 
             {/* Editorial Breadcrumb Separator */}
-            <div className="hidden md:flex items-center gap-2 text-xs font-medium text-[#52525B] dark:text-slate-400 pl-3 border-l border-[#E5E4DF] dark:border-white/10">
-              <span className="text-[#52525B]/60">/</span>
-              <span className="font-semibold text-[#0A0A0A] dark:text-white">
+            <div className="hidden lg:flex items-center gap-2 text-xs font-medium text-[#52525B] dark:text-zinc-400 pl-3 border-l border-[#E5E4DF] dark:border-white/10">
+              <span className="text-[#52525B]/60 dark:text-zinc-500">/</span>
+              <span className="font-semibold text-[#0A0A0A] dark:text-[#F8FAFC]">
                 {breadcrumbSection}
               </span>
             </div>
@@ -376,21 +406,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Center/Left: Compact Search Bar */}
           <div className="hidden sm:flex items-center max-w-sm w-full relative mx-4">
-            <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-3" />
+            <Search className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 absolute left-3" />
             <input
               type="text"
               placeholder={t("campaigns.searchPlaceholder")}
-              className="w-full h-8 pl-8 pr-3 bg-white dark:bg-slate-900 border border-[#E5E4DF] dark:border-white/10 focus:border-[#0A0A0A] focus:ring-1 focus:ring-[#0A0A0A] rounded-lg text-xs text-[#0A0A0A] dark:text-slate-100 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full h-8 pl-8 pr-3 bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-1 focus:ring-[#6A0D18] dark:focus:ring-[#E87985] rounded-lg text-xs text-[#0A0A0A] dark:text-[#F8FAFC] placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none transition-all"
             />
           </div>
 
           {/* Right: Role Switcher Indicator, Language, User Profile */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Role Badge Indicator */}
-            <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F2F1EC] dark:bg-slate-800 text-[#0A0A0A] dark:text-white border border-[#E5E4DF] dark:border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#1D4ED8]" />
-              {isCreator ? "Creator View" : "Brand View"}
-            </div>
+            {user?.isAdmin ? (
+              <Link href="/admin">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-white liquid-burgundy-metal shadow-xs cursor-pointer border border-[#6A0D18]/30 hover:scale-[1.02] transition-all">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  {user.adminRole === "super_admin" ? "Super Admin" : "Admin"}
+                </div>
+              </Link>
+            ) : (
+              <div className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F2F1EC] dark:bg-slate-800 text-[#0A0A0A] dark:text-white border border-[#E5E4DF] dark:border-white/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#6A0D18]" />
+                {isCreator ? "Creator View" : "Brand View"}
+              </div>
+            )}
 
             <button
               type="button"
@@ -399,20 +438,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#1D4ED8]" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#6A0D18]" />
               )}
             </button>
+
+            {/* Theme Toggle Button */}
+            <ThemeToggle />
 
             {/* Header Language Selector Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#E5E4DF] dark:border-white/10 hover:border-slate-400 bg-white dark:bg-slate-900 text-xs font-semibold text-[#0A0A0A] dark:text-slate-200 transition-colors cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg border border-[#E5E4DF] dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20 bg-white dark:bg-[#121216] text-xs font-semibold text-[#0A0A0A] dark:text-[#F8FAFC] transition-colors cursor-pointer shadow-xs"
                   title={t("settings.appLanguage")}
                 >
-                  <Globe className="h-3.5 w-3.5 text-[#1D4ED8]" />
-                  <span className="hidden xs:inline">{currentLangLabel}</span>
+                  <Globe className="h-3.5 w-3.5 text-[#6A0D18] dark:text-[#E87985]" />
+                  <span className="hidden sm:inline">{currentLangLabel}</span>
                   <ChevronDown className="h-3 w-3 text-slate-400" />
                 </button>
               </DropdownMenuTrigger>
@@ -422,49 +464,61 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   className="rounded-lg text-xs font-semibold cursor-pointer py-2 px-3 flex items-center justify-between"
                 >
                   <span>English</span>
-                  {i18n.language === "en" && <span className="text-[#1D4ED8] font-bold">✓</span>}
+                  {i18n.language === "en" && (
+                    <span className="text-[#6A0D18] dark:text-[#E87985] font-bold">✓</span>
+                  )}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => i18n.changeLanguage("hi")}
                   className="rounded-lg text-xs font-semibold cursor-pointer py-2 px-3 flex items-center justify-between"
                 >
                   <span>हिन्दी</span>
-                  {i18n.language === "hi" && <span className="text-[#1D4ED8] font-bold">✓</span>}
+                  {i18n.language === "hi" && (
+                    <span className="text-[#6A0D18] dark:text-[#E87985] font-bold">✓</span>
+                  )}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => i18n.changeLanguage("mr")}
                   className="rounded-lg text-xs font-semibold cursor-pointer py-2 px-3 flex items-center justify-between"
                 >
                   <span>मराठी</span>
-                  {i18n.language === "mr" && <span className="text-[#1D4ED8] font-bold">✓</span>}
+                  {i18n.language === "mr" && (
+                    <span className="text-[#6A0D18] dark:text-[#E87985] font-bold">✓</span>
+                  )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="h-3.5 w-px bg-[#E5E4DF] dark:bg-slate-800 mx-0.5 hidden sm:block" />
+            <div className="h-3.5 w-px bg-[#E5E4DF] dark:bg-white/10 mx-0.5 hidden sm:block" />
 
             {/* User Avatar Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-2 p-1 sm:p-1 sm:pl-2 rounded-lg border border-[#E5E4DF] dark:border-white/10 hover:border-slate-400 bg-white dark:bg-slate-900 hover:bg-[#F2F1EC] dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 p-1 sm:pl-2 rounded-lg border border-[#E5E4DF] dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20 bg-white dark:bg-[#121216] hover:bg-[#F2F1EC] dark:hover:bg-white/[0.06] transition-colors cursor-pointer shadow-xs"
                 >
-                  <Avatar className="h-6 w-6 border border-[#E5E4DF] dark:border-slate-700">
+                  <Avatar className="h-6 w-6 border border-[rgba(106,13,24,0.42)]">
                     <AvatarImage
                       src={
                         user?.avatarUrl && user.avatarUrl.trim() !== "" ? user.avatarUrl : undefined
                       }
                     />
-                    <AvatarFallback className="bg-[#0A0A0A] text-white font-semibold text-xs">
+                    <AvatarFallback className="monogram-silver-burgundy text-[#6A0D18] dark:text-[#E87985] font-bold text-xs">
                       {user?.name?.charAt(0) || "D"}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-xs font-semibold text-[#0A0A0A] dark:text-slate-200 max-w-[80px] sm:max-w-[110px] truncate hidden xs:inline">
+                  <span className="text-xs font-semibold text-[#0A0A0A] dark:text-[#F8FAFC] max-w-[80px] sm:max-w-[110px] truncate hidden sm:inline">
                     {user?.name || "Demo User"}
                   </span>
-                  <span className="text-xs font-medium uppercase px-1.5 py-0.5 bg-[#F2F1EC] dark:bg-slate-800 text-[#52525B] dark:text-slate-400 rounded shrink-0 hidden sm:inline-flex">
-                    {user?.role === "influencer" ? "CREATOR" : "BRAND"}
+                  <span className="text-xs font-medium uppercase px-1.5 py-0.5 bg-[#F2F1EC] dark:bg-white/[0.08] text-[#52525B] dark:text-[#A1A1AA] rounded shrink-0 hidden sm:inline-flex">
+                    {user?.isAdmin
+                      ? user.adminRole === "super_admin"
+                        ? "SUPER ADMIN"
+                        : "ADMIN"
+                      : user?.role === "influencer"
+                        ? "CREATOR"
+                        : "BRAND"}
                   </span>
                   <ChevronDown className="h-3 w-3 text-slate-400 shrink-0 mr-1" />
                 </button>
@@ -479,6 +533,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[#E5E4DF] dark:bg-slate-800" />
+                {user?.isAdmin && (
+                  <>
+                    <Link href="/admin">
+                      <DropdownMenuItem className="rounded-xl text-xs font-semibold cursor-pointer py-2 px-3 text-[#6A0D18] focus:text-[#6A0D18] focus:bg-[#6A0D18]/10">
+                        <Shield className="mr-2 h-4 w-4 text-[#6A0D18]" />
+                        Admin Control Center
+                      </DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuSeparator className="bg-[#E5E4DF] dark:bg-slate-800" />
+                  </>
+                )}
                 {isCreator ? (
                   <Link href="/profile">
                     <DropdownMenuItem className="rounded-xl text-xs font-medium cursor-pointer py-2 px-3">
@@ -521,29 +586,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ─── 2. MAIN LAYOUT WITH ADAPTIVE EDITORIAL RAIL & WORKSPACE CONTENT ────────────── */}
       <div className="flex-1 flex w-full min-h-0">
-        {/* EDITORIAL WORKSPACE RAIL: Collapsible w-[72px] on tablet/compact, w-60 on desktop */}
+        {/* EDITORIAL WORKSPACE RAIL: Collapsible w-[72px] on tablet/compact, w-60 on desktop (hidden below lg) */}
         <aside
           className={cn(
-            "border-r border-[#E5E4DF] dark:border-white/10 bg-[#FAF9F6] dark:bg-[#0A0A0A] shrink-0 hidden md:flex flex-col transition-all duration-200 select-none",
+            "border-r border-[#DCDFE6] bg-[#F5F4F0]/90 dark:border-white/10 dark:bg-[#0E0E12] shrink-0 hidden lg:flex flex-col transition-all duration-200 select-none backdrop-blur-md",
             sidebarCollapsed ? "w-[72px]" : "w-60"
           )}
         >
           {/* Rail Header / Collapse Trigger */}
           <div
             className={cn(
-              "h-11 flex items-center border-b border-[#E5E4DF] dark:border-white/10 px-3 shrink-0",
+              "h-11 flex items-center border-b border-[#DCDFE6] dark:border-white/10 px-3 shrink-0",
               sidebarCollapsed ? "justify-center" : "justify-between"
             )}
           >
             {!sidebarCollapsed && (
-              <span className="text-[11px] font-bold tracking-widest uppercase text-[#52525B]/70 dark:text-slate-400">
+              <span className="text-[11px] font-bold tracking-widest uppercase text-[#52525B]/70 dark:text-zinc-400">
                 Workspace Rail
               </span>
             )}
             <button
               type="button"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-1 rounded-md text-[#52525B] dark:text-slate-400 hover:text-[#0A0A0A] dark:hover:text-white hover:bg-[#F2F1EC] dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1 rounded-md text-[#52525B] dark:text-zinc-400 hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC] hover:bg-[#F2F1EC] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
               title={sidebarCollapsed ? "Expand sidebar (w-60)" : "Collapse sidebar (w-72px)"}
             >
               {sidebarCollapsed ? (
@@ -559,6 +624,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               location={location}
               role={user?.role}
               userName={user?.name}
+              isAdmin={user?.isAdmin}
               collapsed={sidebarCollapsed}
             />
           </div>
@@ -569,7 +635,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ─── 3. MOBILE BOTTOM NAVIGATION BAR ───────────────────────────────── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF9F6]/95 dark:bg-[#0A0A0A]/95 border-t border-[#E5E4DF] dark:border-white/10 backdrop-blur-xl px-3 py-1.5 flex items-center justify-around shadow-lg">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF9F6]/95 dark:bg-[#0E0E12]/95 border-t border-[#E5E4DF] dark:border-white/10 backdrop-blur-xl px-3 py-1.5 flex items-center justify-around shadow-lg">
         {bottomNavLinks.map((link) => {
           const isActive =
             location === link.href ||
@@ -585,12 +651,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     className={cn(
                       "h-4 w-4",
                       isActive
-                        ? "text-[#1D4ED8] font-semibold"
-                        : "text-[#52525B] dark:text-slate-400"
+                        ? "text-[#6A0D18] dark:text-[#E87985] font-semibold"
+                        : "text-[#52525B] dark:text-zinc-400"
                     )}
                   />
                   {"badge" in link && Boolean(link.badge) && (
-                    <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-[#1D4ED8] text-white text-[11px] font-bold flex items-center justify-center font-tabular shadow-2xs">
+                    <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-[#6A0D18] dark:bg-[#E87985] text-white text-[11px] font-bold flex items-center justify-center font-tabular shadow-2xs">
                       {link.badge}
                     </span>
                   )}
@@ -598,7 +664,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span
                   className={cn(
                     "text-[11px] truncate max-w-[70px]",
-                    isActive ? "font-semibold text-[#1D4ED8]" : "text-[#52525B] dark:text-slate-400"
+                    isActive
+                      ? "font-semibold text-[#6A0D18] dark:text-[#E87985]"
+                      : "text-[#52525B] dark:text-zinc-400"
                   )}
                 >
                   {link.label}

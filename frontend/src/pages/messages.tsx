@@ -190,7 +190,7 @@ export default function DealDiscussions() {
       <div className="px-4 sm:px-6 py-3.5 border-b border-[#E5E4DF] bg-[#FAF9F6] flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-baseline gap-3">
           <h1 className="text-xl font-bold tracking-tight text-[#0A0A0A]">
-            Deal <span className="font-serif italic font-normal text-blue-700">Discussions</span>
+            Deal <span className="font-serif italic font-normal text-[#6A0D18]">Discussions</span>
           </h1>
           <span className="hidden md:inline text-xs text-zinc-500">
             Audited correspondence linked to milestone deliverables
@@ -231,7 +231,7 @@ export default function DealDiscussions() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search brands or briefs..."
-                className="w-full h-9 pl-9 pr-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-blue-700"
+                className="w-full h-9 pl-9 pr-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-[#6A0D18]"
               />
             </div>
 
@@ -273,7 +273,7 @@ export default function DealDiscussions() {
                   onClick={() => handleSelectThread(item.id)}
                   className={`w-full p-4 text-left transition-colors flex items-start gap-3 cursor-pointer ${
                     isSelected
-                      ? "bg-[#FAF9F6] border-l-2 border-l-blue-700"
+                      ? "bg-[#FAF9F6] border-l-2 border-l-[#6A0D18]"
                       : "hover:bg-[#FAF9F6]/60"
                   }`}
                 >
@@ -289,13 +289,13 @@ export default function DealDiscussions() {
                         {item.lastTime}
                       </span>
                     </div>
-                    <p className="text-xs font-semibold text-blue-700 truncate">
+                    <p className="text-xs font-semibold text-[#6A0D18] truncate">
                       {item.campaignTitle} • {item.amount}
                     </p>
                     <p className="text-xs text-zinc-500 truncate">{lastMsg?.text}</p>
                   </div>
                   {item.unread && (
-                    <span className="w-2 h-2 rounded-full bg-blue-700 shrink-0 mt-2" />
+                    <span className="w-2 h-2 rounded-full bg-[#6A0D18] shrink-0 mt-2" />
                   )}
                 </button>
               );
@@ -398,7 +398,7 @@ export default function DealDiscussions() {
             onSubmit={handleSend}
             className="p-3 sm:p-4 bg-white border-t border-[#E5E4DF] shrink-0"
           >
-            <div className="flex items-end gap-2 sm:gap-3 bg-[#FAF9F6] border border-[#E5E4DF] rounded-xl p-2 focus-within:border-blue-700 focus-within:ring-2 focus-within:ring-blue-700/15 transition-all">
+            <div className="flex items-end gap-2 sm:gap-3 bg-[#FAF9F6] border border-[#E5E4DF] rounded-xl p-2 focus-within:border-[#6A0D18] focus-within:ring-2 focus-within:ring-[#6A0D18]/15 transition-all">
               <button
                 type="button"
                 onClick={handleAttach}
@@ -439,7 +439,7 @@ export default function DealDiscussions() {
           <aside className="hidden xl:flex w-80 border-l border-[#E5E4DF] bg-white flex-col justify-between p-5 shrink-0 overflow-y-auto min-h-0">
             <div className="space-y-6">
               <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-blue-700 block mb-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] block mb-1">
                   Active Contract
                 </span>
                 <h3 className="text-base font-bold text-[#0A0A0A]">{activeThread.campaignTitle}</h3>
@@ -472,7 +472,7 @@ export default function DealDiscussions() {
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <Clock className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+                    <Clock className="w-4 h-4 text-[#6A0D18] shrink-0 mt-0.5" />
                     <div>
                       <span className="font-semibold text-[#0A0A0A] block">Script & Rough Cut</span>
                       <span className="text-zinc-500">Due {activeThread.deadline}</span>

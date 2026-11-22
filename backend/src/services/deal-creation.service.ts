@@ -3,6 +3,7 @@ import {
   dealsTable,
   dealParticipantsTable,
   dealTermsVersionsTable,
+  dealApprovalsTable,
   dealActivityTable,
   brandsTable,
   influencersTable,
@@ -10,6 +11,7 @@ import {
 } from "@workspace/db";
 import { eq, and, or } from "drizzle-orm";
 import { sendNotification } from "./notification.service";
+import { computeCanonicalTermsHash } from "./deal-proposal.service";
 
 let featureDealRoomEnabled = true;
 
@@ -148,7 +150,22 @@ export async function createDeal(params: CreateDealParams) {
       .limit(1);
 
     if (existingConv) {
-      conversationId = existingConv.id;
+      // Check if conversation is already attached to another deal (idx_deals_conversation_id is unique)
+      const [dealUsingConv] = await db
+        .select({ id: dealsTable.id })
+        .from(dealsTable)
+        .where(eq(dealsTable.conversationId, existingConv.id))
+        .limit(1);
+
+      if (!dealUsingConv) {
+        conversationId = existingConv.id;
+      } else {
+        const [newConv] = await db
+          .insert(conversationsTable)
+          .values({ user1Id: brandUserIdInt, user2Id: creatorUserIdInt })
+          .returning();
+        conversationId = newConv.id;
+      }
     } else {
       const [newConv] = await db
         .insert(conversationsTable)
@@ -280,6 +297,17 @@ export async function createDeal(params: CreateDealParams) {
       .update(dealsTable)
       .set({ activeProposalId: v1Proposal.id })
       .where(eq(dealsTable.id, deal.id));
+
+    // Digital signoff by proposer on Version 1
+    const termsHash = computeCanonicalTermsHash(v1Proposal as any);
+    await tx.insert(dealApprovalsTable).values({
+      dealId: deal.id,
+      proposalId: v1Proposal.id,
+      proposalVersion: 1,
+      userId: initiatorUserId,
+      party: initiatorParty,
+      termsHash,
+    });
 
     await tx.insert(dealActivityTable).values({
       dealId: deal.id,

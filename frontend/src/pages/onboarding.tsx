@@ -541,9 +541,9 @@ export default function OnboardingPage() {
             <div className="flex items-center justify-between text-xs font-semibold text-[#52525B] uppercase tracking-wider">
               <span className="flex items-center gap-1.5 text-[#0A0A0A]">
                 {isBrand ? (
-                  <Building2 className="w-4 h-4 text-[#1D4ED8]" />
+                  <Building2 className="w-4 h-4 text-[#6A0D18]" />
                 ) : (
-                  <UserCheck className="w-4 h-4 text-[#1D4ED8]" />
+                  <UserCheck className="w-4 h-4 text-[#6A0D18]" />
                 )}
                 {isBrand
                   ? `Brand Verification — Step ${step} of 6`
@@ -614,7 +614,7 @@ export default function OnboardingPage() {
                           onClick={() => setCreatorType(t)}
                           className={`p-3 rounded-xl border text-xs font-bold transition-all text-center ${
                             creatorType === t
-                              ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600/15"
+                              ? "border-[#6A0D18] bg-[#FDF6F7] text-[#6A0D18] ring-2 ring-[#6A0D18]/15"
                               : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                           }`}
                         >
@@ -626,7 +626,7 @@ export default function OnboardingPage() {
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Content Niches (Select MIN 2, MAX 5) <span className="text-blue-500">*</span>
+                      Content Niches (Select MIN 2, MAX 5) <span className="text-[#6A0D18]">*</span>
                     </Label>
                     <div className="grid grid-cols-3 gap-2">
                       {nicheOptions.map((niche) => (
@@ -638,7 +638,7 @@ export default function OnboardingPage() {
                           }
                           className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
                             selectedNiches.includes(niche)
-                              ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600/15"
+                              ? "border-[#6A0D18] bg-[#FDF6F7] text-[#6A0D18] ring-2 ring-[#6A0D18]/15"
                               : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                           }`}
                         >
@@ -656,7 +656,7 @@ export default function OnboardingPage() {
                   {/* Location: State Dropdown & City Textbox */}
                   <div className="space-y-3 pt-2">
                     <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Location <span className="text-blue-500">*</span>
+                      Location <span className="text-[#6A0D18]">*</span>
                     </Label>
 
                     {!(user as any)?.country && (
@@ -671,7 +671,7 @@ export default function OnboardingPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <Label className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                          State / UT <span className="text-blue-500">*</span>
+                          State / UT <span className="text-[#6A0D18]">*</span>
                         </Label>
                         <select
                           value={creatorState}
@@ -691,7 +691,7 @@ export default function OnboardingPage() {
                       </div>
                       <div>
                         <Label className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                          City <span className="text-blue-500">*</span>
+                          City <span className="text-[#6A0D18]">*</span>
                         </Label>
                         <Input
                           type="text"
@@ -707,7 +707,7 @@ export default function OnboardingPage() {
                   {/* Languages Selection (Strictly English, Hindi, Marathi) */}
                   <div className="space-y-1.5 pt-2">
                     <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Languages Spoken <span className="text-blue-500">*</span>
+                      Languages Spoken <span className="text-[#6A0D18]">*</span>
                     </Label>
                     <div className="grid grid-cols-3 gap-2">
                       {creatorLanguagesOptions.map((lang) => (
@@ -719,13 +719,13 @@ export default function OnboardingPage() {
                           }
                           className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
                             creatorLanguages.includes(lang)
-                              ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600/15"
+                              ? "border-[#6A0D18] bg-[#FDF6F7] text-[#6A0D18] ring-2 ring-[#6A0D18]/15"
                               : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                           }`}
                         >
                           <span>{lang}</span>
                           {creatorLanguages.includes(lang) && (
-                            <Check className="w-3.5 h-3.5 text-blue-600" />
+                            <Check className="w-3.5 h-3.5 text-[#6A0D18]" />
                           )}
                         </button>
                       ))}
@@ -742,7 +742,7 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={isSaving || selectedNiches.length < 2 || selectedNiches.length > 5}
                     onClick={handleCreatorC1Submit}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                    className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                   >
                     {isSaving ? (
                       <>
@@ -773,7 +773,7 @@ export default function OnboardingPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Primary Age Range <span className="text-blue-500">*</span>
+                        Primary Age Range <span className="text-[#6A0D18]">*</span>
                       </Label>
                       <select
                         value={audienceAge}
@@ -846,7 +846,7 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={isSaving}
                     onClick={handleCreatorC2Submit}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                    className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                   >
                     {isSaving ? (
                       <>
@@ -864,8 +864,8 @@ export default function OnboardingPage() {
             {/* SCREEN C3: CONNECT SOCIAL ACCOUNTS (OPTIONAL - HAS SKIP) */}
             {step === 3 && (
               <div className="space-y-6">
-                <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/80 flex items-start gap-3">
-                  <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div className="p-4 rounded-xl bg-[#FDF6F7] border border-[#EED8DC] dark:border-white/10/80 flex items-start gap-3">
+                  <Info className="w-5 h-5 text-[#6A0D18] shrink-0 mt-0.5" />
                   <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                     Connect your accounts to help brands discover you and import performance
                     insights.
@@ -905,7 +905,7 @@ export default function OnboardingPage() {
                       type="button"
                       disabled={isSaving}
                       onClick={() => handleCreatorC3Submit()}
-                      className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                      className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                     >
                       {isSaving ? (
                         <>
@@ -937,7 +937,7 @@ export default function OnboardingPage() {
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       Supported Post Types & Partnership Formats{" "}
-                      <span className="text-blue-500">*</span>
+                      <span className="text-[#6A0D18]">*</span>
                     </Label>
                     <div className="grid grid-cols-2 gap-2">
                       {creatorPostTypeOptions.map((t) => (
@@ -947,12 +947,12 @@ export default function OnboardingPage() {
                           onClick={() => toggleArrayItem(collabTypes, setCollabTypes, t, 6)}
                           className={`p-3 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-between px-4 ${
                             collabTypes.includes(t)
-                              ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600/15"
+                              ? "border-[#6A0D18] bg-[#FDF6F7] text-[#6A0D18] ring-2 ring-[#6A0D18]/15"
                               : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                           }`}
                         >
                           <span>{t}</span>
-                          {collabTypes.includes(t) && <Check className="w-4 h-4 text-blue-600" />}
+                          {collabTypes.includes(t) && <Check className="w-4 h-4 text-[#6A0D18]" />}
                         </button>
                       ))}
                     </div>
@@ -974,7 +974,7 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={isSaving || collabTypes.length === 0}
                     onClick={handleCreatorC4Submit}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                    className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                   >
                     {isSaving ? (
                       <>
@@ -1009,12 +1009,12 @@ export default function OnboardingPage() {
                       onClick={() => toggleArrayItem(creatorGoals, setCreatorGoals, goal, 3)}
                       className={`w-full p-3.5 rounded-xl border text-xs font-bold transition-all text-left flex items-center justify-between ${
                         creatorGoals.includes(goal)
-                          ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600/15"
+                          ? "border-[#6A0D18] bg-[#FDF6F7] text-[#6A0D18] ring-2 ring-[#6A0D18]/15"
                           : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                       }`}
                     >
                       <span>{goal}</span>
-                      {creatorGoals.includes(goal) && <Check className="w-4 h-4 text-blue-600" />}
+                      {creatorGoals.includes(goal) && <Check className="w-4 h-4 text-[#6A0D18]" />}
                     </button>
                   ))}
                 </div>
@@ -1034,7 +1034,7 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={isSaving || creatorGoals.length === 0}
                     onClick={handleCreatorC5Submit}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                    className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                   >
                     {isSaving ? (
                       <>
@@ -1072,7 +1072,7 @@ export default function OnboardingPage() {
                   <Button
                     type="button"
                     onClick={() => setLocation("/dashboard/influencer")}
-                    className="w-full sm:w-auto px-10 py-3.5 bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold text-xs rounded-lg shadow-xs cursor-pointer transition-colors"
+                    className="w-full sm:w-auto px-10 py-3.5 liquid-burgundy-metal hover:brightness-110 text-white font-semibold text-xs rounded-lg shadow-md cursor-pointer transition-all"
                   >
                     Go to Creator Dashboard
                   </Button>
@@ -1100,7 +1100,7 @@ export default function OnboardingPage() {
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Company Name <span className="text-blue-500">*</span>
+                      Company Name <span className="text-[#6A0D18]">*</span>
                     </Label>
                     <Input
                       required
@@ -1131,7 +1131,7 @@ export default function OnboardingPage() {
                   {/* Based in: Country & City Selection */}
                   <div className="space-y-3 pt-1">
                     <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Based in (Country & City) <span className="text-blue-500">*</span>
+                      Based in (Country & City) <span className="text-[#6A0D18]">*</span>
                     </Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
@@ -1180,7 +1180,7 @@ export default function OnboardingPage() {
                   {/* Business Type: Segmented Radio Selection */}
                   <div className="space-y-1.5 pt-2">
                     <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Business Type <span className="text-blue-500">*</span>
+                      Business Type <span className="text-[#6A0D18]">*</span>
                     </Label>
                     <div
                       className="grid grid-cols-2 gap-3"
@@ -1194,12 +1194,12 @@ export default function OnboardingPage() {
                           onClick={() => setBusinessType(type)}
                           className={`p-3 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-center gap-2 ${
                             businessType === type
-                              ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600/15"
+                              ? "border-[#6A0D18] bg-[#FDF6F7] text-[#6A0D18] ring-2 ring-[#6A0D18]/15"
                               : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                           }`}
                         >
                           <span>{type}</span>
-                          {businessType === type && <Check className="w-4 h-4 text-blue-600" />}
+                          {businessType === type && <Check className="w-4 h-4 text-[#6A0D18]" />}
                         </button>
                       ))}
                     </div>
@@ -1215,7 +1215,7 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={isSaving || !brandName}
                     onClick={handleBrandB1Submit}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                    className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                   >
                     {isSaving ? (
                       <>
@@ -1277,7 +1277,7 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={isSaving}
                     onClick={handleBrandB2Submit}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                    className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                   >
                     {isSaving ? (
                       <>
@@ -1309,7 +1309,7 @@ export default function OnboardingPage() {
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       Target Audience (Select all that apply){" "}
-                      <span className="text-blue-500">*</span>
+                      <span className="text-[#6A0D18]">*</span>
                     </Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {brandTargetAudienceOptions.map((aud) => (
@@ -1321,13 +1321,13 @@ export default function OnboardingPage() {
                           }
                           className={`p-3 rounded-xl border text-xs font-bold transition-all text-left flex items-center justify-between ${
                             brandTargetAudiences.includes(aud)
-                              ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600/15"
+                              ? "border-[#6A0D18] bg-[#FDF6F7] text-[#6A0D18] ring-2 ring-[#6A0D18]/15"
                               : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                           }`}
                         >
                           <span>{aud}</span>
                           {brandTargetAudiences.includes(aud) && (
-                            <Check className="w-4 h-4 text-blue-600" />
+                            <Check className="w-4 h-4 text-[#6A0D18]" />
                           )}
                         </button>
                       ))}
@@ -1347,13 +1347,13 @@ export default function OnboardingPage() {
                           onClick={() => toggleArrayItem(brandPronouns, setBrandPronouns, pr, 3)}
                           className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
                             brandPronouns.includes(pr)
-                              ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600/15"
+                              ? "border-[#6A0D18] bg-[#FDF6F7] text-[#6A0D18] ring-2 ring-[#6A0D18]/15"
                               : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                           }`}
                         >
                           <span>{pr}</span>
                           {brandPronouns.includes(pr) && (
-                            <Check className="w-3.5 h-3.5 text-blue-600" />
+                            <Check className="w-3.5 h-3.5 text-[#6A0D18]" />
                           )}
                         </button>
                       ))}
@@ -1376,7 +1376,7 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={isSaving || brandTargetAudiences.length === 0}
                     onClick={handleBrandB3Submit}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                    className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                   >
                     {isSaving ? (
                       <>
@@ -1411,12 +1411,12 @@ export default function OnboardingPage() {
                       onClick={() => toggleArrayItem(campaignGoals, setCampaignGoals, goal, 5)}
                       className={`w-full p-3.5 rounded-xl border text-xs font-bold transition-all text-left flex items-center justify-between ${
                         campaignGoals.includes(goal)
-                          ? "border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600/15"
+                          ? "border-[#6A0D18] bg-[#FDF6F7] text-[#6A0D18] ring-2 ring-[#6A0D18]/15"
                           : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                       }`}
                     >
                       <span>{goal}</span>
-                      {campaignGoals.includes(goal) && <Check className="w-4 h-4 text-blue-600" />}
+                      {campaignGoals.includes(goal) && <Check className="w-4 h-4 text-[#6A0D18]" />}
                     </button>
                   ))}
                 </div>
@@ -1436,7 +1436,7 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={isSaving || campaignGoals.length === 0}
                     onClick={handleBrandB4Submit}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                    className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                   >
                     {isSaving ? (
                       <>
@@ -1511,7 +1511,7 @@ export default function OnboardingPage() {
                     type="button"
                     disabled={isSaving}
                     onClick={handleBrandB5Submit}
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                    className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                   >
                     {isSaving ? (
                       <>
@@ -1576,7 +1576,7 @@ export default function OnboardingPage() {
                       type="button"
                       disabled={isSaving}
                       onClick={handleBrandB6Submit}
-                      className="px-8 py-3 bg-blue-600 hover:bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-md shadow-blue-600/20 flex items-center gap-2"
+                      className="px-8 py-3 liquid-burgundy-metal font-bold text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs flex items-center gap-2 text-white"
                     >
                       {isSaving ? (
                         <>
@@ -1611,7 +1611,7 @@ export default function OnboardingPage() {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 max-w-md mx-auto text-left flex items-center justify-between">
+                <div className="p-4 rounded-xl bg-[#FDF6F7] border border-[#EED8DC] dark:border-white/10 max-w-md mx-auto text-left flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                       Profile Completion
@@ -1620,7 +1620,7 @@ export default function OnboardingPage() {
                       70% complete — ready to launch campaigns
                     </p>
                   </div>
-                  <span className="text-sm font-mono font-extrabold text-blue-600 bg-blue-100 dark:bg-blue-900 px-3 py-1 rounded-full">
+                  <span className="text-sm font-mono font-extrabold text-[#6A0D18] bg-[#FDF6F7] px-3 py-1 rounded-full">
                     70%
                   </span>
                 </div>
@@ -1629,7 +1629,7 @@ export default function OnboardingPage() {
                   <Button
                     type="button"
                     onClick={() => setLocation("/dashboard/brand")}
-                    className="w-full sm:w-auto px-10 py-3.5 bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold text-xs rounded-lg shadow-xs cursor-pointer transition-colors"
+                    className="w-full sm:w-auto px-10 py-3.5 liquid-burgundy-metal hover:brightness-110 text-white font-semibold text-xs rounded-lg shadow-md cursor-pointer transition-all"
                   >
                     Find Creators
                   </Button>

@@ -121,23 +121,26 @@ export default function DealsDirectory() {
   }, [categorizedDeals, activeTab, searchTerm]);
 
   return (
-    <div className="workspace-canvas space-y-6 pb-16 antialiased text-[#0A0A0A]">
+    <div className="workspace-canvas space-y-6 pb-16 antialiased text-[#0A0A0A] dark:text-[#F8FAFC]">
       {/* ─── 1. PAGE HEADER ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-4 border-b border-[#E5E4DF]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-4 border-b border-[#E5E4DF] dark:border-white/10">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-[#FDF6F7] dark:bg-[#6A0D18]/25 text-[#6A0D18] dark:text-[#E87985] border border-[#EED8DC] dark:border-[#6A0D18]/40">
               COMMERCIAL CONTRACTS
             </span>
             <span className="text-zinc-400">•</span>
-            <span className="text-xs font-semibold text-zinc-500">
+            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
               Immutable Versioned Negotiation Engine
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A]">
-            Deal <span className="font-serif italic font-normal text-blue-700">Rooms</span>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
+            Deal{" "}
+            <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985]">
+              Rooms
+            </span>
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1 max-w-2xl">
             Propose collaborations, negotiate dynamic deliverables and timelines with optimistic
             locking, and execute cryptographic SHA-256 signoffs.
           </p>
@@ -147,9 +150,9 @@ export default function DealsDirectory() {
         <div className="flex items-center gap-2.5">
           <Button
             onClick={() => setWizardOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs cursor-pointer group"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 text-white" />
             <span>Propose New Deal</span>
           </Button>
         </div>
@@ -158,7 +161,7 @@ export default function DealsDirectory() {
       {/* ─── 2. ROLE-AWARE TABS & SEARCH ─────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Role-Aware Tabs */}
-        <div className="inline-flex items-center p-1 rounded-xl bg-[#F2F1EC] border border-[#E5E4DF] overflow-x-auto">
+        <div className="flex items-center p-1 rounded-xl bg-[#F2F1EC] dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 overflow-x-auto max-w-full">
           {(
             [
               { id: "all", label: "All Deals", count: counts.all },
@@ -174,8 +177,8 @@ export default function DealsDirectory() {
               className={cn(
                 "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer",
                 activeTab === tab.id
-                  ? "bg-white text-[#0A0A0A] shadow-xs"
-                  : "text-zinc-600 hover:text-[#0A0A0A]"
+                  ? "liquid-burgundy-metal font-bold shadow-xs text-white"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC]"
               )}
             >
               <span>{tab.label}</span>
@@ -183,8 +186,8 @@ export default function DealsDirectory() {
                 className={cn(
                   "text-[10px] font-bold px-1.5 py-0.2 rounded-md font-tabular",
                   activeTab === tab.id
-                    ? "bg-[#0A0A0A] text-white"
-                    : "bg-white/80 text-zinc-600 border border-[#E5E4DF]"
+                    ? "bg-white/20 text-white"
+                    : "bg-white/80 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 border border-[#E5E4DF] dark:border-white/10"
                 )}
               >
                 {tab.count}
@@ -201,16 +204,16 @@ export default function DealsDirectory() {
             placeholder="Search deals by title or partner..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-9 pl-8 pr-3 rounded-lg bg-white border border-[#E5E4DF] text-xs font-medium text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-[#0A0A0A] shadow-xs"
+            className="w-full h-9 pl-8 pr-3 rounded-lg bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 text-xs font-medium text-[#0A0A0A] dark:text-[#F8FAFC] placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] shadow-xs"
           />
         </div>
       </div>
 
       {/* ─── 3. FULL-WIDTH HAIRLINE LEDGER ───────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-[#E5E4DF] divide-y divide-[#E5E4DF] shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-[#121216] rounded-2xl border border-[#E5E4DF] dark:border-white/10 divide-y divide-[#E5E4DF] dark:divide-white/10 shadow-xs overflow-hidden">
         {isLoadingDeals ? (
           <div className="p-12 text-center space-y-3">
-            <div className="w-8 h-8 rounded-full border-2 border-blue-600 border-t-transparent animate-spin mx-auto" />
+            <div className="w-8 h-8 rounded-full border-2 border-[#6A0D18] border-t-transparent animate-spin mx-auto" />
             <p className="text-xs font-semibold text-zinc-500">Loading commercial deal rooms...</p>
           </div>
         ) : filteredDeals.length === 0 ? (
@@ -226,7 +229,7 @@ export default function DealsDirectory() {
             </p>
             <Button
               onClick={() => setWizardOpen(true)}
-              className="mt-2 rounded-lg bg-[#0A0A0A] text-white text-xs font-semibold shadow-xs"
+              className="mt-2 rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs cursor-pointer"
             >
               Propose Deal
             </Button>
@@ -247,25 +250,25 @@ export default function DealsDirectory() {
             return (
               <div
                 key={deal.id}
-                className="p-5 sm:p-6 transition-colors hover:bg-[#FAF9F6] flex flex-col lg:flex-row lg:items-center justify-between gap-5"
+                className="p-5 sm:p-6 transition-colors hover:bg-[#FAF9F6] dark:hover:bg-white/[0.04] flex flex-col lg:flex-row lg:items-center justify-between gap-5"
               >
                 {/* Left: Deal Metadata & Badges */}
                 <div className="flex items-start gap-4 flex-1 min-w-0">
-                  <div className="w-11 h-11 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF] flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5 text-blue-700" />
+                  <div className="w-11 h-11 rounded-xl bg-[#FAF9F6] dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 text-[#6A0D18] dark:text-[#E87985]" />
                   </div>
 
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         href={`/deals/${deal.id}`}
-                        className="text-sm font-bold text-[#0A0A0A] hover:text-blue-700 transition-colors"
+                        className="text-sm font-bold text-[#0A0A0A] dark:text-[#F8FAFC] hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
                       >
                         {deal.title}
                       </Link>
 
                       {/* Current Version Badge */}
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F2F1EC] text-zinc-700 border border-[#E5E4DF] font-tabular">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F2F1EC] dark:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 border border-[#E5E4DF] dark:border-white/10 font-tabular">
                         v{versionNum}
                       </span>
 
@@ -274,10 +277,10 @@ export default function DealsDirectory() {
                         className={cn(
                           "px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider",
                           collabType === "barter"
-                            ? "bg-purple-50 text-purple-700 border border-purple-200/70"
+                            ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/70 dark:border-purple-800/40"
                             : collabType === "hybrid"
-                              ? "bg-emerald-50 text-emerald-800 border border-emerald-200/70"
-                              : "bg-blue-50 text-blue-700 border border-blue-200/70"
+                              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/40"
+                              : "bg-[#FDF6F7] dark:bg-[#6A0D18]/25 text-[#6A0D18] dark:text-[#E87985] border border-[#EED8DC] dark:border-[#6A0D18]/40"
                         )}
                       >
                         {collabType}
@@ -288,10 +291,10 @@ export default function DealsDirectory() {
                         className={cn(
                           "ml-auto sm:ml-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
                           deal.isAccepted
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200/70"
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/40"
                             : deal.requiresMyAction
-                              ? "bg-amber-50 text-amber-800 border border-amber-200/70"
-                              : "bg-zinc-100 text-zinc-600 border border-zinc-200"
+                              ? "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/70 dark:border-amber-800/40"
+                              : "bg-zinc-100 dark:bg-white/[0.08] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/10"
                         )}
                       >
                         {deal.isAccepted
@@ -303,13 +306,13 @@ export default function DealsDirectory() {
                     </div>
 
                     {/* Counterparty & Date Info */}
-                    <div className="flex items-center gap-3 text-xs text-zinc-500">
+                    <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
                       <span>
                         {isCreator
                           ? `Brand: ${deal.brandName || "Brand Partner"}`
                           : `Creator: ${deal.influencerName || "Creator Partner"}`}
                       </span>
-                      <span className="text-zinc-300">•</span>
+                      <span className="text-zinc-300 dark:text-zinc-600">•</span>
                       <span className="font-tabular">
                         Updated{" "}
                         {new Date(deal.updatedAt).toLocaleDateString("en-IN", {
@@ -321,7 +324,7 @@ export default function DealsDirectory() {
 
                     {/* Deliverables summary */}
                     {activeProp?.deliverables && activeProp.deliverables.length > 0 && (
-                      <p className="text-xs text-zinc-600 line-clamp-1">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-1">
                         Scope:{" "}
                         {activeProp.deliverables
                           .map((d: any) => `${d.count || d.quantity || 1}x ${d.title}`)
@@ -332,13 +335,13 @@ export default function DealsDirectory() {
                 </div>
 
                 {/* Right: Bilateral Signoff Indicators & Action */}
-                <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-[#E5E4DF]">
+                <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-[#E5E4DF] dark:border-white/10">
                   {/* Total Value */}
                   <div className="text-left lg:text-right">
-                    <span className="text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">
+                    <span className="text-[10px] uppercase font-bold text-zinc-400 dark:text-zinc-500 block tracking-wider">
                       Agreed Compensation
                     </span>
-                    <span className="text-base sm:text-lg font-bold font-tabular text-[#0A0A0A]">
+                    <span className="text-base sm:text-lg font-bold font-tabular text-[#0A0A0A] dark:text-[#F8FAFC]">
                       {displayAmount}
                     </span>
                   </div>
@@ -370,10 +373,10 @@ export default function DealsDirectory() {
 
                     <Link
                       href={`/deals/${deal.id}`}
-                      className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors shadow-xs"
+                      className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs"
                     >
                       <span>Negotiation Room</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <ArrowRight className="w-3.5 h-3.5 text-white" />
                     </Link>
                   </div>
                 </div>

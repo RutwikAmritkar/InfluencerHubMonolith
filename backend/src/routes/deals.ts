@@ -9,6 +9,7 @@ import {
   brandsTable,
   influencersTable,
   user as userTable,
+  paymentOrdersTable,
 } from "@workspace/db";
 import { eq, and, or, desc } from "drizzle-orm";
 import { requireAuth, AuthenticatedRequest } from "../middlewares/auth";
@@ -20,11 +21,12 @@ import {
   confirmDealTerms,
 } from "../services/deal-proposal.service";
 import { sendNotification } from "../services/notification.service";
+import { logPlatformActivity } from "../services/activity.service";
 
 const router: IRouter = Router();
 
 // Helper to notify counterparty on commercial events
-async function notifyDealCounterparty({
+export async function notifyDealCounterparty({
   dealId,
   actorUserId,
   actorParty,
@@ -169,6 +171,13 @@ async function formatDealDetail(deal: typeof dealsTable.$inferSelect) {
     .where(eq(dealActivityTable.dealId, deal.id))
     .orderBy(desc(dealActivityTable.createdAt));
 
+  const [paymentOrder] = await db
+    .select()
+    .from(paymentOrdersTable)
+    .where(eq(paymentOrdersTable.dealId, deal.id))
+    .orderBy(desc(paymentOrdersTable.createdAt))
+    .limit(1);
+
   const overallStatus = deriveOverallStatus(
     deal.agreementStatus,
     deal.paymentStatus,
@@ -199,6 +208,22 @@ async function formatDealDetail(deal: typeof dealsTable.$inferSelect) {
     participants,
     activeProposal,
     approvals,
+    paymentOrder: paymentOrder
+      ? {
+          id: paymentOrder.id,
+          razorpayOrderId: paymentOrder.razorpayOrderId,
+          status: paymentOrder.status,
+          autoReleaseAt: paymentOrder.autoReleaseAt
+            ? paymentOrder.autoReleaseAt.toISOString()
+            : null,
+          grossAmountPaise: paymentOrder.grossAmountPaise,
+          platformFeePaise: paymentOrder.platformFeePaise,
+          gstAmountPaise: paymentOrder.gstAmountPaise,
+          tdsAmountPaise: paymentOrder.tdsAmountPaise,
+          netCreatorPayoutPaise: paymentOrder.netCreatorPayoutPaise,
+          razorpayPaymentId: paymentOrder.razorpayPaymentId,
+        }
+      : null,
     activityLogs: activityLogs.map((a) => ({
       ...a,
       createdAt: a.createdAt.toISOString(),
@@ -597,6 +622,16 @@ router.post(
         badgeLabel: "Negotiation Room",
       });
 
+      await logPlatformActivity({
+        actorUserId: userId,
+        actorParty: party as any,
+        eventType: "deal.counter_offer",
+        entityType: "deal",
+        entityId: id,
+        summary: `${party === "brand" ? "Brand" : "Creator"} proposed revised commercial terms (v${newProposal.version}) on Deal #${id}: "${deal.title}"`,
+        metadata: { version: newProposal.version, pricePaise: newProposal.pricePaise },
+      });
+
       res.status(201).json({
         ...newProposal,
         termsHash,
@@ -670,6 +705,16 @@ router.post(
         title: `Terms Confirmed & Signed: ${deal.title}`,
         body: `Version ${proposalVersion} has been accepted and signed by ${party === "brand" ? "the brand" : "the creator"}.`,
         badgeLabel: "Terms Executed",
+      });
+
+      await logPlatformActivity({
+        actorUserId: userId,
+        actorParty: party as any,
+        eventType: "deal.signed",
+        entityType: "deal",
+        entityId: id,
+        summary: `Bilateral terms confirmed and digitally signed on Deal #${id}: "${deal.title}" (v${proposalVersion})`,
+        metadata: { version: proposalVersion },
       });
 
       res.json(result);
@@ -748,6 +793,16 @@ router.post(
         title: `Terms Confirmed & Signed: ${deal.title}`,
         body: `Version ${proposalVersion} has been accepted and signed by ${party === "brand" ? "the brand" : "the creator"}.`,
         badgeLabel: "Terms Executed",
+      });
+
+      await logPlatformActivity({
+        actorUserId: userId,
+        actorParty: party as any,
+        eventType: "deal.signed",
+        entityType: "deal",
+        entityId: id,
+        summary: `Bilateral terms confirmed and digitally signed on Deal #${id}: "${deal.title}" (v${proposalVersion})`,
+        metadata: { version: proposalVersion },
       });
 
       res.json(result);
@@ -881,13 +936,31 @@ router.post(
       .where(eq(dealsTable.id, id))
       .returning();
 
+    // 72-Hour RBI Escrow Auto-Release SLA initiation
+    const autoReleaseDate = new Date(Date.now() + 72 * 60 * 60 * 1000);
+    await db
+      .update(paymentOrdersTable)
+      .set({
+        autoReleaseAt: autoReleaseDate,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(paymentOrdersTable.dealId, id), eq(paymentOrdersTable.status, "funded_on_hold"))
+      );
+
     await db.insert(dealActivityTable).values({
       dealId: id,
       actorId: userId,
       actorParty: "creator",
       action: "CONTENT_PACKAGE_SUBMITTED",
-      description: `Creator submitted deliverable package (Round ${round}) for review.`,
-      metadata: { round, contentUrls, notes: notes || null, deliverableId: deliverableId || null },
+      description: `Creator submitted deliverable package (Round ${round}) for review. 72-Hour Auto-Release Review SLA initiated (Release deadline: ${autoReleaseDate.toLocaleDateString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}).`,
+      metadata: {
+        round,
+        contentUrls,
+        notes: notes || null,
+        deliverableId: deliverableId || null,
+        autoReleaseAt: autoReleaseDate.toISOString(),
+      },
     });
 
     notifyDealCounterparty({
@@ -896,19 +969,30 @@ router.post(
       actorParty: "creator",
       type: "deal_content_submitted",
       title: `Deliverables Submitted: ${deal.title}`,
-      body: `Creator submitted deliverable package (Round ${round}) for your review and approval.`,
+      body: `Creator submitted deliverable package (Round ${round}) for your review. 72-Hour SLA active until ${autoReleaseDate.toLocaleDateString("en-IN")}.`,
       badgeLabel: "Review Deliverables",
+    });
+
+    await logPlatformActivity({
+      actorUserId: userId,
+      actorParty: "creator",
+      eventType: "deliverable.submitted",
+      entityType: "deal",
+      entityId: id,
+      summary: `Creator submitted content deliverable package (Round ${round}) on Deal #${id}: "${deal.title}" with 72h auto-release SLA`,
+      metadata: { round, contentUrls, autoReleaseAt: autoReleaseDate.toISOString() },
     });
 
     res.json({
       success: true,
       executionStatus: "FINAL_CONTENT_SUBMITTED",
+      autoReleaseAt: autoReleaseDate.toISOString(),
       deal: await formatDealDetail(updated),
     });
   }
 );
 
-// ─── 9. REVIEW: BRAND APPROVE OR REQUEST REVISION ─────────────────────────────
+// ─── 9. REVIEW: BRAND APPROVE OR REQUEST REVISION (HARD REVISION CAP) ─────────
 router.post(
   "/deals/:id/review",
   checkDealRoomFeature,
@@ -964,12 +1048,117 @@ router.post(
         badgeLabel: "Content Approved",
       });
 
+      await logPlatformActivity({
+        actorUserId: userId,
+        actorParty: "brand",
+        eventType: "content.approved",
+        entityType: "deal",
+        entityId: id,
+        summary: `Brand approved final deliverable package on Deal #${id}: "${deal.title}"`,
+        metadata: { approvedAt: new Date().toISOString() },
+      });
+
       res.json({
         success: true,
         executionStatus: "COMPLETED",
         deal: await formatDealDetail(updated),
       });
     } else if (action === "request_revision") {
+      // 1. Fetch active proposal to get allowed contractual revision count
+      let maxAllowedRevisions = 1;
+      if (deal.activeProposalId) {
+        const [activeProposal] = await db
+          .select({ revisionCount: dealTermsVersionsTable.revisionCount })
+          .from(dealTermsVersionsTable)
+          .where(eq(dealTermsVersionsTable.id, deal.activeProposalId))
+          .limit(1);
+        if (activeProposal?.revisionCount != null) {
+          maxAllowedRevisions = activeProposal.revisionCount;
+        }
+      }
+
+      // 2. Count past revision requests
+      const pastRevisionRows = await db
+        .select()
+        .from(dealActivityTable)
+        .where(
+          and(eq(dealActivityTable.dealId, id), eq(dealActivityTable.action, "REVISION_REQUESTED"))
+        );
+      const pastRevisionsCount = pastRevisionRows.length;
+
+      // 3. Hard Revision Cap Enforcement: Dispute if cap exceeded
+      if (pastRevisionsCount >= maxAllowedRevisions) {
+        const [disputedDeal] = await db
+          .update(dealsTable)
+          .set({
+            executionStatus: "DISPUTED",
+            paymentStatus: "DISPUTED",
+            updatedAt: new Date(),
+          })
+          .where(eq(dealsTable.id, id))
+          .returning();
+
+        await db
+          .update(paymentOrdersTable)
+          .set({
+            status: "disputed",
+            autoReleaseAt: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(paymentOrdersTable.dealId, id));
+
+        await db.insert(dealActivityTable).values({
+          dealId: id,
+          actorId: userId,
+          actorParty: "brand",
+          action: "DISPUTE_RAISED",
+          description: `Contractual revision cap reached (${pastRevisionsCount + 1}/${maxAllowedRevisions} rounds requested). Deal automatically disputed and escalated to platform admin for commercial mediation.`,
+          metadata: {
+            pastRevisionsCount,
+            maxAllowedRevisions,
+            revisionNotes: revisionNotes || null,
+          },
+        });
+
+        notifyDealCounterparty({
+          dealId: id,
+          actorUserId: userId,
+          actorParty: "brand",
+          type: "deal_disputed",
+          title: `Deal Dispute Escalated: ${deal.title}`,
+          body: `Brand requested a revision exceeding the contractual revision cap (${pastRevisionsCount + 1}/${maxAllowedRevisions}). Deal has been frozen and escalated to Admin for resolution.`,
+          badgeLabel: "Dispute Escalated",
+        });
+
+        await logPlatformActivity({
+          actorUserId: userId,
+          actorParty: "brand",
+          eventType: "deal.disputed",
+          entityType: "deal",
+          entityId: id,
+          summary: `Deal #${id} entered dispute status due to exceeded revision cap (${pastRevisionsCount + 1}/${maxAllowedRevisions})`,
+        });
+
+        res.status(409).json({
+          success: false,
+          disputed: true,
+          message: `Contractual revision limit (${maxAllowedRevisions} rounds) reached. Deal has been escalated to platform admin for dispute resolution.`,
+          deal: await formatDealDetail(disputedDeal),
+        });
+        return;
+      }
+
+      // If under cap, pause auto-release SLA during active revision
+      await db
+        .update(paymentOrdersTable)
+        .set({
+          autoReleaseAt: null,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(eq(paymentOrdersTable.dealId, id), eq(paymentOrdersTable.status, "funded_on_hold"))
+        );
+
       const [updated] = await db
         .update(dealsTable)
         .set({
@@ -984,8 +1173,12 @@ router.post(
         actorId: userId,
         actorParty: "brand",
         action: "REVISION_REQUESTED",
-        description: `Brand requested revision: ${revisionNotes || "Changes requested"}`,
-        metadata: { revisionNotes: revisionNotes || null },
+        description: `Brand requested revision (${pastRevisionsCount + 1}/${maxAllowedRevisions}): ${revisionNotes || "Changes requested"}`,
+        metadata: {
+          round: pastRevisionsCount + 1,
+          maxAllowedRevisions,
+          revisionNotes: revisionNotes || null,
+        },
       });
 
       notifyDealCounterparty({
@@ -993,7 +1186,7 @@ router.post(
         actorUserId: userId,
         actorParty: "brand",
         type: "deal_revision_requested",
-        title: `Revision Requested: ${deal.title}`,
+        title: `Revision Requested (${pastRevisionsCount + 1}/${maxAllowedRevisions}): ${deal.title}`,
         body: revisionNotes || "Brand requested adjustments on your deliverable package.",
         badgeLabel: "Revision Needed",
       });
@@ -1001,6 +1194,7 @@ router.post(
       res.json({
         success: true,
         executionStatus: "REVISION_REQUESTED",
+        remainingRevisions: maxAllowedRevisions - (pastRevisionsCount + 1),
         deal: await formatDealDetail(updated),
       });
     } else {
@@ -1102,6 +1296,16 @@ router.post(
       title: `Milestone Payout Settled & Released: ${deal.title}`,
       body: `Brand released payment settlement (${status}). Reference: ${utrReference || "Direct UPI"}`,
       badgeLabel: "Payout Released",
+    });
+
+    await logPlatformActivity({
+      actorUserId: userId,
+      actorParty: "brand",
+      eventType: "payment.settled",
+      entityType: "deal",
+      entityId: id,
+      summary: `Brand processed payment settlement (${status}) on Deal #${id}: "${deal.title}"`,
+      metadata: { status, utrReference: utrReference || null },
     });
 
     res.json({

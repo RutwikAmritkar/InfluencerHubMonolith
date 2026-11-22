@@ -142,7 +142,7 @@ export default function InfluencerDetail({ params }: { params: { id: string } })
   if (isLoading || !influencer) {
     return (
       <div className="flex h-[calc(100vh-200px)] w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1D4ED8]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#6A0D18]" />
       </div>
     );
   }
@@ -188,7 +188,7 @@ export default function InfluencerDetail({ params }: { params: { id: string } })
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white">
                 {influencer.name}
               </h1>
-              {influencer.isVerified && <CheckCircle2 className="w-5 h-5 text-[#1D4ED8]" />}
+              {influencer.isVerified && <CheckCircle2 className="w-5 h-5 text-[#6A0D18]" />}
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-[#52525B] dark:text-slate-400 font-medium">
@@ -226,7 +226,7 @@ export default function InfluencerDetail({ params }: { params: { id: string } })
               className="h-10 px-5 bg-[#0A0A0A] hover:bg-slate-800 text-white font-semibold text-xs rounded-lg shadow-xs cursor-pointer inline-flex items-center gap-2"
             >
               <span>Direct Brief</span>
-              <ArrowRight className="w-4 h-4 text-[#1D4ED8]" />
+              <ArrowRight className="w-4 h-4 text-[#6A0D18]" />
             </Button>
           </div>
         </div>
@@ -379,7 +379,7 @@ export default function InfluencerDetail({ params }: { params: { id: string } })
                       </h4>
                       <p className="text-xs text-[#52525B]">{collab.campaignTitle}</p>
                     </div>
-                    <span className="text-xs font-bold text-[#1D4ED8] bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200">
+                    <span className="text-xs font-bold text-[#6A0D18] bg-[#FDF6F7] px-2.5 py-0.5 rounded border border-[#EED8DC]">
                       {collab.year}
                     </span>
                   </div>

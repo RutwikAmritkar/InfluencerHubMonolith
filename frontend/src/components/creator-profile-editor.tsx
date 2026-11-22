@@ -300,7 +300,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
   if (isLoading) {
     return (
       <div className="py-20 flex flex-col items-center justify-center space-y-3">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-700" />
+        <Loader2 className="w-6 h-6 animate-spin text-[#6A0D18]" />
         <span className="text-xs text-zinc-500 font-medium">Loading Creator Studio...</span>
       </div>
     );
@@ -311,12 +311,14 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
       {/* ─── Top Page Header ─── */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#E5E4DF] pb-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] mb-1">
             Creator Studio
           </p>
           <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
             {name}’s{" "}
-            <span className="font-serif italic font-normal text-blue-700">Profile & Media Kit</span>
+            <span className="font-serif italic font-normal text-[#6A0D18]">
+              Profile & Media Kit
+            </span>
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
             Configure how your storefront, deliverables, and starting rates appear to verified
@@ -337,9 +339,9 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
             type="button"
             onClick={handleSave}
             disabled={updateInf.isPending}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-[#0A0A0A] hover:bg-zinc-800 rounded-lg shadow-xs transition-all active:scale-[0.99] cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold liquid-burgundy-metal rounded-lg shadow-xs transition-all active:scale-[0.99] cursor-pointer"
           >
-            {updateInf.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            {updateInf.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />}
             <span>Save & Publish Profile</span>
           </button>
         </div>
@@ -367,9 +369,9 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
               >
                 <label className="cursor-pointer inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white/85 hover:bg-white backdrop-blur-md border border-white/60 text-xs font-semibold text-[#0A0A0A] shadow-sm transition-all">
                   {isUploadingCover ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-700" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#6A0D18]" />
                   ) : (
-                    <UploadCloud className="w-4 h-4 text-blue-700" />
+                    <UploadCloud className="w-4 h-4 text-[#6A0D18]" />
                   )}
                   <span>
                     {isUploadingCover
@@ -415,7 +417,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
             <div className="px-6 pb-6">
               <div className="relative -mt-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div className="flex items-end gap-4">
-                  <div className="relative w-24 h-24 rounded-2xl bg-blue-700 border-4 border-white shadow-md flex items-center justify-center text-white text-2xl font-bold shrink-0 overflow-hidden">
+                  <div className="relative w-24 h-24 rounded-2xl bg-[#6A0D18] border-4 border-white shadow-md flex items-center justify-center text-white text-2xl font-bold shrink-0 overflow-hidden">
                     {avatarUrl ? (
                       <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
                     ) : (
@@ -465,7 +467,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-sm font-medium text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700 cursor-pointer"
+                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-sm font-medium text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18] cursor-pointer"
                 >
                   <option value="Lifestyle">Lifestyle</option>
                   <option value="Fashion & Beauty">Fashion & Beauty</option>
@@ -489,7 +491,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
                     min={0}
                     value={startingRate}
                     onChange={(e) => setStartingRate(e.target.value)}
-                    className="w-full h-10 pl-9 pr-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-sm font-semibold text-[#0A0A0A] font-tabular focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700"
+                    className="w-full h-10 pl-9 pr-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-sm font-semibold text-[#0A0A0A] font-tabular focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18]"
                   />
                 </div>
                 <p className="text-xs text-zinc-400">Minimum single-deliverable campaign rate</p>
@@ -523,7 +525,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
                 <select
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-sm font-medium text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700 cursor-pointer"
+                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-sm font-medium text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18] cursor-pointer"
                 >
                   <option value="Maharashtra">Maharashtra</option>
                   <option value="Karnataka">Karnataka</option>
@@ -545,7 +547,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="e.g. Mumbai"
-                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-sm font-medium text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700"
+                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-sm font-medium text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18]"
                 />
               </div>
             </div>
@@ -566,7 +568,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
                           : "bg-[#FAF9F6] text-zinc-600 border-[#E5E4DF] hover:border-zinc-400"
                       }`}
                     >
-                      {selected && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                      {selected && <Check className="w-3.5 h-3.5 text-[#EED8DC]" />}
                       <span>{lang}</span>
                     </button>
                   );
@@ -591,7 +593,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Describe your audience demographic, content style, and past brand niches..."
-              className="w-full p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] text-sm text-[#0A0A0A] leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-700/20 focus:border-blue-700 resize-none"
+              className="w-full p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] text-sm text-[#0A0A0A] leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#6A0D18]/20 focus:border-[#6A0D18] resize-none"
             />
           </section>
 
@@ -611,7 +613,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
         <div className="xl:col-span-5 2xl:col-span-4 xl:sticky xl:top-20 space-y-3 min-w-0">
           <div className="flex items-center justify-between px-1">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600">
-              <Eye className="w-3.5 h-3.5 text-blue-700" />
+              <Eye className="w-3.5 h-3.5 text-[#6A0D18]" />
               Live Brand Discovery Preview
             </span>
             <span className="text-xs text-zinc-400">Updates in real time</span>
@@ -620,7 +622,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
           {/* Glassmorphic Creator Media Kit Card */}
           <div className="rounded-2xl border border-[#E5E4DF] bg-white overflow-hidden shadow-[0_20px_40px_-15px_rgba(15,23,42,0.08)]">
             {/* Mini Cover */}
-            <div className="h-32 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-800 relative p-4 flex justify-end items-start overflow-hidden">
+            <div className="h-32 bg-gradient-to-br from-zinc-900 via-[#3D060D] to-[#6A0D18] relative p-4 flex justify-end items-start overflow-hidden">
               {coverUrl ? (
                 <img
                   src={coverUrl}
@@ -630,7 +632,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
               ) : null}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
               <span className="relative z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/75 backdrop-blur-md border border-white/80 text-xs font-semibold text-[#0A0A0A] shadow-xs">
-                <Sparkles className="w-3 h-3 text-blue-700" />
+                <Sparkles className="w-3 h-3 text-[#6A0D18]" />
                 {category}
               </span>
             </div>
@@ -638,7 +640,7 @@ export function CreatorProfileEditor({ profileId }: { profileId?: number }) {
             <div className="px-6 pb-6">
               {/* Avatar & Starting Rate */}
               <div className="-mt-10 mb-3 flex items-end justify-between">
-                <div className="relative w-20 h-20 rounded-2xl bg-blue-700 border-4 border-white shadow-sm flex items-center justify-center text-white text-xl font-bold overflow-hidden">
+                <div className="relative w-20 h-20 rounded-2xl bg-[#6A0D18] border-4 border-white shadow-sm flex items-center justify-center text-white text-xl font-bold overflow-hidden">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
                   ) : (

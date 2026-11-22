@@ -12,7 +12,9 @@
     "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\" \"backend/src/**/*.ts\" \"database/src/**/*.ts\" \"shared/**/*.{ts,json}\"",
     "db:push": "pnpm --filter @workspace/db run push",
     "db:push-force": "pnpm --filter @workspace/db run push-force",
-    "db:seed": "npx tsx database/seeds/seed.ts"
+    "db:seed": "npx tsx database/seeds/seed.ts",
+    "db:seed:admin": "node --env-file=backend/.env scripts/node_modules/tsx/dist/cli.mjs database/seeds/seed-admin-rbac.ts",
+    "provision:admin": "node --env-file=backend/.env scripts/node_modules/tsx/dist/cli.mjs scripts/provision-super-admin.ts"
   },
   "private": true,
   "dependencies": {

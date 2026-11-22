@@ -87,12 +87,12 @@ export default function CampaignCreate() {
           </Link>
         </Button>
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8] block mb-0.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] block mb-0.5">
             Pre-Funded Milestone Brief
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white">
             Create Campaign &amp;{" "}
-            <span className="font-serif italic font-normal text-[#1D4ED8]">Milestone Terms</span>
+            <span className="font-serif italic font-normal text-[#6A0D18]">Milestone Terms</span>
           </h1>
           <p className="text-xs text-[#52525B] dark:text-slate-400 font-normal mt-0.5">
             Post an auditable campaign brief. Creator compensation is protected by milestone
@@ -294,7 +294,7 @@ export default function CampaignCreate() {
             <Button
               type="submit"
               disabled={createCampaign.isPending}
-              className="h-10 px-6 rounded-lg bg-[#0A0A0A] hover:bg-slate-800 text-white font-semibold text-xs shadow-xs cursor-pointer inline-flex items-center gap-2"
+              className="h-10 px-6 rounded-lg liquid-burgundy-metal font-semibold text-xs shadow-xs cursor-pointer inline-flex items-center gap-2"
             >
               {createCampaign.isPending ? (
                 <>

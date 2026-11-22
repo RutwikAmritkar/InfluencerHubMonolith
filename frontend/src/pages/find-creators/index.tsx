@@ -144,12 +144,12 @@ export default function FindCreatorsPage() {
       {/* ─── 1. EDITORIAL HEADER ───────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-[#E5E4DF] dark:border-white/10">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8] block mb-1">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] block mb-1">
             Verified Creator Roster
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white">
             Discover Verified{" "}
-            <span className="font-serif italic font-normal text-[#1D4ED8]">Media Kits</span>
+            <span className="font-serif italic font-normal text-[#6A0D18]">Media Kits</span>
           </h1>
           <p className="text-xs sm:text-sm text-[#52525B] dark:text-slate-400 font-normal mt-1">
             Browse authenticated creator media kits with auditable audience velocity and verified
@@ -163,7 +163,7 @@ export default function FindCreatorsPage() {
             size="sm"
             className="h-10 px-4 rounded-lg border-[#E5E4DF] dark:border-white/10 text-[#0A0A0A] dark:text-white font-semibold text-xs hover:bg-[#F2F1EC] dark:hover:bg-slate-800 cursor-pointer flex items-center gap-2 shadow-xs transition-colors"
           >
-            <Bookmark className="w-3.5 h-3.5 text-[#1D4ED8]" />
+            <Bookmark className="w-3.5 h-3.5 text-[#6A0D18]" />
             <span>Shortlists ({shortlistedIds.length})</span>
           </Button>
         </Link>
@@ -258,7 +258,7 @@ export default function FindCreatorsPage() {
                     onClick={() => toggleShortlist(creator.id, creator.name)}
                     className={`h-8 w-8 rounded-full flex items-center justify-center backdrop-blur-md border transition-all cursor-pointer ${
                       isSaved
-                        ? "bg-[#1D4ED8] text-white border-blue-400"
+                        ? "bg-[#6A0D18] text-white border-[#A82830]"
                         : "bg-white/80 text-[#0A0A0A] border-white/60 hover:bg-white"
                     }`}
                     title={isSaved ? "Saved" : "Save to Shortlist"}
@@ -273,7 +273,7 @@ export default function FindCreatorsPage() {
                     <h3 className="text-base font-bold tracking-tight text-white">
                       {creator.name}
                     </h3>
-                    <CheckCircle2 className="w-4 h-4 text-[#1D4ED8] fill-white" />
+                    <CheckCircle2 className="w-4 h-4 text-[#6A0D18] fill-white" />
                   </div>
                   <p className="text-xs text-slate-300 font-medium">
                     {creator.handle} · {creator.location}
@@ -325,9 +325,9 @@ export default function FindCreatorsPage() {
                 </span>
 
                 <Link href={`/influencers/${creator.id}`}>
-                  <Button className="h-8 px-4 rounded-lg bg-[#0A0A0A] hover:bg-slate-800 text-white text-xs font-semibold shadow-xs cursor-pointer inline-flex items-center gap-1.5 transition-all">
+                  <Button className="h-8 px-4 rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs cursor-pointer inline-flex items-center gap-1.5 transition-all">
                     <span>View Media Kit</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 text-white" />
                   </Button>
                 </Link>
               </div>

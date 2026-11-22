@@ -11,6 +11,7 @@ import { eq, and, desc, inArray } from "drizzle-orm";
 import { requireAuth, requireRole, AuthenticatedRequest } from "../middlewares/auth";
 import { createDeal } from "../services/deal-creation.service";
 import { sendNotification } from "../services/notification.service";
+import { logPlatformActivity } from "../services/activity.service";
 import { z } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -237,6 +238,19 @@ router.post(
         status: "pending",
       })
       .returning();
+
+    await logPlatformActivity({
+      actorUserId: String(userId),
+      actorParty: "creator",
+      eventType: "application.submitted",
+      entityType: "application",
+      entityId: application.id,
+      summary: `Creator submitted application pitch for campaign #${application.campaignId}`,
+      metadata: {
+        campaignId: application.campaignId,
+        quotedRatePaise: quotedPaise,
+      },
+    });
 
     // Notify brand of incoming application
     try {

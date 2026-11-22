@@ -101,7 +101,7 @@ export default function PublicMediaKitPage() {
               CB
             </div>
             <span className="font-bold text-sm tracking-tight text-[#0A0A0A]">
-              Creators<span className="font-serif italic font-normal text-blue-700">Brand</span>
+              Creators<span className="font-serif italic font-normal text-[#6A0D18]">Brand</span>
             </span>
           </Link>
 
@@ -118,7 +118,7 @@ export default function PublicMediaKitPage() {
               onClick={handleProposeDeal}
               className="h-9 px-4 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
             >
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+              <Sparkles className="w-3.5 h-3.5 text-[#6A0D18]" />
               <span>Propose a Deal</span>
             </Button>
           </div>
@@ -139,18 +139,18 @@ export default function PublicMediaKitPage() {
                 />
                 {isVerified && (
                   <div className="absolute -bottom-1 -right-1 p-1 bg-white rounded-full shadow-xs border border-[#E5E4DF]">
-                    <CheckCircle2 className="w-4 h-4 text-blue-700 fill-blue-50" />
+                    <CheckCircle2 className="w-4 h-4 text-[#6A0D18] fill-[#FDF6F7]" />
                   </div>
                 )}
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0A0A0A]">
                     {name}
                   </h1>
                   {isVerified && (
-                    <span className="px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200/60 text-blue-700 text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-md bg-[#FDF6F7] border border-[#EED8DC] text-[#6A0D18] text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
                       <ShieldCheck className="w-3 h-3" />
                       <span>Verified Handle</span>
                     </span>
@@ -159,7 +159,7 @@ export default function PublicMediaKitPage() {
                 <p className="text-xs sm:text-sm font-semibold text-zinc-500">
                   {handle} • {creator?.category || "Lifestyle & Tech"}
                 </p>
-                <div className="flex items-center gap-3 text-xs text-zinc-500 pt-0.5">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-zinc-500 pt-0.5">
                   <span className="inline-flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5 text-zinc-400" />
                     <span>
@@ -177,7 +177,7 @@ export default function PublicMediaKitPage() {
               className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
             >
               <span>Initiate Direct Deal Room</span>
-              <ArrowRight className="w-4 h-4 text-blue-400" />
+              <ArrowRight className="w-4 h-4 text-[#6A0D18]" />
             </Button>
           </div>
 
@@ -220,7 +220,7 @@ export default function PublicMediaKitPage() {
             <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
               Starting Rate Card
             </span>
-            <span className="text-2xl font-bold font-tabular text-blue-700">
+            <span className="text-2xl font-bold font-tabular text-[#6A0D18]">
               ₹{startingRate.toLocaleString("en-IN")}
             </span>
             <span className="text-[11px] text-zinc-500 block">Single Deliverable Base</span>
@@ -229,7 +229,7 @@ export default function PublicMediaKitPage() {
 
         {/* ─── 4. COMMERCIAL RATE CARD SCOPE ─────────────────────────────────── */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-bold text-[#0A0A0A] tracking-tight">
               Commercial Deliverables &amp; Formats
             </h2>
@@ -243,11 +243,11 @@ export default function PublicMediaKitPage() {
               onClick={() => setSelectedDeliverable("1× Instagram Reel")}
               className={`p-5 rounded-2xl border transition-all cursor-pointer bg-white space-y-3 ${
                 selectedDeliverable === "1× Instagram Reel"
-                  ? "border-blue-700 ring-2 ring-blue-700/10 shadow-xs"
+                  ? "border-[#6A0D18] ring-2 ring-[#6A0D18]/10 shadow-xs"
                   : "border-[#E5E4DF] hover:border-zinc-400 shadow-2xs"
               }`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-pink-50 text-pink-700 border border-pink-200 inline-flex items-center gap-1">
                   <Instagram className="w-3 h-3" />
                   <span>Instagram</span>
@@ -265,11 +265,11 @@ export default function PublicMediaKitPage() {
               onClick={() => setSelectedDeliverable("1× Dedicated YouTube Video")}
               className={`p-5 rounded-2xl border transition-all cursor-pointer bg-white space-y-3 ${
                 selectedDeliverable === "1× Dedicated YouTube Video"
-                  ? "border-blue-700 ring-2 ring-blue-700/10 shadow-xs"
+                  ? "border-[#6A0D18] ring-2 ring-[#6A0D18]/10 shadow-xs"
                   : "border-[#E5E4DF] hover:border-zinc-400 shadow-2xs"
               }`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-50 text-red-700 border border-red-200 inline-flex items-center gap-1">
                   <Youtube className="w-3 h-3" />
                   <span>YouTube</span>
@@ -287,12 +287,12 @@ export default function PublicMediaKitPage() {
               onClick={() => setSelectedDeliverable("1× UGC Video Only")}
               className={`p-5 rounded-2xl border transition-all cursor-pointer bg-white space-y-3 ${
                 selectedDeliverable === "1× UGC Video Only"
-                  ? "border-blue-700 ring-2 ring-blue-700/10 shadow-xs"
+                  ? "border-[#6A0D18] ring-2 ring-[#6A0D18]/10 shadow-xs"
                   : "border-[#E5E4DF] hover:border-zinc-400 shadow-2xs"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#FDF6F7] text-[#6A0D18] border border-[#EED8DC] inline-flex items-center gap-1">
                   <FileCheck2 className="w-3 h-3" />
                   <span>UGC Production</span>
                 </span>

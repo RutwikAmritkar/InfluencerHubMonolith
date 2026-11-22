@@ -8,7 +8,7 @@ import {
   type SocialAccount,
 } from "@workspace/db";
 import { UpdateInfluencerBody } from "@workspace/api-zod";
-import { eq, and, gte, lte, ilike, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, ilike, desc, sql, or } from "drizzle-orm";
 import { socialVerificationService } from "../services/social-verification.service";
 import { requireAuth, optionalAuth } from "../middlewares/auth";
 import { storageService } from "../services/storage.service";
@@ -97,6 +97,36 @@ router.get("/influencers", async (req, res): Promise<void> => {
     return;
   } catch (_e) {
     res.json(Object.values(inMemoryStore));
+  }
+});
+
+router.get("/influencers/featured", async (_req, res): Promise<void> => {
+  try {
+    const rows = await db
+      .select({
+        id: influencersTable.id,
+        name: userTable.name,
+        category: influencersTable.category,
+        followers: influencersTable.followers,
+        engagementRate: influencersTable.engagementRate,
+        avatarUrl: influencersTable.avatarUrl,
+        country: influencersTable.country,
+        isVerified: influencersTable.isVerified,
+      })
+      .from(influencersTable)
+      .leftJoin(userTable, eq(userTable.id, influencersTable.userId))
+      .where(eq(influencersTable.isVerified, true))
+      .limit(6);
+
+    res.json(
+      rows.map((r) => ({
+        ...r,
+        name: r.name ?? "Featured Creator",
+        avatarUrl: resolveAvatarUrl(r.avatarUrl),
+      }))
+    );
+  } catch {
+    res.json([]);
   }
 });
 

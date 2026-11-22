@@ -8,10 +8,34 @@ import {
   user as userTable,
   session as sessionTable,
   verification as verificationTable,
+  adminUsersTable,
+  adminRolesTable,
 } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { logAuditEvent } from "../auth/audit";
 import { getLatestDevResetLink } from "../services/email.service";
+
+async function getAdminStatus(
+  userId: string
+): Promise<{ isAdmin: boolean; adminRole: string | null }> {
+  try {
+    const [adminRecord] = await db
+      .select({
+        roleSlug: adminRolesTable.slug,
+      })
+      .from(adminUsersTable)
+      .innerJoin(adminRolesTable, eq(adminRolesTable.id, adminUsersTable.roleId))
+      .where(and(eq(adminUsersTable.userId, userId), eq(adminUsersTable.isActive, true)))
+      .limit(1);
+
+    if (adminRecord) {
+      return { isAdmin: true, adminRole: adminRecord.roleSlug };
+    }
+  } catch (error) {
+    console.error("[GET ADMIN STATUS ERROR]", error);
+  }
+  return { isAdmin: false, adminRole: null };
+}
 
 export function sanitizeSocialAccounts(accounts: any[]): any[] {
   if (!Array.isArray(accounts)) return [];
@@ -155,6 +179,8 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         emailVerified: !emailVerificationRequired,
         avatarUrl: authResult.user.image || null,
         profileId,
+        isAdmin: false,
+        adminRole: null,
       },
       requiresEmailVerification: emailVerificationRequired,
       emailVerificationRequired,
@@ -650,6 +676,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     const userId = authResult.user.id;
     const [dbUser] = await db.select().from(userTable).where(eq(userTable.id, userId));
     const userRole = (dbUser?.role || authResult.user.role || "influencer") as string;
+    const { isAdmin, adminRole } = await getAdminStatus(userId);
 
     let profileId = 1;
     let avatarUrl = authResult.user.image || null;
@@ -727,6 +754,8 @@ router.post("/auth/login", async (req, res): Promise<void> => {
         emailVerified: dbUser?.emailVerified ?? false,
         avatarUrl,
         profileId,
+        isAdmin,
+        adminRole,
       },
     });
   } catch (error: any) {
@@ -776,7 +805,8 @@ router.get(["/auth/me", "/me"], async (req, res): Promise<void> => {
         .select()
         .from(userTable)
         .where(eq(userTable.id, sessionData.user.id));
-      const role = dbUser?.role || sessionData.user.role || "influencer";
+      const role = dbUser?.role || (sessionData.user as any).role || "influencer";
+      const { isAdmin, adminRole } = await getAdminStatus(sessionData.user.id);
 
       let profileId = 1;
       let avatarUrl = sessionData.user.image || null;
@@ -854,6 +884,8 @@ router.get(["/auth/me", "/me"], async (req, res): Promise<void> => {
           emailVerified: dbUser?.emailVerified ?? false,
           avatarUrl,
           profileId,
+          isAdmin,
+          adminRole,
         },
       });
       return;

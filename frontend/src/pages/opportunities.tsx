@@ -129,22 +129,26 @@ export default function Opportunities() {
   };
 
   return (
-    <div className="workspace-canvas space-y-8 pb-16 antialiased text-[#0A0A0A]">
+    <div className="workspace-canvas space-y-8 pb-16 antialiased text-[#0A0A0A] dark:text-[#F8FAFC]">
       {/* ─── 1. STAGE 1 FUNNEL HEADER ───────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-4 border-b border-[#E5E4DF]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-4 border-b border-[#E5E4DF] dark:border-white/10">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60">
+            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-[#FDF6F7] dark:bg-[#6A0D18]/25 text-[#6A0D18] dark:text-[#E87985] border border-[#EED8DC] dark:border-[#6A0D18]/40">
               Stage 1 of Funnel
             </span>
             <span className="text-zinc-400">•</span>
-            <span className="text-xs font-semibold text-zinc-500">Discovery &amp; Open Briefs</span>
+            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+              Discovery &amp; Open Briefs
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A]">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
             Marketplace{" "}
-            <span className="font-serif italic font-normal text-blue-700">Opportunities</span>
+            <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985]">
+              Opportunities
+            </span>
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1 max-w-2xl">
             Filter verified, pre-funded brand briefs matching your audience demographics, delivery
             format, and starting rate card.
           </p>
@@ -153,16 +157,16 @@ export default function Opportunities() {
         {/* Funnel Progress Pill */}
         <Link
           href="/applications"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[#E5E4DF] hover:border-zinc-400 text-xs font-semibold text-[#0A0A0A] transition-all shadow-xs cursor-pointer group"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 hover:border-zinc-400 text-xs font-semibold text-[#0A0A0A] dark:text-[#F8FAFC] transition-all shadow-xs cursor-pointer group"
         >
-          <FileCheck className="w-3.5 h-3.5 text-blue-700" />
+          <FileCheck className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
           <span>View Pitched Applications ({applications.length})</span>
           <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
 
       {/* ─── 2. MULTI-AXIS FILTER CONTROLLER ─────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-[#E5E4DF] p-4 sm:p-5 shadow-xs space-y-4">
+      <div className="bg-white dark:bg-[#121216] rounded-2xl border border-[#E5E4DF] dark:border-white/10 p-4 sm:p-5 shadow-xs space-y-4">
         {/* Search Bar + Active Count */}
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
@@ -172,14 +176,14 @@ export default function Opportunities() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search briefs by brand, product title, or keyword..."
-              className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700 transition-all"
+              className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#E5E4DF] dark:border-white/10 bg-[#FAF9F6] dark:bg-[#18181E] text-xs text-[#0A0A0A] dark:text-[#F8FAFC] placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-1 focus:ring-[#6A0D18] dark:focus:ring-[#E87985] transition-all"
             />
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto text-xs text-zinc-500 font-medium shrink-0">
+          <div className="flex items-center gap-2 self-end sm:self-auto text-xs text-zinc-500 dark:text-zinc-400 font-medium shrink-0">
             <span>
               Showing{" "}
-              <strong className="text-[#0A0A0A] font-tabular">
+              <strong className="text-[#0A0A0A] dark:text-[#F8FAFC] font-tabular">
                 {filteredOpportunities.length}
               </strong>{" "}
               active briefs
@@ -188,16 +192,16 @@ export default function Opportunities() {
         </div>
 
         {/* Hairline Divided Filter Selectors */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-[#E5E4DF]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-[#E5E4DF] dark:border-white/10">
           {/* 1. Category */}
           <div className="space-y-1">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block">
               Category
             </label>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-blue-700 cursor-pointer"
+              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] dark:border-white/10 bg-[#FAF9F6] dark:bg-[#18181E] text-xs font-semibold text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] cursor-pointer"
             >
               <option value="all">All Categories</option>
               <option value="Beauty & Lifestyle">Beauty &amp; Lifestyle</option>
@@ -209,13 +213,13 @@ export default function Opportunities() {
 
           {/* 2. Format */}
           <div className="space-y-1">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block">
               Deliverable Format
             </label>
             <select
               value={formatFilter}
               onChange={(e) => setFormatFilter(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-blue-700 cursor-pointer"
+              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] dark:border-white/10 bg-[#FAF9F6] dark:bg-[#18181E] text-xs font-semibold text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] cursor-pointer"
             >
               <option value="all">All Formats</option>
               <option value="9:16 Reels">9:16 Reels</option>
@@ -232,7 +236,7 @@ export default function Opportunities() {
             <select
               value={cityFilter}
               onChange={(e) => setCityFilter(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-blue-700 cursor-pointer"
+              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-[#6A0D18] cursor-pointer"
             >
               <option value="all">All Locations (Pan-India)</option>
               <option value="Mumbai">Mumbai</option>
@@ -251,7 +255,7 @@ export default function Opportunities() {
             <select
               value={minPayoutFilter}
               onChange={(e) => setMinPayoutFilter(Number(e.target.value))}
-              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-blue-700 cursor-pointer"
+              className="w-full h-9 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-[#6A0D18] cursor-pointer"
             >
               <option value={0}>Any Budget</option>
               <option value={30000}>₹30,000+ Min</option>
@@ -270,7 +274,7 @@ export default function Opportunities() {
           return (
             <div
               key={item.id}
-              className="bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs flex flex-col justify-between hover:border-zinc-400 transition-all space-y-5"
+              className="liquid-silver-card rounded-2xl p-6 shadow-xs flex flex-col justify-between transition-all space-y-5"
             >
               {/* Top Row: Brand Monogram + Title + Escrow Badge */}
               <div className="space-y-3">
@@ -283,58 +287,68 @@ export default function Opportunities() {
                         className="w-10 h-10 rounded-xl object-cover border border-[#E5E4DF] shadow-2xs"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-xl bg-[#0A0A0A] text-white font-bold text-xs flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-xl monogram-silver-burgundy text-[#6A0D18] font-bold text-xs flex items-center justify-center">
                         {item.brandInitials}
                       </div>
                     )}
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-[#0A0A0A]">{item.brandName}</span>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-700" />
+                        <span className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                          {item.brandName}
+                        </span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
                       </div>
-                      <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-zinc-400" />
+                      <span className="text-[11px] text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
                         {item.city}
                       </span>
                     </div>
                   </div>
 
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/40">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>{item.escrowStatus}</span>
                   </span>
                 </div>
 
                 {/* Campaign Title & Deliverable Scope */}
                 <div>
-                  <h3 className="text-base font-bold text-[#0A0A0A] leading-snug">{item.title}</h3>
+                  <h3 className="text-base font-bold text-[#0A0A0A] dark:text-[#F8FAFC] leading-snug">
+                    {item.title}
+                  </h3>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <span className="px-2 py-0.5 rounded-md bg-[#FAF9F6] border border-[#E5E4DF] text-xs font-semibold text-blue-700">
+                    <span className="px-2 py-0.5 rounded-md bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40 text-xs font-semibold text-[#6A0D18] dark:text-[#E87985]">
                       {item.format}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#FAF9F6] border border-[#E5E4DF] text-xs font-medium text-zinc-600">
+                    <span className="px-2 py-0.5 rounded-md bg-[#FAF9F6] dark:bg-white/[0.06] border border-[#E5E4DF] dark:border-white/10 text-xs font-medium text-zinc-600 dark:text-zinc-300">
                       {item.category}
                     </span>
                   </div>
                 </div>
 
                 {/* Description Narrative */}
-                <p className="text-xs text-zinc-500 leading-relaxed line-clamp-3">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-3">
                   {item.description}
                 </p>
               </div>
 
               {/* Bottom Card Footer: Deliverable, Budget Range & Funnel Action */}
-              <div className="space-y-4 pt-4 border-t border-[#E5E4DF]">
+              <div className="space-y-4 pt-4 border-t border-[#E5E4DF] dark:border-white/10">
                 {/* Deliverable & Escrow Range Strip */}
                 <div className="flex items-center justify-between text-xs">
                   <div>
-                    <span className="text-[11px] text-zinc-400 block">Deliverable Scope</span>
-                    <span className="font-semibold text-[#0A0A0A]">{item.deliverable}</span>
+                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500 block">
+                      Deliverable Scope
+                    </span>
+                    <span className="font-semibold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                      {item.deliverable}
+                    </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[11px] text-zinc-400 block">Budget Range</span>
-                    <span className="font-bold text-emerald-700 font-tabular text-sm">
+                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500 block">
+                      Budget Range
+                    </span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400 font-tabular text-sm">
                       ₹{item.minPayout.toLocaleString("en-IN")} – ₹
                       {item.maxPayout.toLocaleString("en-IN")}
                     </span>
@@ -343,30 +357,32 @@ export default function Opportunities() {
 
                 {/* Action Bar with Linked State */}
                 <div className="flex items-center justify-between gap-3 pt-1">
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                    <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-500">
+                    <Calendar className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
                     <span>
                       Deadline:{" "}
-                      <strong className="text-zinc-600 font-medium">{item.deadline}</strong>
+                      <strong className="text-zinc-600 dark:text-zinc-300 font-medium">
+                        {item.deadline}
+                      </strong>
                     </span>
                   </div>
 
                   {isApplied ? (
                     <Link
                       href="/applications"
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#FAF9F6] hover:bg-[#F2F1EC] border border-[#E5E4DF] text-xs font-semibold text-zinc-700 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#FAF9F6] dark:bg-white/[0.06] hover:bg-[#F2F1EC] dark:hover:bg-white/[0.1] border border-[#E5E4DF] dark:border-white/15 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>Applied • View →</span>
                     </Link>
                   ) : (
                     <button
                       type="button"
                       onClick={() => handleOpenPitchModal(item)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer shadow-xs"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs cursor-pointer active:scale-[0.98]"
                     >
                       <span>Apply with Pitch</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <ArrowRight className="w-3.5 h-3.5 text-white" />
                     </button>
                   )}
                 </div>
@@ -378,18 +394,18 @@ export default function Opportunities() {
 
       {/* ─── 4. APPLY WITH PITCH MODAL ─────────────────────────────────────── */}
       {pitchModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-[#E5E4DF] max-w-lg w-full p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#121216] rounded-2xl border border-[#E5E4DF] dark:border-white/15 max-w-[95vw] sm:max-w-lg w-full p-4 sm:p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="flex items-start justify-between gap-4 border-b border-[#E5E4DF] pb-4">
+            <div className="flex items-start justify-between gap-4 border-b border-[#E5E4DF] dark:border-white/10 pb-4">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 block mb-0.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985] block mb-0.5">
                   Direct Creator Pitch
                 </span>
-                <h3 className="text-lg font-bold text-[#0A0A0A]">
+                <h3 className="text-lg font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
                   Apply for {pitchModalItem.title}
                 </h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                   Brand: {pitchModalItem.brandName} • Budget: ₹
                   {pitchModalItem.minPayout.toLocaleString("en-IN")} – ₹
                   {pitchModalItem.maxPayout.toLocaleString("en-IN")}
@@ -399,7 +415,7 @@ export default function Opportunities() {
               <button
                 type="button"
                 onClick={() => setPitchModalItem(null)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-[#0A0A0A] hover:bg-zinc-100 transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-[#0A0A0A] dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -408,18 +424,22 @@ export default function Opportunities() {
             {/* Pitch Form */}
             <form onSubmit={handleSubmitPitch} className="space-y-4">
               {/* Deliverable Recap Box */}
-              <div className="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E5E4DF] text-xs space-y-1">
-                <span className="text-zinc-500 font-medium">Deliverable Required:</span>
-                <p className="font-bold text-[#0A0A0A]">{pitchModalItem.deliverable}</p>
+              <div className="p-3.5 rounded-xl bg-[#FAF9F6] dark:bg-[#18181E] border border-[#E5E4DF] dark:border-white/10 text-xs space-y-1">
+                <span className="text-zinc-500 dark:text-zinc-400 font-medium">
+                  Deliverable Required:
+                </span>
+                <p className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                  {pitchModalItem.deliverable}
+                </p>
               </div>
 
               {/* Quoted Rate Input */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-[#0A0A0A]">
+                <label className="block text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
                   Your Quoted Fee (₹ INR)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500 dark:text-zinc-400">
                     ₹
                   </span>
                   <input
@@ -427,18 +447,18 @@ export default function Opportunities() {
                     value={quotedRate}
                     onChange={(e) => setQuotedRate(e.target.value)}
                     placeholder="e.g. 45000"
-                    className="w-full h-10 pl-8 pr-3 rounded-lg border border-[#E5E4DF] bg-white text-xs font-bold font-tabular text-[#0A0A0A] focus:outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
+                    className="w-full h-10 pl-8 pr-3 rounded-lg border border-[#E5E4DF] dark:border-white/10 bg-white dark:bg-[#18181E] text-xs font-bold font-tabular text-[#0A0A0A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-1 focus:ring-[#6A0D18] dark:focus:ring-[#E87985]"
                     required
                   />
                 </div>
-                <span className="text-[11px] text-zinc-400">
+                <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
                   Protected by verified milestones once brand accepts your quote.
                 </span>
               </div>
 
               {/* Pitch Narrative Textarea */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-[#0A0A0A]">
+                <label className="block text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
                   Pitch &amp; Creative Concept
                 </label>
                 <textarea
@@ -446,13 +466,13 @@ export default function Opportunities() {
                   value={pitchMessage}
                   onChange={(e) => setPitchMessage(e.target.value)}
                   placeholder="Explain why your audience is a strong match, your proposed visual hook, and past results..."
-                  className="w-full p-3 rounded-lg border border-[#E5E4DF] bg-white text-xs text-[#0A0A0A] leading-relaxed focus:outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700 resize-none"
+                  className="w-full p-3 rounded-lg border border-[#E5E4DF] dark:border-white/10 bg-white dark:bg-[#18181E] text-xs text-[#0A0A0A] dark:text-[#F8FAFC] placeholder:text-zinc-400 dark:placeholder:text-zinc-500 leading-relaxed focus:outline-none focus:border-[#6A0D18] dark:focus:border-[#E87985] focus:ring-1 focus:ring-[#6A0D18] dark:focus:ring-[#E87985] resize-none"
                   required
                 />
               </div>
 
               {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E4DF]">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-[#E5E4DF]">
                 <button
                   type="button"
                   onClick={() => setPitchModalItem(null)}
@@ -463,10 +483,10 @@ export default function Opportunities() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-all shadow-xs cursor-pointer active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs cursor-pointer active:scale-[0.98]"
                 >
                   <span>Submit Pitch to Brand</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 text-white" />
                 </button>
               </div>
             </form>

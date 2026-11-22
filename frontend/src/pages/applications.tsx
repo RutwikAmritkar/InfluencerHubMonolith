@@ -79,7 +79,7 @@ export default function Applications() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-4 border-b border-[#E5E4DF]">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60">
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-[#FDF6F7] text-[#6A0D18] border border-[#EED8DC]">
               PITCH PIPELINE
             </span>
             <span className="text-zinc-400">•</span>
@@ -88,7 +88,7 @@ export default function Applications() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A]">
-            Deal <span className="font-serif italic font-normal text-blue-700">Applications</span>
+            Deal <span className="font-serif italic font-normal text-[#6A0D18]">Applications</span>
           </h1>
           <p className="text-xs sm:text-sm text-zinc-500 mt-1 max-w-2xl">
             Audit your submitted pitches, track brand decision turnarounds, and transition accepted
@@ -100,27 +100,27 @@ export default function Applications() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/opportunities"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs"
           >
             <span>Browse Open Briefs</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5 text-white" />
           </Link>
         </div>
       </div>
 
       {/* ─── 2. FUNNEL PIPELINE SUMMARY METRICS ──────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl bg-white border border-[#E5E4DF] shadow-xs flex items-center justify-between">
+        <div className="p-4 rounded-xl liquid-silver-card flex items-center justify-between">
           <div>
             <span className="text-xs font-medium text-zinc-500 block">Total Submitted Pitches</span>
             <span className="text-2xl font-bold text-[#0A0A0A] font-tabular">{counts.all}</span>
           </div>
           <div className="w-9 h-9 rounded-lg bg-zinc-100 border border-[#E5E4DF] flex items-center justify-center text-zinc-700">
-            <FileCheck className="w-4 h-4 text-blue-700" />
+            <FileCheck className="w-4 h-4 text-[#6A0D18]" />
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#E5E4DF] shadow-xs flex items-center justify-between">
+        <div className="p-4 rounded-xl liquid-silver-card flex items-center justify-between">
           <div>
             <span className="text-xs font-medium text-zinc-500 block">Pending Brand Decisions</span>
             <span className="text-2xl font-bold text-amber-600 font-tabular">{counts.pending}</span>
@@ -130,7 +130,7 @@ export default function Applications() {
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-[#E5E4DF] shadow-xs flex items-center justify-between">
+        <div className="p-4 rounded-xl liquid-silver-card flex items-center justify-between">
           <div>
             <span className="text-xs font-medium text-zinc-500 block">Accepted &amp; Funded</span>
             <span className="text-2xl font-bold text-emerald-600 font-tabular">
@@ -163,7 +163,7 @@ export default function Applications() {
               onClick={() => setActiveTab(tab.id)}
               className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 isActive
-                  ? "bg-[#0A0A0A] text-white shadow-xs"
+                  ? "liquid-burgundy-metal font-bold shadow-xs"
                   : "text-zinc-600 hover:bg-white hover:text-[#0A0A0A]"
               }`}
             >
@@ -242,9 +242,9 @@ export default function Applications() {
                         <span className="text-xs font-bold text-[#0A0A0A] truncate">
                           {app.brandName}
                         </span>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] shrink-0" />
                       </div>
-                      <h4 className="text-xs font-semibold text-zinc-700 truncate mt-0.5 group-hover:text-blue-700 transition-colors">
+                      <h4 className="text-xs font-semibold text-zinc-700 truncate mt-0.5 group-hover:text-[#6A0D18] transition-colors">
                         {app.campaignTitle}
                       </h4>
                       <span className="text-[11px] text-zinc-400 font-tabular block">
@@ -292,8 +292,8 @@ export default function Applications() {
                         <span>Accepted</span>
                       </span>
                     ) : isShortlisted ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/70 whitespace-nowrap">
-                        <Sparkles className="w-3.5 h-3.5 text-blue-700" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#FDF6F7] text-[#6A0D18] border border-[#EED8DC] whitespace-nowrap">
+                        <Sparkles className="w-3.5 h-3.5 text-[#6A0D18]" />
                         <span>Shortlisted</span>
                       </span>
                     ) : isPending ? (
@@ -376,7 +376,7 @@ export default function Applications() {
               <div className="p-6 border-b border-[#E5E4DF] bg-[#FAF9F6] flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60">
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-[#FDF6F7] text-[#6A0D18] border border-[#EED8DC]">
                       PITCH DOSSIER
                     </span>
                     <span className="text-zinc-400">•</span>
@@ -402,7 +402,7 @@ export default function Applications() {
                     <span className="text-xs font-semibold text-zinc-700">
                       {viewingPitch.brandName}
                     </span>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-700" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18]" />
                   </div>
                 </div>
 

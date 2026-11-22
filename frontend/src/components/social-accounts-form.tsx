@@ -544,7 +544,7 @@ export function SocialAccountsForm({
                         <h4 className="font-semibold text-sm">{config.name}</h4>
                         {acc.status === "SUBMITTED" && (
                           <Badge
-                            className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-xs px-2 py-0.5 shadow-none font-medium flex items-center gap-1"
+                            className="bg-[#FDF6F7] text-[#6A0D18] border-[#EED8DC] text-xs px-2 py-0.5 shadow-none font-medium flex items-center gap-1"
                             title="Your profile has been submitted. Ownership verification will be required before it can display as Verified."
                           >
                             <CheckCircle2 className="w-3 h-3" /> Submitted
@@ -750,8 +750,8 @@ export function SocialAccountsForm({
             );
           })()}
 
-          <div className="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 rounded-xl text-blue-700 dark:text-blue-300 text-xs font-medium flex items-center gap-2">
-            <Info className="w-4 h-4 shrink-0 text-blue-500" />
+          <div className="p-3 bg-[#FDF6F7] border border-[#EED8DC] rounded-xl text-[#6A0D18] text-xs font-medium flex items-center gap-2">
+            <Info className="w-4 h-4 shrink-0 text-[#6A0D18]" />
             <span>
               Manual handle entries remain marked as Submitted until official OAuth ownership is
               connected.
@@ -781,7 +781,7 @@ export function SocialAccountsForm({
                       {(draft.status === "SUBMITTED" ||
                         (!draft.status && draft.value.trim().length > 0)) && (
                         <Badge
-                          className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 shadow-none font-medium flex items-center gap-1 text-xs px-2.5 py-0.5"
+                          className="bg-[#FDF6F7] text-[#6A0D18] border-[#EED8DC] shadow-none font-medium flex items-center gap-1 text-xs px-2.5 py-0.5"
                           title="Your profile has been submitted. Ownership verification will be required before it can display as Verified."
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" /> Submitted

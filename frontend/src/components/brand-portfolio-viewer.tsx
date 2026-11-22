@@ -77,7 +77,7 @@ export function BrandPortfolioViewer({ creatorId }: BrandPortfolioViewerProps) {
     return (
       <div className="space-y-4 py-4" data-testid="portfolio-viewer-loading">
         <div className="flex items-center space-x-2 text-slate-400">
-          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+          <Loader2 className="h-5 w-5 animate-spin text-[#6A0D18]" />
           <span className="text-xs font-semibold">Loading portfolio...</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -162,7 +162,7 @@ export function BrandPortfolioViewer({ creatorId }: BrandPortfolioViewerProps) {
                 setSelectedItem(featuredItem);
               }
             }}
-            className="group relative aspect-video md:aspect-[21/9] rounded-xl overflow-hidden bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-md cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600"
+            className="group relative aspect-video md:aspect-[21/9] rounded-xl overflow-hidden bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-md cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6A0D18]"
             data-testid="featured-video-card"
           >
             {featuredItem.thumbnailUrl ? (
@@ -198,7 +198,7 @@ export function BrandPortfolioViewer({ creatorId }: BrandPortfolioViewerProps) {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <div className="h-12 w-12 rounded-full bg-[#6A0D18] text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                   <Play className="h-6 w-6 fill-current ml-0.5" />
                 </div>
                 <div>
@@ -238,7 +238,7 @@ export function BrandPortfolioViewer({ creatorId }: BrandPortfolioViewerProps) {
                   setSelectedItem(item);
                 }
               }}
-              className="group relative aspect-video rounded-xl overflow-hidden bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs cursor-pointer transition-all duration-300 hover:shadow-md focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="group relative aspect-video rounded-xl overflow-hidden bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs cursor-pointer transition-all duration-300 hover:shadow-md focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6A0D18]"
               data-testid={`portfolio-card-${item.id}`}
             >
               {item.thumbnailUrl ? (
@@ -258,7 +258,7 @@ export function BrandPortfolioViewer({ creatorId }: BrandPortfolioViewerProps) {
               )}
 
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="h-10 w-10 rounded-full bg-[#6A0D18] text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                   <Play className="h-5 w-5 fill-current ml-0.5" />
                 </div>
               </div>

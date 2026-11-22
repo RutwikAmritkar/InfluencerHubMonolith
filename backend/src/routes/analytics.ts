@@ -186,12 +186,18 @@ router.get(
             const dt = deal.confirmedAt ? new Date(deal.confirmedAt) : new Date(deal.createdAt);
             if (dt.getFullYear() === yr && dt.getMonth() === mo) {
               const pr = proposal?.pricePaise ?? 0;
-              agreedPaise += pr;
-              if (
+              const isAgreed =
+                deal.agreementStatus === "ACCEPTED" || deal.agreementStatus === "CONFIRMED";
+              const isSettled =
                 deal.paymentStatus === "PAYOUT_RELEASED" ||
                 deal.paymentStatus === "RELEASED" ||
-                deal.executionStatus === "COMPLETED"
-              ) {
+                deal.paymentStatus === "PAID" ||
+                deal.executionStatus === "COMPLETED";
+
+              if (isAgreed || isSettled) {
+                agreedPaise += pr;
+              }
+              if (isSettled) {
                 settledPaise += pr;
               }
             }
@@ -205,6 +211,19 @@ router.get(
             agreedRupees: Math.round(agreedPaise / 100),
             settledRupees: Math.round(settledPaise / 100),
           });
+        }
+
+        const totalSeriesAgreed = monthlyRevenueSeries.reduce((acc, s) => acc + s.agreedPaise, 0);
+        if (
+          totalAgreedEarningsPaise > 0 &&
+          totalSeriesAgreed === 0 &&
+          monthlyRevenueSeries.length > 0
+        ) {
+          monthlyRevenueSeries[monthlyRevenueSeries.length - 1].agreedPaise =
+            totalAgreedEarningsPaise;
+          monthlyRevenueSeries[monthlyRevenueSeries.length - 1].agreedRupees = Math.round(
+            totalAgreedEarningsPaise / 100
+          );
         }
 
         // 4. Platform Deliverables Mix
@@ -481,12 +500,18 @@ router.get(
           const dt = deal.confirmedAt ? new Date(deal.confirmedAt) : new Date(deal.createdAt);
           if (dt.getFullYear() === yr && dt.getMonth() === mo) {
             const pr = proposal?.pricePaise ?? 0;
-            committedPaise += pr;
-            if (
+            const isAgreed =
+              deal.agreementStatus === "ACCEPTED" || deal.agreementStatus === "CONFIRMED";
+            const isSettled =
               deal.paymentStatus === "PAYOUT_RELEASED" ||
               deal.paymentStatus === "RELEASED" ||
-              deal.executionStatus === "COMPLETED"
-            ) {
+              deal.paymentStatus === "PAID" ||
+              deal.executionStatus === "COMPLETED";
+
+            if (isAgreed || isSettled) {
+              committedPaise += pr;
+            }
+            if (isSettled) {
               settledPaise += pr;
             }
           }
@@ -500,6 +525,19 @@ router.get(
           committedRupees: Math.round(committedPaise / 100),
           settledRupees: Math.round(settledPaise / 100),
         });
+      }
+
+      const totalSeriesCommitted = monthlySpendSeries.reduce((acc, s) => acc + s.committedPaise, 0);
+      if (
+        totalCommittedBudgetPaise > 0 &&
+        totalSeriesCommitted === 0 &&
+        monthlySpendSeries.length > 0
+      ) {
+        monthlySpendSeries[monthlySpendSeries.length - 1].committedPaise =
+          totalCommittedBudgetPaise;
+        monthlySpendSeries[monthlySpendSeries.length - 1].committedRupees = Math.round(
+          totalCommittedBudgetPaise / 100
+        );
       }
 
       res.json({

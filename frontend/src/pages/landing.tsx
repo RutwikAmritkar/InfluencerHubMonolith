@@ -1,882 +1,956 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useState, useRef, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { LEGAL_CONFIG } from "@/lib/legal-config";
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  useReducedMotion,
-  useInView,
-} from "framer-motion";
-import {
-  Users,
-  Zap,
-  TrendingUp,
-  CheckCircle,
-  ArrowRight,
-  ChevronDown,
-  Sparkles,
-  Target,
-  Inbox,
-  Calendar,
-  CheckSquare,
-  ListTodo,
-  Star,
-  CheckCircle2,
-  Megaphone,
-  Laptop,
-  Smartphone,
-  ShieldCheck,
-  Search,
-  Instagram,
-  Youtube,
-  BarChart3,
-  DollarSign,
-  Send,
-  Eye,
-  Sliders,
-  Award,
-  Lock,
-  ArrowUpRight,
-  CircleDollarSign,
-  FileCheck2,
-  Layers,
-  MapPin,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, CheckCircle2, Video, Layers, Sparkles } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
-// ─── ANIMATED NUMBER COUNTER ───────────────────────────────────────────────
-function AnimatedCounter({
-  from = 0,
-  to,
-  duration = 1.5,
-  suffix = "",
-  prefix = "",
-}: {
-  from?: number;
-  to: number;
-  duration?: number;
-  suffix?: string;
-  prefix?: string;
-}) {
-  const [count, setCount] = useState(from);
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
-
-  useEffect(() => {
-    if (!isInView) return;
-    let startTime: number;
-    let animationFrame: number;
-
-    const step = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
-      setCount(Math.floor(progress * (to - from) + from));
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(step);
-      }
-    };
-
-    animationFrame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [isInView, from, to, duration]);
-
-  return (
-    <span ref={ref} className="font-mono font-bold tracking-tight">
-      {prefix}
-      {count.toLocaleString()}
-      {suffix}
-    </span>
-  );
+// ─── TYPES ───────────────────────────────────────────────────────────────────
+export interface RegisteredCreatorPreview {
+  id: number;
+  name: string;
+  category: string;
+  followers: number;
+  engagementRate: string | number;
+  avatarUrl?: string;
+  country?: string;
+  isVerified?: boolean;
 }
 
-// ─── REAL INDIAN BENCHMARKS & DISCOVERY PREVIEW SECTION ──────────────────
-const REAL_INDIAN_BENCHMARKS = [
+// ─── MARKETPLACE DELIVERABLE CATEGORIES ──────────────────────────────────────
+const MARKETPLACE_FORMATS = [
   {
-    name: "Komal Pandey",
-    handle: "@komalpandeyofficial",
-    instagramUrl: "https://www.instagram.com/komalpandeyofficial/",
-    initials: "KP",
-    niche: "Fashion & Editorial Styling",
-    followers: "1.9M+",
-    primaryDemo: "18–34 • 78% India",
-    topCities: "Delhi NCR, Mumbai",
-    formatStrength: "9:16 Styling Reels",
-    badge: "Public Benchmark",
+    id: "reels",
+    badge: "9:16 Vertical Video",
+    title: "Instagram Reels & Stories",
+    deliverable: "1× Dedicated Reel + 2× Stories",
+    typicalBudget: "₹25,000 – ₹85,000",
+    specs: "Hook in 1.8s • Dual revision boundary • Tier-1 reach",
+    actionLabel: "Browse Open Briefs",
+    actionHref: "/opportunities",
+    icon: Video,
   },
   {
-    name: "Ankush Bahuguna",
-    handle: "@ankushbahuguna",
-    instagramUrl: "https://www.instagram.com/ankushbahuguna/",
-    initials: "AB",
-    niche: "Men's Grooming & Comedy",
-    followers: "1.3M+",
-    primaryDemo: "18–34 • 84% India",
-    topCities: "Mumbai, Bengaluru",
-    formatStrength: "Skits & Beauty Reviews",
-    badge: "Public Benchmark",
+    id: "youtube",
+    badge: "Long-Form Video",
+    title: "YouTube Dedicated & Mid-Rolls",
+    deliverable: "60–90s Integrated Sponsor Segment",
+    typicalBudget: "₹45,000 – ₹1,80,000",
+    specs: "Pinned description link • 14-day telemetry • In-depth demo",
+    actionLabel: "Explore Opportunities",
+    actionHref: "/opportunities",
+    icon: Sparkles,
   },
   {
-    name: "Shlok Srivastava",
-    handle: "@techburner",
-    instagramUrl: "https://www.instagram.com/techburner/",
-    initials: "TB",
-    niche: "Consumer Tech & Gadgets",
-    followers: "4.5M+",
-    primaryDemo: "18–34 • 89% India",
-    topCities: "Delhi NCR, Pune",
-    formatStrength: "High-Retention Tech Reels",
-    badge: "Public Benchmark",
+    id: "ugc",
+    badge: "Performance Creatives",
+    title: "UGC Ad Packages & Whitelisting",
+    deliverable: "3× Raw 4K Hooks + Paid Ad Rights",
+    typicalBudget: "₹20,000 – ₹70,000",
+    specs: "High-CTR scripting • Dual aspect ratio • Meta Spark ready",
+    actionLabel: "Join as a Creator",
+    actionHref: "/signup",
+    icon: Layers,
   },
 ];
 
+// ─── LIVE MARKETPLACE PREVIEW SECTION ────────────────────────────────────────
 export function DiscoveryPreviewSection() {
+  const { data: registeredCreators } = useQuery<RegisteredCreatorPreview[]>({
+    queryKey: ["/api/influencers/featured"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/influencers/featured");
+        if (!res.ok) return [];
+        return (await res.json()) as RegisteredCreatorPreview[];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const hasRealCreators = registeredCreators && registeredCreators.length > 0;
+
   return (
-    <section id="discovery" className="py-20 px-6 lg:px-10 max-w-7xl mx-auto space-y-12">
+    <section id="discovery" className="py-12 lg:py-16 px-6 lg:px-10 max-w-7xl mx-auto space-y-8">
       {/* Section Header */}
-      <div className="max-w-2xl mx-auto text-center space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
-          Creator Discovery Engine
+      <div className="max-w-2xl mx-auto text-center space-y-2.5">
+        <p className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985]">
+          Live Marketplace Preview
         </p>
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#0A0A0A]">
-          Evaluate Indian creators with{" "}
-          <span className="font-serif italic font-normal text-blue-700">
-            verified audience data.
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
+          Structured creator formats with{" "}
+          <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985]">
+            milestone-protected payouts.
           </span>
         </h2>
-        <p className="text-sm text-zinc-500 leading-relaxed">
-          Inspect real demographic splits, Tier-1 city concentrations, and format performance before
-          sending a collaboration brief.
+        <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-xl mx-auto">
+          Explore structured commercial packages, review deliverables before production begins, and
+          negotiate in versioned deal rooms without middleman markups.
         </p>
       </div>
 
-      {/* 3-Column Creator Benchmark Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {REAL_INDIAN_BENCHMARKS.map((creator) => (
-          <div
-            key={creator.handle}
-            className="bg-white rounded-2xl border border-[#E5E4DF] p-6 shadow-xs flex flex-col justify-between space-y-5 hover:border-zinc-400 transition-colors"
-          >
-            {/* Top Identity Row */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-[#0A0A0A] text-white text-xs font-bold flex items-center justify-center shrink-0">
-                  {creator.initials}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="text-sm font-bold text-[#0A0A0A] truncate">{creator.name}</h3>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+      {/* Grid: Real Registered Creators or Standardized Format Hubs */}
+      {hasRealCreators ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {registeredCreators.slice(0, 3).map((creator) => (
+            <div
+              key={creator.id}
+              className="liquid-silver-card rounded-2xl p-6 flex flex-col justify-between space-y-5 transition-all border border-[rgba(106,13,24,0.35)] dark:border-[#E87985]/30 shadow-xs"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-12 h-12 rounded-xl monogram-silver-burgundy flex items-center justify-center font-bold text-base text-[#6A0D18] dark:text-[#E87985] shrink-0">
+                    {creator.name.slice(0, 2).toUpperCase()}
                   </div>
-                  <a
-                    href={creator.instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-blue-700 transition-colors truncate"
-                  >
-                    <Instagram className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{creator.handle}</span>
-                  </a>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-sm font-bold text-[#0A0A0A] dark:text-[#F8FAFC] truncate">
+                        {creator.name}
+                      </h3>
+                      {creator.isVerified && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985] shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                      {creator.category}
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-md bg-[#FDF6F7] dark:bg-[#6A0D18]/25 text-[#6A0D18] dark:text-[#E87985] border border-[#EED8DC] dark:border-[#6A0D18]/40 text-xs font-semibold">
+                  Verified Creator
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#E5E4DF] dark:border-white/10 text-xs">
+                <div>
+                  <span className="text-zinc-400 dark:text-zinc-500 block text-[11px]">
+                    Audience Reach
+                  </span>
+                  <span className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC] font-tabular">
+                    {creator.followers ? `${(creator.followers / 1000).toFixed(0)}K+` : "Growing"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-zinc-400 dark:text-zinc-500 block text-[11px]">
+                    Engagement Rate
+                  </span>
+                  <span className="font-bold text-[#6A0D18] dark:text-[#E87985]">
+                    {creator.engagementRate ? `${creator.engagementRate}%` : "Audited"}
+                  </span>
                 </div>
               </div>
 
-              <span className="px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60 text-xs font-semibold shrink-0">
-                {creator.badge}
-              </span>
-            </div>
-
-            {/* Niche Tag */}
-            <div className="px-3 py-1.5 rounded-lg bg-[#FAF9F6] border border-[#E5E4DF] text-xs font-medium text-zinc-700">
-              {creator.niche}
-            </div>
-
-            {/* 2x2 Audience Ledger */}
-            <div className="grid grid-cols-2 gap-y-3.5 gap-x-4 pt-1 border-t border-[#E5E4DF] text-xs">
-              <div>
-                <span className="text-zinc-400 block">Instagram Reach</span>
-                <span className="font-bold text-[#0A0A0A] font-tabular">{creator.followers}</span>
-              </div>
-              <div>
-                <span className="text-zinc-400 block">Primary Format</span>
-                <span className="font-bold text-blue-700">{creator.formatStrength}</span>
-              </div>
-              <div>
-                <span className="text-zinc-400 block">Core Audience</span>
-                <span className="font-semibold text-[#0A0A0A] font-tabular">
-                  {creator.primaryDemo}
+              <div className="pt-3 border-t border-[#E5E4DF] dark:border-white/10 flex items-center justify-between gap-3">
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                  India Roster
                 </span>
-              </div>
-              <div>
-                <span className="text-zinc-400 block">Top Metros</span>
-                <span className="font-semibold text-[#0A0A0A] truncate block">
-                  {creator.topCities}
-                </span>
+                <Link href={`/influencers/${creator.id}`}>
+                  <button className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg liquid-burgundy-metal text-xs font-semibold text-white shadow-xs cursor-pointer">
+                    <span>View Media Kit</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-white" />
+                  </button>
+                </Link>
               </div>
             </div>
-
-            {/* Footer Action Linking to Real Instagram Profile */}
-            <div className="pt-3 border-t border-[#E5E4DF] flex items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
-                <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-                India
-              </span>
-              <a
-                href={creator.instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#FAF9F6] hover:bg-[#0A0A0A] text-[#0A0A0A] hover:text-white border border-[#E5E4DF] text-xs font-semibold transition-colors"
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {MARKETPLACE_FORMATS.map((fmt) => {
+            const Icon = fmt.icon;
+            return (
+              <div
+                key={fmt.id}
+                className="liquid-silver-card rounded-2xl p-6 h-full flex flex-col justify-between space-y-5 transition-all border border-[rgba(106,13,24,0.35)] dark:border-[#E87985]/30 shadow-xs"
               >
-                <span>Inspect Instagram</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </div>
-        ))}
-      </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="px-2.5 py-0.5 rounded-md bg-[#FDF6F7] dark:bg-[#6A0D18]/25 text-[#6A0D18] dark:text-[#E87985] border border-[#EED8DC] dark:border-[#6A0D18]/40 text-xs font-semibold">
+                      {fmt.badge}
+                    </span>
+                    <div className="h-8 w-8 rounded-lg bg-white/80 dark:bg-white/10 border border-[#E5E4DF] dark:border-white/10 flex items-center justify-center text-[#6A0D18] dark:text-[#E87985]">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                      {fmt.title}
+                    </h3>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium mt-1">
+                      {fmt.deliverable}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-3 border-t border-[#E5E4DF] dark:border-white/10 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500 dark:text-zinc-400">Benchmark Rate</span>
+                    <span className="font-bold text-[#0A0A0A] dark:text-[#F8FAFC] font-tabular">
+                      {fmt.typicalBudget}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-zinc-500 dark:text-zinc-400 block text-[11px]">
+                      Operating Specs
+                    </span>
+                    <p className="font-medium text-[#6A0D18] dark:text-[#E87985] text-xs leading-relaxed">
+                      {fmt.specs}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-[#E5E4DF] dark:border-white/10 flex items-center justify-between gap-3">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                    Bilateral Terms
+                  </span>
+                  <Link href={fmt.actionHref}>
+                    <button className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg liquid-burgundy-metal text-xs font-semibold text-white shadow-xs cursor-pointer">
+                      <span>{fmt.actionLabel}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-white" />
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
 
-// ─── CREATOR JOURNEY STEPS ────────────────────────────────────────────────
-const JOURNEY_STEPS = [
-  {
-    step: "01",
-    title: "Connect Social Accounts",
-    desc: "Link Instagram and YouTube with official OAuth authentication.",
-    icon: Zap,
-  },
-  {
-    step: "02",
-    title: "Verified Identity Pass",
-    desc: "Gain roster verification, rate card transparency, and milestone payment protection.",
-    icon: ShieldCheck,
-  },
-  {
-    step: "03",
-    title: "Review Matching Briefs",
-    desc: "Access high-ticket brand campaigns matching your niche and minimum fee.",
-    icon: Search,
-  },
-  {
-    step: "04",
-    title: "Mutual Deal Room",
-    desc: "Negotiate milestone deadlines and compensation with clear contractual terms.",
-    icon: FileCheck2,
-  },
-  {
-    step: "05",
-    title: "Confirm Terms & Deliver",
-    desc: "Brands pre-fund 100% of the contract budget into safe milestone vaults.",
-    icon: Lock,
-  },
-  {
-    step: "06",
-    title: "Automated Release",
-    desc: "Funds disburse directly to creator accounts upon deliverable signoff.",
-    icon: CircleDollarSign,
-  },
-];
-
+// ─── MAIN LANDING PAGE COMPONENT ─────────────────────────────────────────────
 export default function Landing() {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [hoveredCreatorId, setHoveredCreatorId] = useState<number | null>(1);
-  const [aiStage, setAiStage] = useState<"idle" | "typing" | "analyzing" | "complete">("idle");
-  const shouldReduceMotion = useReducedMotion();
+  const heroCardRef = useRef<HTMLDivElement>(null);
+  const [heroMousePos, setHeroMousePos] = useState({ x: 50, y: 50 });
+  const [isHeroHovered, setIsHeroHovered] = useState(false);
 
-  // AI Assistant Interactive Simulation Trigger
-  const triggerAiDemo = () => {
-    setAiStage("typing");
-    setTimeout(() => {
-      setAiStage("analyzing");
-      setTimeout(() => {
-        setAiStage("complete");
-      }, 1200);
-    }, 1000);
-  };
+  const handleHeroMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!heroCardRef.current) return;
+    const rect = heroCardRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    setHeroMousePos({ x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 });
+    setIsHeroHovered(true);
+  }, []);
+
+  const handleHeroMouseLeave = useCallback(() => {
+    setHeroMousePos({ x: 50, y: 50 });
+    setIsHeroHovered(false);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#0A0A0A] selection:bg-[#1D4ED8] selection:text-white font-sans antialiased">
-      {/* ─── 1. MINIMAL CENTERED-LOGO TOP NAVIGATION ───────────────────────── */}
-      <header className="sticky top-0 z-50 bg-[#FAF9F6]/80 backdrop-blur-lg border-b border-slate-200/60 transition-colors">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 h-16 grid grid-cols-3 items-center">
-          {/* Col 1: Left Flanking Links */}
-          <nav className="flex items-center gap-6 text-xs font-semibold uppercase tracking-wider text-[#52525B] justify-self-start">
-            <a href="#discovery" className="hover:text-[#0A0A0A] transition-colors cursor-pointer">
-              Discovery
+    <div className="min-h-screen bg-[#FAF9F6] dark:bg-[#09090B] text-[#0A0A0A] dark:text-[#F8FAFC] selection:bg-[#6A0D18] selection:text-white font-sans antialiased">
+      {/* ─── 1. TOP EDITORIAL NAVIGATION ─────────────────────────────────── */}
+      <header className="sticky top-0 z-50 bg-[#FAF9F6]/85 dark:bg-[#09090B]/85 backdrop-blur-lg border-b border-[#E5E4DF] dark:border-white/10 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 h-16 flex items-center justify-between md:grid md:grid-cols-3">
+          {/* Col 1: Left Flanking Links (Desktop only) */}
+          <nav className="hidden md:flex items-center gap-6 text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 justify-self-start">
+            <a
+              href="#discovery"
+              className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors cursor-pointer"
+            >
+              Marketplace
             </a>
             <a
-              href="#social-proof"
-              className="hover:text-[#0A0A0A] transition-colors cursor-pointer hidden sm:inline-block"
+              href="#value-strip"
+              className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors cursor-pointer"
             >
               Economics
             </a>
             <a
-              href="#telemetry"
-              className="hover:text-[#0A0A0A] transition-colors cursor-pointer hidden md:inline-block"
-            >
-              Telemetry
-            </a>
-            <a
               href="#workflow"
-              className="hover:text-[#0A0A0A] transition-colors cursor-pointer hidden lg:inline-block"
+              className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors cursor-pointer"
             >
-              Architecture
+              Workflow
             </a>
           </nav>
 
-          {/* Col 2: Mathematically Centered Wordmark */}
+          {/* Col 2: Wordmark (Centered on desktop, left on mobile) */}
           <Link
             href="/"
-            className="flex items-center gap-2 group cursor-pointer justify-self-center"
+            className="flex items-center gap-2 group cursor-pointer md:justify-self-center"
           >
-            <div className="h-7 w-7 rounded-md bg-[#0A0A0A] text-white flex items-center justify-center font-bold text-xs tracking-tighter shadow-xs group-hover:bg-[#1D4ED8] transition-colors">
+            <div className="h-7 w-7 rounded-md bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] flex items-center justify-center font-bold text-xs tracking-tighter shadow-xs group-hover:bg-[#6A0D18] dark:group-hover:bg-[#8B1524] dark:group-hover:text-white transition-colors">
               CB
             </div>
-            <span className="text-base font-bold tracking-tight text-[#0A0A0A]">
+            <span className="text-base font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
               Creators
-              <span className="font-serif italic font-normal text-[#1D4ED8] ml-0.5">Brand</span>
+              <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985] ml-0.5">
+                Brand
+              </span>
             </span>
           </Link>
 
           {/* Col 3: Right Controls & Auth CTA */}
-          <div className="flex items-center gap-3 justify-self-end">
+          <div className="flex items-center gap-2 sm:gap-3 justify-self-end">
+            <ThemeToggle />
             <Link
               href="/login"
-              className="text-xs font-semibold text-[#52525B] hover:text-[#0A0A0A] transition-colors px-2 py-1"
+              className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-[#0A0A0A] dark:hover:text-white transition-colors px-2 py-1"
             >
               Sign in
             </Link>
             <Link href="/signup">
-              <Button className="h-9 px-4 rounded-lg bg-[#0A0A0A] hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer">
+              <button className="h-9 px-3.5 sm:px-4 rounded-lg liquid-burgundy-metal text-xs font-semibold text-white shadow-xs transition-all cursor-pointer">
                 Join Roster
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
       </header>
 
       <main>
-        {/* ─── 2. ASYMMETRIC 50/50 SPLIT-SCREEN HERO SECTION ─────────────────── */}
-        <section className="p-3 sm:p-6 lg:p-8 bg-[#EEF2F6]/60">
-          <div className="max-w-7xl mx-auto rounded-3xl bg-[#FAF9F6] border border-black/[0.07] shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
-            {/* LEFT 50%: ATMOSPHERIC CREATOR VISUAL + FROSTED TELEMETRY ARTIFACTS */}
-            <div className="lg:col-span-6 relative p-3 sm:p-4 flex flex-col justify-between overflow-hidden min-h-[540px] lg:min-h-full">
-              {/* Visual Frame */}
-              <div className="absolute inset-3 sm:inset-4 rounded-2xl overflow-hidden bg-slate-950">
-                <img
-                  src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1400&auto=format&fit=crop"
-                  alt="Creator Production Studio"
-                  className="w-full h-full object-cover object-center opacity-85 scale-105 transition-transform duration-700 hover:scale-100"
-                />
-                {/* Atmospheric Vignette Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/35" />
-                <div className="absolute inset-0 bg-radial-at-c from-transparent via-transparent to-black/50" />
-              </div>
-
-              {/* FLOATING FROSTED CARD 1: Escrow Balance & Vault Telemetry (Top Left) */}
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="relative z-10 m-2 sm:m-4 self-start bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl backdrop-saturate-150 border border-white/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8),0_20px_40px_-15px_rgba(15,23,42,0.12)] p-4 rounded-2xl max-w-[280px] sm:max-w-xs text-[#0A0A0A] space-y-2.5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#52525B]">
-                    Terms Confirmed
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Locked &amp; Secured
-                  </span>
-                </div>
+        {/* ─── 2. ABOVE-THE-FOLD HERO SECTION WITH WARM EDITORIAL GRADIENT ─── */}
+        <section className="relative py-12 sm:py-16 lg:py-20 border-b border-[#E5E4DF] dark:border-white/10 bg-editorial-hero">
+          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+              {/* LEFT COLUMN (7 COLS): HEADLINE, SUBHEADLINE & DUAL ROLE CTAS */}
+              <div className="lg:col-span-7 space-y-6 sm:space-y-8">
+                {/* Eyebrow Badge */}
                 <div>
-                  <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A]">
-                    ₹2,45,000
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full liquid-silver-card text-xs font-semibold text-[#0A0A0A] dark:text-[#F8FAFC] shadow-xs">
+                    <span className="w-2 h-2 rounded-full bg-[#6A0D18] dark:bg-[#E87985]" />
+                    <span>DIRECT CREATOR–BRAND MARKETPLACE • INDIA</span>
                   </div>
-                  <p className="text-[11px] text-[#52525B] font-medium mt-0.5">
-                    Pre-funded milestone budget for Q4 campaigns
+                </div>
+
+                {/* Display Headline with Signature Editorial Contrast */}
+                <div className="space-y-4">
+                  <h1 className="text-3xl sm:text-5xl lg:text-[3.5rem] font-bold text-[#0A0A0A] dark:text-[#F8FAFC] tracking-[-0.035em] leading-[1.08]">
+                    Where creators get paid —{" "}
+                    <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985] block sm:inline">
+                      not promised exposure.
+                    </span>
+                  </h1>
+
+                  <p className="text-base sm:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed max-w-xl">
+                    Discover verified Indian creators, lock deliverables and INR payouts in
+                    versioned deal rooms, review final content packages, and track settlements
+                    without agency markups.
                   </p>
                 </div>
-                <div className="pt-2 border-t border-black/[0.06] flex items-center justify-between text-[11px]">
-                  <span className="text-[#52525B]">Release Condition</span>
-                  <span className="font-semibold text-[#0A0A0A]">Dual Signoff</span>
-                </div>
-              </motion.div>
 
-              {/* FLOATING FROSTED CARD 2: Recent Brand Payouts Feed (Middle Stagger) */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.25 }}
-                className="relative z-10 my-auto self-end mr-2 sm:mr-4 bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl backdrop-saturate-150 border border-white/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8),0_20px_40px_-15px_rgba(15,23,42,0.12)] p-3.5 rounded-2xl max-w-[290px] sm:max-w-[310px] text-[#0A0A0A] space-y-2"
-              >
-                <div className="flex items-center justify-between text-[11px] text-[#52525B]">
-                  <span className="font-semibold uppercase tracking-wider">Cleared Payout</span>
-                  <span className="font-mono text-emerald-700 font-semibold">Instant T+0</span>
-                </div>
-                <div className="flex items-center justify-between gap-3 pt-1">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-8 w-8 rounded-lg bg-blue-100 text-[#1D4ED8] flex items-center justify-center font-bold text-xs shrink-0">
-                      LB
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[#0A0A0A] truncate">
-                        Lumière Beauty
-                      </p>
-                      <p className="text-[11px] text-[#52525B] truncate">Instagram Reel Delivery</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-sm font-bold text-emerald-700 block">+₹65,000</span>
-                    <span className="text-[11px] text-[#52525B]">Payout Released</span>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* FLOATING FROSTED CARD 3: Obsidian Verified Creator Pass (Bottom Left) */}
-              <motion.div
-                initial={{ opacity: 0, y: -16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="relative z-10 m-2 sm:m-4 self-start bg-[#0A0A0A]/85 backdrop-blur-xl border border-white/15 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)] p-4 rounded-2xl max-w-[300px] sm:max-w-xs text-white space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Verified Creator Pass
-                  </span>
-                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                    Tier 1 Elite
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-3">
-                  <img
-                    src="https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=150&auto=format&fit=crop"
-                    alt="Maya Chen"
-                    className="w-10 h-10 rounded-full object-cover border border-white/20 shrink-0"
-                  />
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="text-xs font-bold text-white">Maya Chen</h4>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#2563EB]" />
-                    </div>
-                    <p className="text-[11px] text-slate-400">@mayachen_tech · 285K</p>
-                  </div>
-                </div>
-                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-400">Avg. Engagement</span>
-                  <span className="font-bold text-white">6.2% Verified</span>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* RIGHT 50%: EDITORIAL TYPOGRAPHY & TACTILE SPLIT-ACTION CTA */}
-            <div className="lg:col-span-6 p-8 sm:p-12 lg:p-16 flex flex-col justify-between space-y-10">
-              {/* Category Kicker */}
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-black/[0.05] text-xs font-semibold text-[#52525B]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1D4ED8]" />
-                  Commercial Operating System for Creators & Brands
-                </div>
-              </div>
-
-              {/* Main Headline with Editorial Italic Serif Contrast */}
-              <div className="space-y-6">
-                <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-[#0A0A0A] tracking-[-0.035em] leading-[1.04]">
-                  Where verified influence meets{" "}
-                  <span className="font-serif italic font-normal text-[#1D4ED8] block sm:inline">
-                    guaranteed payouts.
-                  </span>
-                </h1>
-
-                <p className="text-base sm:text-lg text-[#52525B] font-normal leading-relaxed max-w-xl">
-                  CreatorsBrand is the disciplined marketplace connecting vetted brands with
-                  high-retention creators. Milestone-gated contracts, auditable audience telemetry,
-                  and zero payment delays.
-                </p>
-              </div>
-
-              {/* Tactile Split-Action Primary CTA */}
-              <div className="space-y-4 pt-2">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                {/* Dual Role CTAs */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-1">
                   <Link href="/signup">
-                    <div className="inline-flex items-center gap-3 p-1.5 pl-5 pr-2 rounded-full bg-[#0A0A0A] hover:bg-slate-800 text-white transition-all duration-200 group shadow-md cursor-pointer">
-                      <span className="text-sm font-semibold tracking-tight">
-                        Explore Open Campaigns
-                      </span>
-                      <div className="h-9 w-9 rounded-full bg-[#1D4ED8] group-hover:bg-blue-600 text-white flex items-center justify-center transition-colors shrink-0 shadow-xs">
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    <button className="px-6 py-3.5 rounded-xl liquid-burgundy-metal text-xs sm:text-sm font-semibold text-white inline-flex items-center justify-center gap-2 shadow-md hover:brightness-110 transition-all cursor-pointer w-full sm:w-auto">
+                      <span>Launch a Campaign</span>
+                      <ArrowRight className="w-4 h-4 text-white" />
+                    </button>
+                  </Link>
+
+                  <Link href="/signup">
+                    <button className="px-6 py-3.5 rounded-xl liquid-silver-card text-xs sm:text-sm font-semibold text-[#0A0A0A] dark:text-[#F8FAFC] hover:text-[#6A0D18] dark:hover:text-[#E87985] inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer w-full sm:w-auto">
+                      <span>Join as a Creator</span>
+                      <ArrowUpRight className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                    </button>
+                  </Link>
+                </div>
+
+                {/* Micro Guarantee & Key Metrics Anchor Row */}
+                <div className="pt-6 border-t border-[#E5E4DF] dark:border-white/10 grid grid-cols-3 gap-3 sm:gap-4">
+                  <div>
+                    <div className="text-lg sm:text-2xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC] font-tabular">
+                      100%
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-normal mt-0.5 leading-snug">
+                      Agreed Payout Protection
+                    </p>
+                  </div>
+                  <div>
+                    <div className="text-lg sm:text-2xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC] font-tabular">
+                      T+0
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-normal mt-0.5 leading-snug">
+                      Settlement on Signoff
+                    </p>
+                  </div>
+                  <div>
+                    <div className="text-lg sm:text-2xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC] font-tabular">
+                      0%
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-normal mt-0.5 leading-snug">
+                      Agency Markups
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN (5 COLS): LIVE CREATOR SHOWCASE VIDEO & DEAL TELEMETRY */}
+              <div className="lg:col-span-5 relative">
+                <div
+                  ref={heroCardRef}
+                  onMouseMove={handleHeroMouseMove}
+                  onMouseLeave={handleHeroMouseLeave}
+                  className="relative w-full rounded-3xl p-[1.5px] transition-[background] duration-300 ease-out shadow-[0_24px_48px_-12px_rgba(106,13,24,0.42)]"
+                  style={{
+                    background: isHeroHovered
+                      ? `radial-gradient(340px circle at ${heroMousePos.x}% ${heroMousePos.y}%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.4) 30%, rgba(139,21,36,0.85) 70%, rgba(71,7,15,1) 100%)`
+                      : `linear-gradient(145deg, rgba(255,255,255,0.65) 0%, rgba(139,21,36,0.8) 50%, rgba(71,7,15,1) 100%)`,
+                  }}
+                >
+                  <div className="relative rounded-[22.5px] liquid-burgundy-metal p-2.5 sm:p-3 border border-white/20 backdrop-blur-2xl overflow-hidden">
+                    {/* Video Container with Fallback Poster Frame */}
+                    <div className="relative w-full h-[470px] sm:h-[510px] lg:h-[530px] rounded-[20px] overflow-hidden bg-[#2D0509]">
+                      <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        preload="auto"
+                        poster="/images/creator-hero.jpg"
+                        className="object-cover w-full h-full rounded-[20px]"
+                      >
+                        <source src="/videos/creator-hero.mp4" type="video/mp4" />
+                        <img
+                          src="/images/creator-hero.jpg"
+                          alt="Creator filming campaign reel"
+                          className="object-cover w-full h-full rounded-[20px]"
+                        />
+                      </video>
+
+                      {/* Ambient Vignette & Gradient for Legibility */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/40 pointer-events-none rounded-[20px]" />
+
+                      {/* Top Badges Row */}
+                      <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between gap-2 pointer-events-none">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-lg">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Live Creator Studio</span>
+                        </div>
+
+                        <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-white/15 text-white border border-white/25 backdrop-blur-md">
+                          DEAL ROOM • V2
+                        </span>
+                      </div>
+
+                      {/* Compact, Frosted Silver-Glass Deal Telemetry Pill */}
+                      <div className="absolute bottom-3 sm:bottom-3.5 inset-x-3 sm:inset-x-3.5 liquid-silver-card rounded-2xl p-4 sm:p-4.5 border border-[rgba(106,13,24,0.35)] dark:border-[#E87985]/30 shadow-2xl backdrop-blur-xl">
+                        {/* Telemetry Header */}
+                        <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#E5E4DF] dark:border-white/10">
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985] px-2 py-0.5 rounded bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40">
+                            FESTIVE LAUNCH DEAL • v2
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            Bilateral Signoff Confirmed
+                          </span>
+                        </div>
+
+                        {/* Financial & Milestone Status */}
+                        <div className="pt-2.5 flex items-end justify-between gap-3">
+                          <div>
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC] font-tabular">
+                                ₹45,000
+                              </span>
+                              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                Agreed
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-normal mt-0.5">
+                              100% Escrow • T+0 UPI Settlement
+                            </p>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC] block">
+                              1× IG Reel + 2× Stories
+                            </span>
+                            <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 block mt-0.5">
+                              SHA-256 Verified
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </Link>
-
-                  <Link
-                    href="/find-creators"
-                    className="text-xs font-semibold text-[#52525B] hover:text-[#0A0A0A] transition-colors py-2 px-1 inline-flex items-center gap-1 group"
-                  >
-                    <span>Browse 63+ Verified Creators</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </Link>
-                </div>
-
-                {/* Micro Guarantee Label */}
-                <p className="text-xs text-[#52525B] font-normal">
-                  Pre-funded milestone budgets · 100% deliverable signoff protection · Official
-                  Instagram OAuth
-                </p>
-              </div>
-
-              {/* Three Stat Anchors */}
-              <div className="pt-8 border-t border-black/[0.06] grid grid-cols-3 gap-4">
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold tracking-tight text-[#0A0A0A]">
-                    100%
                   </div>
-                  <p className="text-xs text-[#52525B] font-normal mt-0.5">
-                    Agreed Payout Protection
-                  </p>
-                </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold tracking-tight text-[#0A0A0A]">
-                    T+0
-                  </div>
-                  <p className="text-xs text-[#52525B] font-normal mt-0.5">Payout Clearance</p>
-                </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold tracking-tight text-[#0A0A0A]">
-                    0%
-                  </div>
-                  <p className="text-xs text-[#52525B] font-normal mt-0.5">Agency Markups</p>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ─── 3. SECTION 2: TYPOGRAPHIC SOCIAL PROOF & VALUE NARRATIVE ────────── */}
+        {/* ─── 3. FULL-WIDTH HORIZONTAL VALUE STRIP (SILVER-PARCHMENT) ─────── */}
         <section
-          id="social-proof"
-          className="py-24 px-6 lg:px-12 bg-white border-t border-black/[0.06]"
+          id="value-strip"
+          className="border-b border-[#E5E4DF] dark:border-white/10 bg-[linear-gradient(180deg,#FAF9F6_0%,#F7F5F0_100%)] dark:bg-[linear-gradient(180deg,#09090B_0%,#121216_100%)]"
         >
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-            {/* Left 7 Columns: Bold Typographic Statement & 3 Hairline Feature Rows */}
-            <div className="lg:col-span-7 space-y-10">
-              <div className="space-y-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8] block">
-                  Commercial Architecture
-                </span>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0A0A0A] tracking-[-0.035em] leading-[1.08]">
-                  Built for direct creator collaborations —{" "}
-                  <span className="font-serif italic font-normal text-[#1D4ED8]">
-                    without agency markups.
-                  </span>
-                </h2>
-                <p className="text-base text-[#52525B] font-normal leading-relaxed max-w-2xl">
-                  Brands and creators eliminate middleman markups with direct milestone-protected
-                  payouts, verified audience telemetry, and clear commercial terms.
+          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#E5E4DF] dark:divide-white/10">
+              {/* Item 1 */}
+              <div className="py-6 sm:py-8 px-0 sm:px-6 first:sm:pl-0 last:sm:pr-0 space-y-1.5">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985]">
+                  <span className="font-mono">01</span>
+                  <span className="h-1 w-1 rounded-full bg-[#6A0D18] dark:bg-[#E87985]" />
+                  <span>Direct Economics</span>
+                </div>
+                <h3 className="text-base font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                  0% Agency Markups
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Direct brand-to-creator agreements with transparent rates and zero hidden
+                  commissions.
                 </p>
               </div>
 
-              {/* 3 Hairline-Divided Feature Value Rows */}
-              <div className="divide-y divide-black/[0.08] border-y border-black/[0.08]">
-                {/* Item 1 */}
-                <div className="py-6 grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-6 items-baseline">
-                  <div className="sm:col-span-4">
-                    <span className="text-xs font-semibold tracking-wider text-blue-700 block mb-1">
-                      01 / VAULTS
-                    </span>
-                    <h3 className="text-base font-bold text-[#0A0A0A]">Pre-Funded Budget</h3>
-                  </div>
-                  <div className="sm:col-span-8">
-                    <p className="text-sm text-[#52525B] leading-relaxed">
-                      Brands commit 100% of compensation into milestone-protected vaults before
-                      creator production begins. Creators produce with certainty that payout is
-                      guaranteed upon approval.
-                    </p>
-                  </div>
+              {/* Item 2 */}
+              <div className="py-6 sm:py-8 px-0 sm:px-6 space-y-1.5">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985]">
+                  <span className="font-mono">02</span>
+                  <span className="h-1 w-1 rounded-full bg-[#6A0D18] dark:bg-[#E87985]" />
+                  <span>Deal Flexibility</span>
                 </div>
-
-                {/* Item 2 */}
-                <div className="py-6 grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-6 items-baseline">
-                  <div className="sm:col-span-4">
-                    <span className="text-xs font-semibold tracking-wider text-blue-700 block mb-1">
-                      02 / MATCHING
-                    </span>
-                    <h3 className="text-base font-bold text-[#0A0A0A]">
-                      Verified Audience Metrics
-                    </h3>
-                  </div>
-                  <div className="sm:col-span-8">
-                    <p className="text-sm text-[#52525B] leading-relaxed">
-                      Zero follower inflation. Roster intelligence ranks creators by authentic
-                      engagement velocity, verified follower demographics, and confirmed deliverable
-                      track records.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Item 3 */}
-                <div className="py-6 grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-6 items-baseline">
-                  <div className="sm:col-span-4">
-                    <span className="text-xs font-semibold tracking-wider text-blue-700 block mb-1">
-                      03 / CANONICAL
-                    </span>
-                    <h3 className="text-base font-bold text-[#0A0A0A]">
-                      Clear Usage Rights & Terms
-                    </h3>
-                  </div>
-                  <div className="sm:col-span-8">
-                    <p className="text-sm text-[#52525B] leading-relaxed">
-                      Deliverables, licensing durations, and milestone payout schedules are clearly
-                      defined and mutually approved before work begins — eliminating scope creep.
-                    </p>
-                  </div>
-                </div>
+                <h3 className="text-base font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                  Paid, Barter & Hybrid
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Structure flexible commercial proposals across fixed INR fees, gifting/barter, and
+                  performance tiers.
+                </p>
               </div>
-            </div>
 
-            {/* Right 5 Columns: Overlapping Creator Portrait & Live Deliverable Card */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden bg-[#EAE6DF] shadow-[0_24px_48px_-12px_rgba(15,23,42,0.12)] border border-[#E5E4DF]">
-                {/* Ambient Silent Creator Video Loop */}
-                <video
-                  ref={(el) => {
-                    if (el) {
-                      el.defaultMuted = true;
-                      el.muted = true;
-                      const playPromise = el.play();
-                      if (playPromise !== undefined) {
-                        playPromise.catch(() => {});
-                      }
-                    }
-                  }}
-                  src="/videos/creator-hero.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="auto"
-                  poster="/images/creator-hero.jpg"
-                  className="w-full h-full object-cover object-center"
-                >
-                  <source src="/videos/creator-hero.mp4" type="video/mp4" />
-                  <source
-                    src="https://res.cloudinary.com/demo/video/upload/c_fill,ar_4:5,w_720,q_auto/samples/cld-sample-video.mp4"
-                    type="video/mp4"
-                  />
-                </video>
-
-                {/* Subtle Top-Right Glass Pill */}
-                <div className="absolute top-4 right-4 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/75 backdrop-blur-md border border-white/80 text-xs font-semibold text-[#0A0A0A] shadow-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-700" />
-                  <span>Verified Creator</span>
+              {/* Item 3 */}
+              <div className="py-6 sm:py-8 px-0 sm:px-6 space-y-1.5">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985]">
+                  <span className="font-mono">03</span>
+                  <span className="h-1 w-1 rounded-full bg-[#6A0D18] dark:bg-[#E87985]" />
+                  <span>Audit Trail</span>
                 </div>
+                <h3 className="text-base font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                  Versioned Deal Rooms
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Every proposal modification and counter-offer tracked (v1, v2) with optimistic
+                  locking.
+                </p>
+              </div>
 
-                {/* Overlapping Frosted Glass Campaign Telemetry Card */}
-                <div className="absolute bottom-5 left-5 right-5 sm:right-auto sm:w-80 z-10 p-4 rounded-2xl bg-white/70 backdrop-blur-xl backdrop-saturate-150 border border-white/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.85),0_20px_40px_-15px_rgba(15,23,42,0.14)] space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold tracking-wider uppercase text-blue-700">
-                      Festive Launch Campaign
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-50/90 text-emerald-700 border border-emerald-200/70 text-xs font-semibold">
-                      Terms Confirmed
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 text-xs border-t border-black/5 pt-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-zinc-600">Campaign Deliverable</span>
-                      <span className="font-semibold text-[#0A0A0A]">
-                        1× IG Reel + Story Series
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-zinc-600">Milestone Status</span>
-                      <span className="font-semibold text-emerald-700">Protected</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-black/5 text-xs">
-                    <div>
-                      <span className="text-zinc-500 block">Agreed Payout</span>
-                      <span className="text-sm font-bold text-[#0A0A0A] font-tabular">₹45,000</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-zinc-500 block">Release Condition</span>
-                      <span className="font-semibold text-[#0A0A0A]">Dual Signoff</span>
-                    </div>
-                  </div>
+              {/* Item 4 */}
+              <div className="py-6 sm:py-8 px-0 sm:px-6 first:sm:pl-0 last:sm:pr-0 space-y-1.5">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985]">
+                  <span className="font-mono">04</span>
+                  <span className="h-1 w-1 rounded-full bg-[#6A0D18] dark:bg-[#E87985]" />
+                  <span>Clear Signoffs</span>
                 </div>
+                <h3 className="text-base font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                  Package-First Review
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Streamlined content submissions, deliverable links, and pre-agreed revision
+                  boundaries.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ─── 4. SECTION 3: REAL INDIAN BENCHMARKS DISCOVERY ──────── */}
-        <div className="border-t border-[#E5E4DF] bg-[#FAF9F6]">
+        {/* ─── 4. LIVE MARKETPLACE PREVIEW (ROSE-TINTED ALABASTER) ─────────── */}
+        <div className="border-b border-[#E5E4DF] dark:border-white/10 bg-rose-alabaster">
           <DiscoveryPreviewSection />
         </div>
 
-        {/* ─── 5. SECTION 4: REAL-TIME TELEMETRY & WORKFLOW PIPELINE ─────────── */}
+        {/* ─── 5. DUAL-ROLE EDITORIAL WORKFLOW SPLIT (BRANDS & CREATORS) ──── */}
         <section
-          id="telemetry"
-          className="py-24 px-6 lg:px-12 bg-white border-t border-black/[0.06]"
+          id="workflow"
+          className="py-12 lg:py-16 px-6 lg:px-10 border-b border-[#E5E4DF] dark:border-white/10 bg-silver-parchment"
         >
-          <div className="max-w-7xl mx-auto space-y-16">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8] block">
-                  Audit Telemetry
-                </span>
-                <h2 className="text-3xl sm:text-4xl font-bold text-[#0A0A0A] tracking-[-0.035em] leading-tight">
-                  Transparent conversion lift & CPV analytics.
-                </h2>
-                <p className="text-base text-[#52525B] font-normal leading-relaxed">
-                  Every active deal publishes real-time impression telemetry, engagement velocity,
-                  and effective CPV directly into both brand and creator workspaces.
-                </p>
-                <div className="grid grid-cols-2 gap-6 pt-2">
-                  <div className="p-4 rounded-xl bg-[#FAF9F6] border border-black/[0.06]">
-                    <span className="text-xs font-mono text-[#52525B] block">AVG ENGAGEMENT</span>
-                    <span className="text-2xl font-bold text-[#0A0A0A] block mt-1">5.8%</span>
-                    <span className="text-xs text-emerald-700 font-semibold mt-0.5 block">
-                      2.4x Industry Benchmark
-                    </span>
-                  </div>
-                  <div className="p-4 rounded-xl bg-[#FAF9F6] border border-black/[0.06]">
-                    <span className="text-xs font-mono text-[#52525B] block">MEAN TIME TO PAY</span>
-                    <span className="text-2xl font-bold text-[#0A0A0A] block mt-1">2.4 hrs</span>
-                    <span className="text-xs text-emerald-700 font-semibold mt-0.5 block">
-                      Post Milestone Signoff
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Architectural Telemetry Box */}
-              <div className="rounded-2xl bg-[#FAF9F6] border border-black/[0.08] p-6 shadow-sm space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-black/[0.06]">
-                  <div>
-                    <h3 className="text-sm font-bold text-[#0A0A0A]">Live Deal Telemetry</h3>
-                    <p className="text-xs text-[#52525B]">Active Deal Milestone Monitor</p>
-                  </div>
-                  <span className="text-xs font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full font-semibold">
-                    Terms Confirmed
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs p-3 rounded-lg bg-white border border-black/[0.05]">
-                    <span className="font-semibold text-[#0A0A0A]">Deliverable Package</span>
-                    <span className="font-mono font-bold text-[#0A0A0A]">1x Reel + 2 Stories</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs p-3 rounded-lg bg-white border border-black/[0.05]">
-                    <span className="font-semibold text-[#0A0A0A]">Effective Blended CPV</span>
-                    <span className="font-mono font-bold text-[#1D4ED8]">₹0.38 / View</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs p-3 rounded-lg bg-white border border-black/[0.05]">
-                    <span className="font-semibold text-[#0A0A0A]">Milestone Payment Vault</span>
-                    <span className="font-mono font-bold text-emerald-700">
-                      ₹2,45,000 Protected
-                    </span>
-                  </div>
-                </div>
-              </div>
+          <div className="max-w-7xl mx-auto space-y-10">
+            {/* Section Header */}
+            <div className="max-w-2xl mx-auto text-center space-y-2.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985] block">
+                Bilateral Architecture
+              </span>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
+                Structured workflows for both sides of the table.
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
+                Whether you are launching high-impact campaigns or monetizing audited reach,
+                CreatorsBrand guarantees complete contract transparency and pre-funded milestone
+                security.
+              </p>
             </div>
 
-            {/* Workflow Steps Grid */}
-            <div id="workflow" className="pt-8 border-t border-black/[0.06] space-y-10">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8] block">
-                  Operating Pipeline
-                </span>
-                <h3 className="text-2xl sm:text-3xl font-bold text-[#0A0A0A] mt-1">
-                  How CreatorsBrand eliminates commercial friction.
-                </h3>
+            {/* 2-Column Editorial Split Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+              {/* Left Card: For Brands */}
+              <div className="liquid-silver-card rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 border border-[rgba(106,13,24,0.40)] dark:border-[#E87985]/30 shadow-sm">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-md bg-[#FDF6F7] dark:bg-[#6A0D18]/25 text-[#6A0D18] dark:text-[#E87985] border border-[#EED8DC] dark:border-[#6A0D18]/40">
+                      For Brands
+                    </span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                      Direct Commissioning
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#0A0A0A] dark:text-[#F8FAFC] tracking-tight">
+                      Deploy high-ROI campaigns without agency friction.
+                    </h3>
+                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-2 leading-relaxed">
+                      Publish structured requirements, negotiate directly in bilateral deal rooms,
+                      and lock agreed milestone payouts in escrow before content production begins.
+                    </p>
+                  </div>
+
+                  {/* 3 Concise Bullet Milestones */}
+                  <div className="space-y-3.5 pt-2">
+                    <div className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                          Publish structured briefs in INR
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                          Define exact deliverable specs, target niches, deadlines, and fixed
+                          budgets with zero hidden cuts.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                          Negotiate versioned scopes without agency fees
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                          Agree on revisions, rights, and timelines with optimistic concurrency
+                          locking and auditable history.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                          Approve final content packages before settlement
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                          Review video proofs, raw hooks, and caption links with dual signoff
+                          required for escrow release.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-[#E5E4DF] dark:border-white/10">
+                  <Link href="/campaigns/create">
+                    <button className="w-full py-3.5 px-6 rounded-xl liquid-burgundy-metal text-xs sm:text-sm font-semibold text-white inline-flex items-center justify-center gap-2 shadow-sm hover:brightness-110 transition-all cursor-pointer">
+                      <span>Post a Brand Brief</span>
+                      <ArrowRight className="w-4 h-4 text-white" />
+                    </button>
+                  </Link>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {JOURNEY_STEPS.map((s) => (
-                  <div
-                    key={s.step}
-                    className="p-5 rounded-xl bg-[#FAF9F6] border border-black/[0.06] space-y-2.5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold text-[#1D4ED8]">{s.step}</span>
-                      <s.icon className="w-4 h-4 text-[#52525B]" />
-                    </div>
-                    <h4 className="text-sm font-bold text-[#0A0A0A]">{s.title}</h4>
-                    <p className="text-xs text-[#52525B] leading-relaxed">{s.desc}</p>
+              {/* Right Card: For Creators */}
+              <div className="liquid-silver-card rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 border border-[rgba(106,13,24,0.40)] dark:border-[#E87985]/30 shadow-sm">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-md bg-[#FDF6F7] dark:bg-[#6A0D18]/25 text-[#6A0D18] dark:text-[#E87985] border border-[#EED8DC] dark:border-[#6A0D18]/40">
+                      For Creators
+                    </span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                      Guaranteed Settlements
+                    </span>
                   </div>
-                ))}
+
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#0A0A0A] dark:text-[#F8FAFC] tracking-tight">
+                      Monetize your creative work with zero payment chasing.
+                    </h3>
+                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-2 leading-relaxed">
+                      Lock legally binding deliverables and payouts before filming. Never work on
+                      promises again—every campaign is backed by pre-funded milestone security.
+                    </p>
+                  </div>
+
+                  {/* 3 Concise Bullet Milestones */}
+                  <div className="space-y-3.5 pt-2">
+                    <div className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                          Showcase verified reach & transparent rate cards
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                          Display verified audience statistics, engagement rates, and standardized
+                          pricing to top brands.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                          Lock deliverables, timelines & revision limits in writing
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                          Prevent scope creep with standardized deal room contracts and explicit
+                          approval windows.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-[#FDF6F7] dark:bg-[#6A0D18]/25 border border-[#EED8DC] dark:border-[#6A0D18]/40 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] dark:text-[#E87985]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#0A0A0A] dark:text-[#F8FAFC]">
+                          Track agreed payouts & barter dispatches in one ledger
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                          Instant T+0 UPI and IMPS direct disbursements upon dual signoff with zero
+                          platform clawbacks.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-[#E5E4DF] dark:border-white/10">
+                  <Link href="/signup">
+                    <button className="w-full py-3.5 px-6 rounded-xl liquid-burgundy-metal text-xs sm:text-sm font-semibold text-white inline-flex items-center justify-center gap-2 shadow-sm hover:brightness-110 transition-all cursor-pointer">
+                      <span>Create Creator Profile</span>
+                      <ArrowRight className="w-4 h-4 text-white" />
+                    </button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ─── 6. CLOSING CTA BANNER ───────────────────────────────────────── */}
-        <section className="py-24 px-6 lg:px-12 bg-[#EEF2F6]/60 border-t border-black/[0.06]">
-          <div className="max-w-4xl mx-auto text-center rounded-3xl bg-[#0A0A0A] text-white p-10 sm:p-16 space-y-8 relative overflow-hidden shadow-2xl">
-            <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-              <span className="text-xs font-semibold uppercase tracking-wider text-blue-400 block">
-                Enterprise & Creator Onboarding
+        {/* ─── 6. FULL-WIDTH #6A0D18 LIQUID BURGUNDY CLOSING BANNER ─────────── */}
+        <section className="py-12 lg:py-16 px-6 lg:px-10 bg-[linear-gradient(180deg,#FAF9F6_0%,#F6EFEA_100%)] dark:bg-[linear-gradient(180deg,#09090B_0%,#121216_100%)]">
+          <div className="max-w-7xl mx-auto rounded-3xl liquid-burgundy-metal text-white p-8 sm:p-12 lg:p-16 text-center space-y-6 sm:space-y-8 relative overflow-hidden shadow-2xl">
+            <div className="relative z-10 max-w-3xl mx-auto space-y-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-rose-200/90 block">
+                Direct Commercial Infrastructure • India
               </span>
-              <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-                Build high-yield campaigns on{" "}
-                <span className="font-serif italic font-normal text-blue-400">
-                  proven milestone rails.
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
+                Stop negotiating in DMs.{" "}
+                <span className="font-serif italic font-normal text-rose-200 block sm:inline">
+                  Start closing structured deals.
                 </span>
               </h2>
-              <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed">
-                Join top verified creators and forward-thinking brands running commercial
-                partnerships with automated payout security.
+              <p className="text-sm sm:text-base text-rose-100/90 font-normal leading-relaxed max-w-2xl mx-auto">
+                Pre-funded milestone vaults, dual-signoff deliverable packages, and zero agency
+                markups for modern brands and high-retention creators.
               </p>
             </div>
 
             <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+              {/* High-Contrast Solid White Button with Burgundy Text */}
               <Link href="/signup">
-                <div className="inline-flex items-center gap-3 p-1.5 pl-6 pr-2 rounded-full bg-white hover:bg-slate-100 text-[#0A0A0A] transition-all group shadow-md cursor-pointer">
-                  <span className="text-sm font-semibold tracking-tight">Create Free Account</span>
-                  <div className="h-9 w-9 rounded-full bg-[#1D4ED8] text-white flex items-center justify-center shrink-0">
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </div>
+                <button className="px-7 py-3.5 rounded-xl bg-white text-[#6A0D18] font-bold hover:bg-[#FDF6F7] shadow-lg text-xs sm:text-sm inline-flex items-center gap-2 transition-all cursor-pointer w-full sm:w-auto justify-center">
+                  <span>Create Brand Account</span>
+                  <ArrowRight className="w-4 h-4 text-[#6A0D18]" />
+                </button>
               </Link>
-              <Link
-                href="/login"
-                className="text-xs font-semibold text-slate-400 hover:text-white transition-colors py-2 px-3"
-              >
-                Existing Member? Sign In
+              {/* High-Contrast Frosted Secondary Button */}
+              <Link href="/signup">
+                <button className="px-7 py-3.5 rounded-xl bg-white/15 text-white border border-white/40 backdrop-blur-md hover:bg-white/25 font-semibold text-xs sm:text-sm inline-flex items-center gap-2 transition-all cursor-pointer w-full sm:w-auto justify-center">
+                  <span>Create Creator Profile</span>
+                  <ArrowUpRight className="w-4 h-4 text-white" />
+                </button>
               </Link>
             </div>
           </div>
         </section>
       </main>
 
-      {/* ─── 7. MINIMAL ARCHITECTURAL FOOTER ───────────────────────────────── */}
-      <footer className="border-t border-black/[0.06] bg-white py-12 px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-[#0A0A0A] text-white flex items-center justify-center font-bold text-[11px]">
-              CB
+      {/* ─── 7. STRUCTURED 4-COLUMN EDITORIAL FOOTER ───────────────────────── */}
+      <footer className="border-t border-[#E5E4DF] dark:border-white/10 bg-[#FAF9F6] dark:bg-[#09090B] py-12 px-6 lg:px-10">
+        <div className="max-w-7xl mx-auto space-y-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+            {/* Col 1: Brand & Purpose */}
+            <div className="col-span-2 sm:col-span-1 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-md bg-[#0A0A0A] dark:bg-white text-white dark:text-[#0A0A0A] flex items-center justify-center font-bold text-xs tracking-tighter shadow-xs">
+                  CB
+                </div>
+                <span className="text-base font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
+                  Creators
+                  <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985]">
+                    Brand
+                  </span>
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-xs">
+                Direct commercial infrastructure connecting vetted Indian brands and verified
+                high-retention creators.
+              </p>
+              <div className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
+                {LEGAL_CONFIG.OPERATED_BY}
+              </div>
             </div>
-            <span className="text-sm font-bold tracking-tight text-[#0A0A0A]">
-              Creators<span className="font-serif italic font-normal text-[#1D4ED8]">Brand</span>
-            </span>
-            <span className="text-xs text-[#52525B] ml-2">© {new Date().getFullYear()}</span>
+
+            {/* Col 2: Marketplace */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A] dark:text-[#F8FAFC]">
+                Marketplace
+              </h4>
+              <ul className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
+                <li>
+                  <Link
+                    href="/find-creators"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Discover Creators
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="#discovery"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Marketplace Deliverables
+                  </a>
+                </li>
+                <li>
+                  <Link
+                    href="/opportunities"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Explore Open Campaigns
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/login"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Brand Workspace
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3: Operating Rails */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A] dark:text-[#F8FAFC]">
+                Operating Rails
+              </h4>
+              <ul className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
+                <li>
+                  <Link
+                    href="/deals"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Versioned Deal Rooms
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/payments"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Milestone Payout Vaults
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="#value-strip"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Direct Economics
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#workflow"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Commercial Architecture
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 4: Compliance & Legal */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A] dark:text-[#F8FAFC]">
+                Compliance & Legal
+              </h4>
+              <ul className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
+                <li>
+                  <Link
+                    href="/terms"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/support"
+                    className="hover:text-[#6A0D18] dark:hover:text-[#E87985] transition-colors"
+                  >
+                    Support & Disputes
+                  </Link>
+                </li>
+                <li>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    Live Workspace Data
+                  </span>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6 text-xs text-[#52525B]">
-            <Link href="/terms" className="hover:text-[#0A0A0A] transition-colors">
-              Terms of Service
-            </Link>
-            <Link href="/privacy" className="hover:text-[#0A0A0A] transition-colors">
-              Privacy Policy
-            </Link>
-            <span className="text-[#52525B]/70">{LEGAL_CONFIG.OPERATED_BY}</span>
+          <div className="pt-6 border-t border-[#E5E4DF] dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500 dark:text-zinc-400">
+            <p>© {new Date().getFullYear()} CreatorsBrand. All rights reserved.</p>
+            <div className="flex items-center gap-6">
+              <Link
+                href="/terms"
+                className="hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC] transition-colors"
+              >
+                Terms
+              </Link>
+              <Link
+                href="/privacy"
+                className="hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC] transition-colors"
+              >
+                Privacy
+              </Link>
+              <Link
+                href="/support"
+                className="hover:text-[#0A0A0A] dark:hover:text-[#F8FAFC] transition-colors"
+              >
+                Support
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

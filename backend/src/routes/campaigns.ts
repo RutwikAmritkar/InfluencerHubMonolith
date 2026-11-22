@@ -4,6 +4,7 @@ import { campaignsTable, brandsTable, applicationsTable } from "@workspace/db";
 import { CreateCampaignBody, UpdateCampaignBody } from "@workspace/api-zod";
 import { eq, and, count } from "drizzle-orm";
 import { requireAuth, requireRole } from "../middlewares/auth";
+import { logPlatformActivity } from "../services/activity.service";
 
 const router: IRouter = Router();
 
@@ -75,6 +76,16 @@ router.post("/campaigns", requireAuth, requireRole(["brand"]), async (req, res):
     .insert(campaignsTable)
     .values({ ...parsed.data, brandId: brand.id })
     .returning();
+
+  await logPlatformActivity({
+    actorUserId: String(userId),
+    actorParty: "brand",
+    eventType: "campaign.created",
+    entityType: "campaign",
+    entityId: campaign.id,
+    summary: `Brand "${brand.name}" created new campaign: "${campaign.title}"`,
+    metadata: { budget: campaign.budget, platform: campaign.platform },
+  });
 
   res.status(201).json(await formatCampaign(campaign));
 });

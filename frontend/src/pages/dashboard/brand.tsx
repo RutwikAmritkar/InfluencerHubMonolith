@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useTheme } from "@/components/theme-provider";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
@@ -24,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ObsidianLiquidKpiCard, BrushedMercuryKpiCard } from "@/components/dashboard/kpi-cards";
 import {
   AreaChart,
   Area,
@@ -173,7 +175,14 @@ interface BrandDashboardData {
 
 export default function BrandDashboard() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [timeframe, setTimeframe] = useState<"7D" | "30D" | "90D" | "1Y">("30D");
+
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   const { data: dashboard } = useQuery<BrandDashboardData>({
     queryKey: ["dashboard-brand"],
@@ -193,133 +202,89 @@ export default function BrandDashboard() {
   const totalBudgetRupees = dashboard?.totalBudgetRupees ?? 615000;
 
   return (
-    <div className="workspace-canvas space-y-8 pb-12 antialiased w-full px-6 lg:px-8">
+    <div className="workspace-canvas space-y-8 pb-12 antialiased w-full px-4 sm:px-6 lg:px-8">
       {/* ─── 1. EDITORIAL HEADER WITH TACTILE CTA ──────────────────────────── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-[#E5E4DF] dark:border-white/10">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8] block mb-1">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] dark:text-[#E87985] block mb-1">
             Commercial Overview
           </span>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-[#F8FAFC]">
             Brand Workspace &amp;{" "}
-            <span className="font-serif italic font-normal text-[#1D4ED8]">
+            <span className="font-serif italic font-normal text-[#6A0D18] dark:text-[#E87985]">
               Campaign Operations
             </span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#52525B] dark:text-slate-400 font-normal mt-1">
+          <p className="text-xs sm:text-sm text-[#52525B] dark:text-zinc-400 font-normal mt-1">
             Auditable audience telemetry, milestone-protected deal rooms, and live creator pipeline.
           </p>
         </div>
 
         <Link href="/campaigns/create">
-          <Button className="h-10 px-5 rounded-lg bg-[#0A0A0A] hover:bg-slate-800 text-white text-xs font-semibold shadow-xs cursor-pointer inline-flex items-center gap-2 group transition-all">
+          <Button className="h-10 px-5 rounded-lg liquid-burgundy-metal text-xs font-semibold shadow-xs cursor-pointer inline-flex items-center gap-2 group transition-all">
             <Plus className="w-4 h-4 text-white" />
             <span>Launch Campaign Brief</span>
           </Button>
         </Link>
       </div>
 
-      {/* ─── 2. SINGLE-CONTAINER KPI METRIC ROW (LINKED DIRECTLY TO ROUTES) ─── */}
-      <div className="bg-white dark:bg-[#11172A] border border-[#E5E4DF] dark:border-white/10 rounded-xl overflow-hidden shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#E5E4DF] dark:divide-white/10">
-        {/* KPI 1: Active Campaigns -> /campaigns */}
-        <Link
-          href="/campaigns"
-          className="p-6 space-y-2 hover:bg-[#FAF9F6] transition-colors group cursor-pointer block"
-        >
-          <div className="flex items-center justify-between text-xs text-[#52525B] dark:text-slate-400 font-medium">
-            <span>Active Campaigns</span>
-            <Megaphone className="w-4 h-4 text-[#0A0A0A] dark:text-white group-hover:text-blue-700 transition-colors" />
-          </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white font-tabular">
-              {activeCampaignsCount}
-            </span>
-            <span className="text-xs font-semibold text-[#059669] bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/60 px-2 py-0.5 rounded-md">
-              Live Briefs
-            </span>
-          </div>
-          <p className="text-xs text-[#52525B] dark:text-slate-400">
-            Open for pitches &amp; invites
-          </p>
-        </Link>
-
-        {/* KPI 2: Pending Applications -> /brand/applications */}
-        <Link
-          href="/brand/applications"
-          className="p-6 space-y-2 hover:bg-[#FAF9F6] transition-colors group cursor-pointer block"
-        >
-          <div className="flex items-center justify-between text-xs text-[#52525B] dark:text-slate-400 font-medium">
-            <span>Pending Applications</span>
-            <FileCheck className="w-4 h-4 text-blue-700 group-hover:translate-x-0.5 transition-transform" />
-          </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white font-tabular">
-              {pendingAppsCount}
-            </span>
-            <span className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-md">
-              Awaiting Review
-            </span>
-          </div>
-          <p className="text-xs text-[#52525B] dark:text-slate-400">Creator pitches &amp; rates</p>
-        </Link>
-
-        {/* KPI 3: Active Deals -> /deals */}
-        <Link
-          href="/deals"
-          className="p-6 space-y-2 hover:bg-[#FAF9F6] transition-colors group cursor-pointer block"
-        >
-          <div className="flex items-center justify-between text-xs text-[#52525B] dark:text-slate-400 font-medium">
-            <span>Active Deals</span>
-            <ShieldCheck className="w-4 h-4 text-[#1D4ED8]" />
-          </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white font-tabular">
-              {activeDealsCount}
-            </span>
-            <span className="text-xs font-semibold text-[#1D4ED8] bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-md">
-              In Production
-            </span>
-          </div>
-          <p className="text-xs text-[#52525B] dark:text-slate-400">Milestone agreements locked</p>
-        </Link>
-
-        {/* KPI 4: Campaign Budget / Payments -> /payments */}
-        <Link
+      {/* ─── 2. TOP 4-CARD KPI SUMMARY ROW (LIQUID METAL & CHROME-GLASS) ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        {/* Card 1 (Hero Financial Metric): Committed Budget in Dark Obsidian Liquid Chrome */}
+        <ObsidianLiquidKpiCard
           href="/payments"
-          className="p-6 space-y-2 hover:bg-[#FAF9F6] transition-colors group cursor-pointer block"
-        >
-          <div className="flex items-center justify-between text-xs text-[#52525B] dark:text-slate-400 font-medium">
-            <span>Campaign Budget</span>
-            <Wallet className="w-4 h-4 text-[#059669]" />
-          </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-3xl font-bold tracking-tight text-[#0A0A0A] dark:text-white font-tabular">
-              ₹{totalBudgetRupees.toLocaleString("en-IN")}
-            </span>
-            <span className="text-xs font-semibold text-[#059669] bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md">
-              Protected
-            </span>
-          </div>
-          <p className="text-xs text-[#52525B] dark:text-slate-400">
-            View payment records &amp; ledger
-          </p>
-        </Link>
+          title="Committed Budget"
+          value={`₹${totalBudgetRupees.toLocaleString("en-IN")}`}
+          subtitle="Pre-funded milestone budget"
+          badgeText="Terms Confirmed"
+          icon={Wallet}
+        />
+
+        {/* Card 2: Active Campaigns in Brushed Mercury Glass */}
+        <BrushedMercuryKpiCard
+          href="/campaigns"
+          title="Active Campaigns"
+          value={activeCampaignsCount}
+          subtitle="Open for pitches & invites"
+          badgeText="Live Briefs"
+          icon={Megaphone}
+        />
+
+        {/* Card 3: Active Deals in Brushed Mercury Glass */}
+        <BrushedMercuryKpiCard
+          href="/deals"
+          title="Active Deals"
+          value={activeDealsCount}
+          subtitle="Milestone agreements locked"
+          badgeText="In Production"
+          icon={ShieldCheck}
+        />
+
+        {/* Card 4: Pending Applications in Brushed Mercury Glass */}
+        <BrushedMercuryKpiCard
+          href="/brand/applications"
+          title="Pending Applications"
+          value={pendingAppsCount}
+          subtitle="Creator pitches & rates"
+          badgeText="Awaiting Review"
+          icon={FileCheck}
+        />
       </div>
 
       {/* ─── 3. AUDITABLE TELEMETRY CHART CONTAINER ────────────────────────── */}
-      <div className="bg-white dark:bg-[#11172A] border border-[#E5E4DF] dark:border-white/10 rounded-xl p-6 shadow-xs space-y-4">
+      <div className="bg-white dark:bg-[#121216] border border-[#E5E4DF] dark:border-white/10 rounded-xl p-6 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E5E4DF] dark:border-white/10 pb-4">
           <div>
-            <h2 className="text-base font-bold text-[#0A0A0A] dark:text-white tracking-tight">
+            <h2 className="text-base font-bold text-[#0A0A0A] dark:text-[#F8FAFC] tracking-tight">
               Campaign Reach &amp; Audience Velocity
             </h2>
-            <p className="text-xs text-[#52525B] dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-[#52525B] dark:text-zinc-400 mt-0.5">
               Aggregated views, verified impressions, and authentic engagement trajectory across
               open briefs.
             </p>
           </div>
 
-          <div className="flex items-center gap-1 bg-[#F2F1EC] dark:bg-slate-800/80 p-1 rounded-lg border border-[#E5E4DF] dark:border-white/10">
+          <div className="flex flex-wrap items-center gap-1 bg-[#F2F1EC] dark:bg-[#18181E] p-1 rounded-lg border border-[#E5E4DF] dark:border-white/10">
             {(["7D", "30D", "90D", "1Y"] as const).map((tf) => (
               <button
                 key={tf}
@@ -327,8 +292,8 @@ export default function BrandDashboard() {
                 onClick={() => setTimeframe(tf)}
                 className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                   timeframe === tf
-                    ? "bg-[#0A0A0A] text-white shadow-xs"
-                    : "text-[#52525B] dark:text-slate-400 hover:text-[#0A0A0A] dark:hover:text-white"
+                    ? "liquid-burgundy-metal font-bold shadow-xs"
+                    : "text-[#52525B] dark:text-zinc-400 hover:text-[#0A0A0A] dark:hover:text-white"
                 }`}
               >
                 {tf}
@@ -344,42 +309,54 @@ export default function BrandDashboard() {
               margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
             >
               <defs>
-                <linearGradient id="cobaltFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0} />
+                <linearGradient id="burgundyFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor={isDark ? "#E87985" : "#A82830"}
+                    stopOpacity={isDark ? 0.35 : 0.2}
+                  />
+                  <stop offset="95%" stopColor={isDark ? "#6A0D18" : "#6A0D18"} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
-                stroke="#E5E4DF"
+                stroke={isDark ? "rgba(255, 255, 255, 0.08)" : "#E5E4DF"}
                 opacity={0.6}
               />
               <XAxis
                 dataKey="day"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "#52525B" }}
+                tick={{ fontSize: 12, fill: isDark ? "#A1A1AA" : "#52525B" }}
                 dy={6}
               />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#52525B" }} />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: isDark ? "#A1A1AA" : "#52525B" }}
+              />
               <Tooltip
                 contentStyle={{
                   borderRadius: "8px",
-                  border: "1px solid #E5E4DF",
-                  background: "#FFFFFF",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #E5E4DF",
+                  background: isDark ? "#18181E" : "#FFFFFF",
                   padding: "8px 12px",
                   boxShadow: "0 4px 12px rgba(10,10,10,0.06)",
                 }}
-                itemStyle={{ color: "#0A0A0A", fontWeight: 600, fontSize: "12px" }}
+                itemStyle={{
+                  color: isDark ? "#F8FAFC" : "#0A0A0A",
+                  fontWeight: 600,
+                  fontSize: "12px",
+                }}
               />
               <Area
                 type="monotone"
                 dataKey="reach"
-                stroke="#1D4ED8"
+                stroke={isDark ? "#E87985" : "#6A0D18"}
                 strokeWidth={2.5}
                 fillOpacity={1}
-                fill="url(#cobaltFill)"
+                fill="url(#burgundyFill)"
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -389,7 +366,7 @@ export default function BrandDashboard() {
       {/* ─── 4. ASYMMETRIC GRID: CAMPAIGNS & MEDIA KITS ───── */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 w-full items-start">
         {/* LEFT: CAMPAIGN PIPELINE */}
-        <section className="xl:col-span-7 2xl:col-span-8 bg-white dark:bg-[#11172A] rounded-xl border border-[#E5E4DF] dark:border-white/10 shadow-xs overflow-hidden min-w-0">
+        <section className="xl:col-span-7 2xl:col-span-8 bg-white dark:bg-[#121216] rounded-xl border border-[#E5E4DF] dark:border-white/10 shadow-xs overflow-hidden min-w-0">
           <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E4DF] dark:border-white/10">
             <div>
               <h2 className="text-base font-bold text-[#0A0A0A] dark:text-white tracking-tight">
@@ -403,7 +380,7 @@ export default function BrandDashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs text-[#1D4ED8] hover:text-blue-800 hover:bg-[#F2F1EC] font-semibold rounded-lg h-8 px-2.5"
+                className="text-xs text-[#6A0D18] hover:text-[#520912] hover:bg-[#F2F1EC] font-semibold rounded-lg h-8 px-2.5"
               >
                 View all briefs
               </Button>
@@ -420,7 +397,7 @@ export default function BrandDashboard() {
                   >
                     <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-xs sm:text-sm font-bold text-[#0A0A0A] dark:text-white group-hover:text-[#1D4ED8] transition-colors truncate">
+                        <h3 className="text-xs sm:text-sm font-bold text-[#0A0A0A] dark:text-white group-hover:text-[#6A0D18] transition-colors truncate">
                           {c.title}
                         </h3>
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#059669] border border-emerald-200">
@@ -468,7 +445,7 @@ export default function BrandDashboard() {
                     </div>
                     <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-xs sm:text-sm font-bold text-[#0A0A0A] dark:text-white group-hover:text-[#1D4ED8] transition-colors truncate">
+                        <h3 className="text-xs sm:text-sm font-bold text-[#0A0A0A] dark:text-white group-hover:text-[#6A0D18] transition-colors truncate">
                           {campaign.title}
                         </h3>
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#059669] border border-emerald-200">
@@ -513,7 +490,7 @@ export default function BrandDashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs text-[#1D4ED8] hover:text-blue-800 hover:bg-[#F2F1EC] font-semibold rounded-lg h-8 px-2.5"
+                className="text-xs text-[#6A0D18] hover:text-[#520912] hover:bg-[#F2F1EC] font-semibold rounded-lg h-8 px-2.5"
               >
                 Directory
               </Button>
@@ -528,19 +505,19 @@ export default function BrandDashboard() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 rounded-full border border-[#E5E4DF]">
+                    <Avatar className="h-10 w-10 rounded-full border border-[rgba(106,13,24,0.42)]">
                       <AvatarImage src={creator.avatar} />
-                      <AvatarFallback className="bg-[#0A0A0A] text-white text-xs font-bold">
+                      <AvatarFallback className="monogram-silver-burgundy text-[#6A0D18] text-xs font-bold">
                         {creator.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs sm:text-sm font-bold text-[#0A0A0A] dark:text-white group-hover:text-[#1D4ED8] transition-colors">
+                        <span className="text-xs sm:text-sm font-bold text-[#0A0A0A] dark:text-white group-hover:text-[#6A0D18] transition-colors">
                           {creator.name}
                         </span>
                         {creator.verified && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#6A0D18] shrink-0" />
                         )}
                       </div>
                       <span className="text-xs text-[#52525B] dark:text-slate-400 block">
@@ -584,7 +561,7 @@ export default function BrandDashboard() {
       <div className="bg-white dark:bg-[#11172A] border border-[#E5E4DF] dark:border-white/10 rounded-xl p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-[#E5E4DF] dark:border-white/10 pb-3">
           <div className="flex items-center gap-2">
-            <FileCheck2 className="w-4 h-4 text-[#1D4ED8]" />
+            <FileCheck2 className="w-4 h-4 text-[#6A0D18]" />
             <h2 className="text-sm font-bold text-[#0A0A0A] dark:text-white tracking-tight">
               Commercial Deal Log &amp; Milestone Releases
             </h2>

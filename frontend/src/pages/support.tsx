@@ -147,12 +147,12 @@ export default function SupportAndDisputes() {
       {/* ─── Header ─── */}
       <div className="border-b border-[#E5E4DF] pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#6A0D18] mb-1">
             Creator Protection &amp; Trust
           </p>
           <h1 className="text-3xl font-bold tracking-tight text-[#0A0A0A]">
             Support &amp;{" "}
-            <span className="font-serif italic font-normal text-blue-700">Disputes</span>
+            <span className="font-serif italic font-normal text-[#6A0D18]">Disputes</span>
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
             Report suspicious briefs, raise milestone payment disputes, or get priority assistance
@@ -229,7 +229,7 @@ export default function SupportAndDisputes() {
                           className={`px-2 py-0.5 rounded text-xs font-semibold ${
                             cat.id === "fraud"
                               ? "bg-rose-50 text-rose-700 border border-rose-200/70"
-                              : "bg-blue-50 text-blue-700 border border-blue-200/70"
+                              : "bg-[#FDF6F7] text-[#6A0D18] border border-[#EED8DC]"
                           }`}
                         >
                           {cat.badge}
@@ -260,7 +260,7 @@ export default function SupportAndDisputes() {
                 <select
                   value={linkedCampaign}
                   onChange={(e) => setLinkedCampaign(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-blue-700 cursor-pointer"
+                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs font-semibold text-[#0A0A0A] focus:outline-none focus:border-[#6A0D18] cursor-pointer"
                 >
                   <option value="camp-1">Glow Cosmetics — Summer Skincare Launch</option>
                   <option value="camp-2">NovaTech Gear — Everyday Desk Setup &amp; Unboxing</option>
@@ -277,7 +277,7 @@ export default function SupportAndDisputes() {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="e.g., Brand asking to move payment outside platform"
-                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-blue-700"
+                  className="w-full h-10 px-3 rounded-lg border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 focus:outline-none focus:border-[#6A0D18]"
                 />
               </div>
             </div>
@@ -292,7 +292,7 @@ export default function SupportAndDisputes() {
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="Include dates, deliverable links, or specific messages. Our team automatically attaches your Deal Discussion history if a campaign is selected."
-                className="w-full p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 leading-relaxed focus:outline-none focus:border-blue-700"
+                className="w-full p-3.5 rounded-xl border border-[#E5E4DF] bg-[#FAF9F6] text-xs text-[#0A0A0A] placeholder:text-zinc-400 leading-relaxed focus:outline-none focus:border-[#6A0D18]"
               />
             </div>
 
@@ -336,7 +336,7 @@ export default function SupportAndDisputes() {
                     key={idx}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#E5E4DF] text-xs font-medium text-zinc-700"
                   >
-                    <FileCheck2 className="w-3.5 h-3.5 text-blue-700" />
+                    <FileCheck2 className="w-3.5 h-3.5 text-[#6A0D18]" />
                     <span className="truncate max-w-[180px]">{name}</span>
                     <button
                       type="button"
@@ -378,9 +378,9 @@ export default function SupportAndDisputes() {
             </span>
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0A0A0A] hover:bg-zinc-800 text-white text-xs font-semibold transition-colors shrink-0 cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg liquid-burgundy-metal text-xs font-semibold shrink-0 cursor-pointer shadow-xs"
             >
-              <Send className="w-3.5 h-3.5" />
+              <Send className="w-3.5 h-3.5 text-white" />
               <span>Submit Report</span>
             </button>
           </div>
@@ -391,7 +391,7 @@ export default function SupportAndDisputes() {
           {/* SLA Trust Card */}
           <div className="bg-white rounded-2xl border border-[#E5E4DF] p-5 shadow-xs space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-[#0A0A0A]">
-              <AlertTriangle className="w-4 h-4 text-blue-700" />
+              <AlertTriangle className="w-4 h-4 text-[#6A0D18]" />
               <span>Safety &amp; Anti-Fraud Policy</span>
             </div>
             <p className="text-xs text-zinc-600 leading-relaxed">
@@ -429,7 +429,7 @@ export default function SupportAndDisputes() {
                 <div key={t.id} className="p-5 space-y-2.5 hover:bg-[#FAF9F6]/70 transition-colors">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-blue-700">{t.id}</span>
+                      <span className="text-xs font-mono font-bold text-[#6A0D18]">{t.id}</span>
                       <span className="text-zinc-300">•</span>
                       <span className="text-xs font-semibold text-zinc-600">{t.categoryLabel}</span>
                     </div>

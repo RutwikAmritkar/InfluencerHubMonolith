@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
             </Button>
             <Button
               size="sm"
-              className="bg-[#0A0A0A] hover:bg-[#1D4ED8] text-white font-semibold text-xs rounded-lg px-4 transition-colors shadow-xs"
+              className="bg-[#0A0A0A] hover:bg-zinc-800 text-white font-semibold text-xs rounded-lg px-4 transition-colors shadow-xs"
               asChild
             >
               <Link href="/login">Sign In</Link>
@@ -55,8 +55,8 @@ export default function PrivacyPolicy() {
       {/* Hero Section */}
       <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-b border-[#E5E4DF] bg-white">
         <div className="max-w-4xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF9F6] border border-[#E5E4DF] text-[#1D4ED8] text-xs font-semibold">
-            <ShieldCheck className="w-4 h-4 text-[#1D4ED8]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF9F6] border border-[#E5E4DF] text-[#6A0D18] text-xs font-semibold">
+            <ShieldCheck className="w-4 h-4 text-[#6A0D18]" />
             <span>Audited Data Protection Standards</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold text-[#0A0A0A] tracking-[-0.03em]">
@@ -77,7 +77,7 @@ export default function PrivacyPolicy() {
         {/* Notice Box */}
         <div className="p-5 rounded-xl bg-white border border-[#E5E4DF] text-xs sm:text-sm text-[#52525B] space-y-2 shadow-xs">
           <div className="flex items-center gap-2 font-bold text-[#0A0A0A] text-sm">
-            <Lock className="w-4 h-4 text-[#1D4ED8]" />
+            <Lock className="w-4 h-4 text-[#6A0D18]" />
             <span>Core Privacy Commitment</span>
           </div>
           <p className="leading-relaxed">
@@ -91,7 +91,7 @@ export default function PrivacyPolicy() {
         {/* Section 1: Introduction */}
         <section className="space-y-4 text-[#52525B]">
           <h2 className="text-xl sm:text-2xl font-bold text-[#0A0A0A] tracking-[-0.02em] flex items-center gap-2 border-b border-[#E5E4DF] pb-3">
-            <span className="text-[#1D4ED8] font-tabular">1.</span> Introduction & Scope
+            <span className="text-[#6A0D18] font-tabular">1.</span> Introduction & Scope
           </h2>
           <p className="text-xs sm:text-sm leading-relaxed">
             This Privacy Policy applies to the {LEGAL_CONFIG.PLATFORM_NAME} web application,
@@ -109,13 +109,13 @@ export default function PrivacyPolicy() {
         {/* Section 2: Information We Collect */}
         <section className="space-y-4 text-[#52525B]">
           <h2 className="text-xl sm:text-2xl font-bold text-[#0A0A0A] tracking-[-0.02em] flex items-center gap-2 border-b border-[#E5E4DF] pb-3">
-            <span className="text-[#1D4ED8] font-tabular">2.</span> Information We Collect
+            <span className="text-[#6A0D18] font-tabular">2.</span> Information We Collect
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div className="p-5 rounded-xl bg-white border border-[#E5E4DF] space-y-2 shadow-xs">
               <div className="flex items-center gap-2 text-[#0A0A0A] font-bold text-sm">
-                <Key className="w-4 h-4 text-[#1D4ED8]" />
+                <Key className="w-4 h-4 text-[#6A0D18]" />
                 <span>Account & Authentication</span>
               </div>
               <p className="text-xs text-[#52525B] leading-relaxed">
@@ -126,7 +126,7 @@ export default function PrivacyPolicy() {
 
             <div className="p-5 rounded-xl bg-white border border-[#E5E4DF] space-y-2 shadow-xs">
               <div className="flex items-center gap-2 text-[#0A0A0A] font-bold text-sm">
-                <Database className="w-4 h-4 text-[#1D4ED8]" />
+                <Database className="w-4 h-4 text-[#6A0D18]" />
                 <span>Media Kit & Profile Details</span>
               </div>
               <p className="text-xs text-[#52525B] leading-relaxed">
@@ -164,7 +164,7 @@ export default function PrivacyPolicy() {
         {/* Section 3: Social Account & Token Security */}
         <section className="space-y-4 text-[#52525B]">
           <h2 className="text-xl sm:text-2xl font-bold text-[#0A0A0A] tracking-[-0.02em] flex items-center gap-2 border-b border-[#E5E4DF] pb-3">
-            <span className="text-[#1D4ED8] font-tabular">3.</span> OAuth Security & Encryption
+            <span className="text-[#6A0D18] font-tabular">3.</span> OAuth Security & Encryption
           </h2>
           <p className="text-xs sm:text-sm leading-relaxed">
             {LEGAL_CONFIG.PLATFORM_NAME} strictly integrates with external platforms through
@@ -191,7 +191,7 @@ export default function PrivacyPolicy() {
         {/* Section 4: Contact Info */}
         <section className="p-6 rounded-xl bg-white border border-[#E5E4DF] space-y-3 shadow-xs">
           <h3 className="text-base font-bold text-[#0A0A0A] flex items-center gap-2">
-            <Mail className="w-4 h-4 text-[#1D4ED8]" />
+            <Mail className="w-4 h-4 text-[#6A0D18]" />
             <span>Contact & Data Controller</span>
           </h3>
           <p className="text-xs text-[#52525B] leading-relaxed">
@@ -209,7 +209,7 @@ export default function PrivacyPolicy() {
               <strong>Contact Email:</strong>{" "}
               <a
                 href={`mailto:${LEGAL_CONFIG.CONTACT.PRIVACY_EMAIL}`}
-                className="text-[#1D4ED8] hover:underline font-mono"
+                className="text-[#6A0D18] hover:underline font-mono"
               >
                 {LEGAL_CONFIG.CONTACT.PRIVACY_EMAIL}
               </a>

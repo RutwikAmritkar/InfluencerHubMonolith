@@ -16,3 +16,5 @@ export * from "./social-insights";
 export * from "./collaboration-requests";
 export * from "./deals";
 export * from "./creator-portfolio-media";
+export * from "./admin";
+export * from "./payments";
